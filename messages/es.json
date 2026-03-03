@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "submit": "Enviar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "close": "Cerrar",
+    "error": "Error",
+    "success": "Éxito",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "download": "Descargar",
+    "noData": "No hay datos disponibles",
+    "actions": "Acciones",
+    "status": "Estado",
+    "date": "Fecha",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "description": "Descripción"
+  },
+  "languages": {
+    "English": "Inglés",
+    "Spanish": "Español",
+    "German": "Alemán",
+    "French": "Francés",
+    "Polish": "Polaco",
+    "Portuguese": "Portugués"
+  },
+  "studentLevel": {
+    "bachelor": "Grado",
+    "master": "Máster"
+  },
+  "stageType": {
+    "initial": "Fase inicial",
+    "admin": "Fase administrativa",
+    "supplementary": "Fase complementaria"
+  },
+  "stageStatus": {
+    "pending": "Pendiente",
+    "active": "Activo",
+    "completed": "Completado"
+  },
+  "slotStatus": {
+    "open": "Abierto",
+    "registered": "Registrado"
+  },
+  "admin": {
+    "login": {
+      "title": "Inicio de sesión de administrador",
+      "subtitle": "Introduce tu correo electrónico para recibir un código de inicio de sesión único",
+      "emailLabel": "Dirección de correo electrónico",
+      "emailPlaceholder": "admin@universidad.es",
+      "sendCode": "Enviar código",
+      "codeSent": "¡Código enviado! Revisa tu correo electrónico.",
+      "codeLabel": "Código único",
+      "codePlaceholder": "Introduce el código de 6 caracteres",
+      "verify": "Verificar e Iniciar sesión",
+      "invalidEmail": "Por favor, introduce una dirección de correo electrónico válida",
+      "notAdmin": "Este correo electrónico no está registrado como administrador",
+      "invalidCode": "Código inválido o expirado",
+      "logout": "Cerrar sesión"
+    },
+    "dashboard": {
+      "title": "Panel de reclutamiento",
+      "createRecruitment": "Crear reclutamiento",
+      "noRecruitments": "No hay reclutamientos. Crea uno para comenzar."
+    },
+    "recruitment": {
+      "title": "Detalles del reclutamiento",
+      "tabs": {
+        "overview": "Resumen",
+        "stages": "Fases",
+        "slots": "Plazas",
+        "destinations": "Destinos"
+      },
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "maxChoices": "Máximo de destinos"
+      },
+      "stages": {
+        "title": "Fases",
+        "addStage": "Añadir fase",
+        "noStages": "No hay fases",
+        "completeStage": "Completar fase",
+        "startSupplementary": "Iniciar fase complementaria",
+        "viewResults": "Ver resultados",
+        "liveDashboard": "Panel en directo"
+      },
+      "slots": {
+        "title": "Plazas",
+        "addSlots": "Añadir plazas",
+        "count": "Número de plazas a añadir",
+        "downloadPdf": "Descargar PDF",
+        "noSlots": "No hay plazas",
+        "slotNumber": "Plaza #{number}",
+        "registrationLink": "Enlace de registro",
+        "teacherLink": "Enlace del profesor"
+      },
+      "destinations": {
+        "title": "Destinos",
+        "addDestination": "Añadir destino",
+        "noDestinations": "No hay destinos",
+        "slotsBachelor": "Plazas grado",
+        "slotsMaster": "Plazas máster",
+        "slotsAny": "Plazas abiertas",
+        "requiredLanguages": "Idiomas requeridos"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Panel de fase en directo",
+      "registered": "Registrados",
+      "openSlots": "Plazas abiertas",
+      "totalSlots": "Total plazas",
+      "recentRegistrations": "Registros recientes",
+      "noRegistrations": "Sin registros todavía"
+    },
+    "results": {
+      "title": "Resultados de asignación",
+      "approve": "Aprobar todo",
+      "approveConfirm": "¿Aprobar estos resultados de asignación? Se enviarán correos a todos los estudiantes.",
+      "approved": "Aprobado",
+      "unassigned": "Sin asignar",
+      "score": "Puntuación",
+      "destination": "Destino",
+      "student": "Estudiante"
+    },
+    "audit": {
+      "title": "Registro de auditoría",
+      "actor": "Actor",
+      "action": "Acción",
+      "resource": "Recurso",
+      "timestamp": "Marca de tiempo",
+      "details": "Detalles",
+      "exportCsv": "Exportar CSV",
+      "filters": {
+        "all": "Todos",
+        "recruitment": "Reclutamiento",
+        "actorType": "Tipo de actor",
+        "actionType": "Acción",
+        "dateFrom": "Desde",
+        "dateTo": "Hasta"
+      }
+    }
+  },
+  "registration": {
+    "title": "Registro de estudiante",
+    "slotNumber": "Plaza #{number}",
+    "recruitment": "Reclutamiento",
+    "alreadyCompleted": "Tu registro está completo",
+    "alreadyCompletedDesc": "Ya has completado tu registro. Puedes actualizar tu información hasta que finalice la fase inicial.",
+    "initialStageClosed": "El registro está cerrado",
+    "initialStageClosedDesc": "La fase inicial ha finalizado. Ya no puedes actualizar tu información.",
+    "steps": {
+      "step1": "Contacto y consentimiento",
+      "step2": "Verificación",
+      "step3": "Información personal",
+      "step4": "Nivel de estudios",
+      "step5": "Idiomas",
+      "step6": "Destinos",
+      "step7": "Resumen"
+    },
+    "step1": {
+      "title": "Datos de contacto y consentimiento",
+      "emailLabel": "Dirección de correo electrónico",
+      "emailPlaceholder": "tu.correo@universidad.es",
+      "emailConsentLabel": "Consiento recibir correos electrónicos sobre este reclutamiento",
+      "privacyLabel": "He leído y acepto la Política de Privacidad",
+      "privacyLink": "Política de Privacidad",
+      "sendCode": "Enviar código de verificación"
+    },
+    "step2": {
+      "title": "Verificación de correo electrónico",
+      "desc": "Hemos enviado un código de 6 caracteres a {email}",
+      "codeLabel": "Código de verificación",
+      "codePlaceholder": "Introduce el código de 6 caracteres",
+      "verify": "Verificar correo electrónico",
+      "resend": "Reenviar código",
+      "invalidCode": "Código inválido o expirado"
+    },
+    "step3": {
+      "title": "Información personal",
+      "nameLabel": "Nombre completo",
+      "namePlaceholder": "Tu nombre completo",
+      "enrollmentLabel": "Número de matrícula universitaria",
+      "enrollmentPlaceholder": "Número de 6 dígitos (ej: 123456)",
+      "enrollmentHelp": "Número de 6 dígitos, no debe empezar por 0"
+    },
+    "step4": {
+      "title": "Nivel de estudios",
+      "bachelor": "Grado",
+      "master": "Máster"
+    },
+    "step5": {
+      "title": "Idiomas hablados",
+      "desc": "Selecciona todos los idiomas que hablas a nivel comunicativo"
+    },
+    "step6": {
+      "title": "Preferencias de destinos",
+      "desc": "Ordena tus preferencias de destinos (el más preferido primero). Puedes seleccionar hasta {max} destinos.",
+      "noDestinations": "Ningún destino coincide con tu perfil lingüístico y nivel de estudios.",
+      "dragToReorder": "Arrastra para reordenar",
+      "addDestination": "Añadir destino",
+      "removeDestination": "Eliminar"
+    },
+    "step7": {
+      "title": "Resumen",
+      "desc": "Por favor, revisa cuidadosamente toda tu información.",
+      "confirmLabel": "He revisado toda la información anterior y confirmo que es correcta",
+      "complete": "Completar registro",
+      "personal": "Información personal",
+      "contact": "Contacto",
+      "level": "Nivel de estudios",
+      "languages": "Idiomas",
+      "preferences": "Preferencias de destinos",
+      "consent": "Consentimientos"
+    },
+    "completed": {
+      "title": "¡Registro completado!",
+      "desc": "Tu registro ha sido enviado con éxito. Recibirás un correo de confirmación en breve.",
+      "goBack": "Volver al inicio"
+    },
+    "errors": {
+      "slotNotFound": "Este enlace de registro no es válido",
+      "slotTaken": "Esta plaza de registro ya no está disponible",
+      "destinationFull": "Uno de tus destinos seleccionados ya no está disponible. Por favor, actualiza tus preferencias.",
+      "stageClosed": "El período de registro ha finalizado",
+      "privacyRequired": "Debes aceptar la política de privacidad",
+      "emailConsentRequired": "Debes dar tu consentimiento para la comunicación por correo electrónico",
+      "invalidEnrollmentId": "El número de matrícula debe ser un número de 6 dígitos que no empiece por 0"
+    }
+  },
+  "teacher": {
+    "title": "Gestión del profesor",
+    "slotInfo": "Información de la plaza",
+    "studentInfo": "Datos del estudiante",
+    "scores": "Evaluaciones académicas",
+    "noStudent": "Ningún estudiante se ha registrado en esta plaza todavía",
+    "averageResult": "Resultado medio (0,0 – 6,0)",
+    "additionalActivities": "Número de actividades adicionales (0 – 4)",
+    "recommendationLetters": "Número de cartas de recomendación (0 – 10)",
+    "saveChanges": "Guardar cambios",
+    "savedSuccessfully": "Cambios guardados con éxito",
+    "invalidSignature": "Este enlace no es válido o ha sido manipulado"
+  },
+  "supplementary": {
+    "title": "Fase complementaria",
+    "currentAssignment": "Tu asignación actual",
+    "unassigned": "No fuiste asignado a ningún destino",
+    "cancelAssignment": "Cancelar mi asignación",
+    "cancelConfirm": "¿Estás seguro de que quieres cancelar tu asignación? Tu plaza quedará libre y tendrás que competir por un nuevo destino.",
+    "cancelled": "Tu asignación ha sido cancelada",
+    "updatePreferences": "Actualizar preferencias de destinos",
+    "savePreferences": "Guardar preferencias",
+    "preferencesUpdated": "Tus preferencias han sido actualizadas",
+    "expired": "Este enlace ha expirado",
+    "stageNotActive": "La fase complementaria no está activa actualmente"
+  }
+}

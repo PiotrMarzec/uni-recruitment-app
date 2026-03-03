@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "error": "Error",
+    "success": "Success",
+    "required": "Required",
+    "optional": "Optional",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "download": "Download",
+    "noData": "No data available",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "name": "Name",
+    "email": "Email",
+    "description": "Description"
+  },
+  "languages": {
+    "English": "English",
+    "Spanish": "Spanish",
+    "German": "German",
+    "French": "French",
+    "Polish": "Polish",
+    "Portuguese": "Portuguese"
+  },
+  "studentLevel": {
+    "bachelor": "Bachelor",
+    "master": "Master"
+  },
+  "stageType": {
+    "initial": "Initial",
+    "admin": "Admin",
+    "supplementary": "Supplementary"
+  },
+  "stageStatus": {
+    "pending": "Pending",
+    "active": "Active",
+    "completed": "Completed"
+  },
+  "slotStatus": {
+    "open": "Open",
+    "registered": "Registered"
+  },
+  "admin": {
+    "login": {
+      "title": "Admin Login",
+      "subtitle": "Enter your email to receive a one-time login code",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "admin@university.edu",
+      "sendCode": "Send code",
+      "codeSent": "Code sent! Check your email.",
+      "codeLabel": "One-time code",
+      "codePlaceholder": "Enter 6-character code",
+      "verify": "Verify & Login",
+      "invalidEmail": "Please enter a valid email address",
+      "notAdmin": "This email is not registered as an admin",
+      "invalidCode": "Invalid or expired code",
+      "logout": "Logout"
+    },
+    "dashboard": {
+      "title": "Recruitment Dashboard",
+      "createRecruitment": "Create Recruitment",
+      "noRecruitments": "No recruitments yet. Create one to get started."
+    },
+    "recruitment": {
+      "title": "Recruitment Details",
+      "tabs": {
+        "overview": "Overview",
+        "stages": "Stages",
+        "slots": "Slots",
+        "destinations": "Destinations"
+      },
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "maxChoices": "Max Destination Choices"
+      },
+      "stages": {
+        "title": "Stages",
+        "addStage": "Add Stage",
+        "noStages": "No stages yet",
+        "completeStage": "Complete Stage",
+        "startSupplementary": "Start Supplementary Stage",
+        "viewResults": "View Results",
+        "liveDashboard": "Live Dashboard"
+      },
+      "slots": {
+        "title": "Slots",
+        "addSlots": "Add Slots",
+        "count": "Number of slots to add",
+        "downloadPdf": "Download PDF",
+        "noSlots": "No slots yet",
+        "slotNumber": "Slot #{number}",
+        "registrationLink": "Registration Link",
+        "teacherLink": "Teacher Link"
+      },
+      "destinations": {
+        "title": "Destinations",
+        "addDestination": "Add Destination",
+        "noDestinations": "No destinations yet",
+        "slotsBachelor": "Bachelor Slots",
+        "slotsMaster": "Master Slots",
+        "slotsAny": "Open Slots",
+        "requiredLanguages": "Required Languages"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Live Stage Dashboard",
+      "registered": "Registered",
+      "openSlots": "Open Slots",
+      "totalSlots": "Total Slots",
+      "recentRegistrations": "Recent Registrations",
+      "noRegistrations": "No registrations yet"
+    },
+    "results": {
+      "title": "Assignment Results",
+      "approve": "Approve All",
+      "approveConfirm": "Approve these assignment results? Emails will be sent to all students.",
+      "approved": "Approved",
+      "unassigned": "Unassigned",
+      "score": "Score",
+      "destination": "Destination",
+      "student": "Student"
+    },
+    "audit": {
+      "title": "Audit Log",
+      "actor": "Actor",
+      "action": "Action",
+      "resource": "Resource",
+      "timestamp": "Timestamp",
+      "details": "Details",
+      "exportCsv": "Export CSV",
+      "filters": {
+        "all": "All",
+        "recruitment": "Recruitment",
+        "actorType": "Actor Type",
+        "actionType": "Action",
+        "dateFrom": "From",
+        "dateTo": "To"
+      }
+    }
+  },
+  "registration": {
+    "title": "Student Registration",
+    "slotNumber": "Slot #{number}",
+    "recruitment": "Recruitment",
+    "alreadyCompleted": "Your registration is complete",
+    "alreadyCompletedDesc": "You have already completed your registration. You can update your information until the initial stage closes.",
+    "initialStageClosed": "Registration is closed",
+    "initialStageClosedDesc": "The initial registration stage has ended. You can no longer update your information.",
+    "steps": {
+      "step1": "Contact & Consent",
+      "step2": "Verification",
+      "step3": "Personal Info",
+      "step4": "Study Level",
+      "step5": "Languages",
+      "step6": "Destinations",
+      "step7": "Summary"
+    },
+    "step1": {
+      "title": "Contact Information & Consent",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "your.email@university.edu",
+      "emailConsentLabel": "I consent to receiving emails about this recruitment",
+      "privacyLabel": "I have read and agree to the Privacy Policy",
+      "privacyLink": "Privacy Policy",
+      "sendCode": "Send verification code"
+    },
+    "step2": {
+      "title": "Email Verification",
+      "desc": "We've sent a 6-character code to {email}",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "Enter 6-character code",
+      "verify": "Verify email",
+      "resend": "Resend code",
+      "invalidCode": "Invalid or expired code"
+    },
+    "step3": {
+      "title": "Personal Information",
+      "nameLabel": "Full name",
+      "namePlaceholder": "Your full name",
+      "enrollmentLabel": "University enrollment ID",
+      "enrollmentPlaceholder": "6-digit ID (e.g. 123456)",
+      "enrollmentHelp": "6-digit number, must not start with 0"
+    },
+    "step4": {
+      "title": "Study Level",
+      "bachelor": "Bachelor's degree",
+      "master": "Master's degree"
+    },
+    "step5": {
+      "title": "Spoken Languages",
+      "desc": "Select all languages you speak at a communicative level"
+    },
+    "step6": {
+      "title": "Destination Preferences",
+      "desc": "Rank your destination preferences (most preferred first). You can select up to {max} destinations.",
+      "noDestinations": "No destinations match your language profile and study level. Please go back and update your languages.",
+      "dragToReorder": "Drag to reorder",
+      "addDestination": "Add destination",
+      "removeDestination": "Remove"
+    },
+    "step7": {
+      "title": "Summary",
+      "desc": "Please review all your information carefully.",
+      "confirmLabel": "I have reviewed all the above information and confirm it is correct",
+      "complete": "Complete Registration",
+      "personal": "Personal Information",
+      "contact": "Contact",
+      "level": "Study Level",
+      "languages": "Spoken Languages",
+      "preferences": "Destination Preferences",
+      "consent": "Consents"
+    },
+    "completed": {
+      "title": "Registration Complete!",
+      "desc": "Your registration has been submitted successfully. You will receive a confirmation email shortly.",
+      "goBack": "Back to start"
+    },
+    "errors": {
+      "slotNotFound": "This registration link is invalid",
+      "slotTaken": "This registration slot is no longer available",
+      "destinationFull": "One of your selected destinations is no longer available. Please update your preferences.",
+      "stageClosed": "The registration period has ended",
+      "privacyRequired": "You must agree to the privacy policy",
+      "emailConsentRequired": "You must consent to email communication",
+      "invalidEnrollmentId": "Enrollment ID must be a 6-digit number not starting with 0"
+    }
+  },
+  "teacher": {
+    "title": "Teacher Management",
+    "slotInfo": "Slot Information",
+    "studentInfo": "Student Information",
+    "scores": "Academic Scores",
+    "noStudent": "No student has registered for this slot yet",
+    "averageResult": "Average Academic Result (0.0 – 6.0)",
+    "additionalActivities": "Additional Activities Count (0 – 4)",
+    "recommendationLetters": "Recommendation Letters Count (0 – 10)",
+    "saveChanges": "Save Changes",
+    "savedSuccessfully": "Changes saved successfully",
+    "invalidSignature": "This link is invalid or has been tampered with"
+  },
+  "supplementary": {
+    "title": "Supplementary Stage",
+    "currentAssignment": "Your Current Assignment",
+    "unassigned": "You were not assigned to any destination",
+    "cancelAssignment": "Cancel My Assignment",
+    "cancelConfirm": "Are you sure you want to cancel your assignment? This will free up your spot and you'll have to compete for a new destination.",
+    "cancelled": "Your assignment has been cancelled",
+    "updatePreferences": "Update Destination Preferences",
+    "savePreferences": "Save Preferences",
+    "preferencesUpdated": "Your preferences have been updated",
+    "expired": "This link has expired",
+    "stageNotActive": "The supplementary stage is not currently active"
+  }
+}

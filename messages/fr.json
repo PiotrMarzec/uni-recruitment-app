@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "back": "Retour",
+    "next": "Suivant",
+    "submit": "Soumettre",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "error": "Erreur",
+    "success": "Succès",
+    "required": "Obligatoire",
+    "optional": "Facultatif",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "download": "Télécharger",
+    "noData": "Aucune donnée disponible",
+    "actions": "Actions",
+    "status": "Statut",
+    "date": "Date",
+    "name": "Nom",
+    "email": "E-mail",
+    "description": "Description"
+  },
+  "languages": {
+    "English": "Anglais",
+    "Spanish": "Espagnol",
+    "German": "Allemand",
+    "French": "Français",
+    "Polish": "Polonais",
+    "Portuguese": "Portugais"
+  },
+  "studentLevel": {
+    "bachelor": "Licence",
+    "master": "Master"
+  },
+  "stageType": {
+    "initial": "Phase initiale",
+    "admin": "Phase administrative",
+    "supplementary": "Phase complémentaire"
+  },
+  "stageStatus": {
+    "pending": "En attente",
+    "active": "Actif",
+    "completed": "Terminé"
+  },
+  "slotStatus": {
+    "open": "Ouvert",
+    "registered": "Inscrit"
+  },
+  "admin": {
+    "login": {
+      "title": "Connexion administrateur",
+      "subtitle": "Entrez votre e-mail pour recevoir un code de connexion unique",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "admin@universite.fr",
+      "sendCode": "Envoyer le code",
+      "codeSent": "Code envoyé ! Vérifiez vos e-mails.",
+      "codeLabel": "Code unique",
+      "codePlaceholder": "Entrez le code à 6 caractères",
+      "verify": "Vérifier & Connexion",
+      "invalidEmail": "Veuillez entrer une adresse e-mail valide",
+      "notAdmin": "Cet e-mail n'est pas enregistré comme administrateur",
+      "invalidCode": "Code invalide ou expiré",
+      "logout": "Déconnexion"
+    },
+    "dashboard": {
+      "title": "Tableau de bord des recrutements",
+      "createRecruitment": "Créer un recrutement",
+      "noRecruitments": "Aucun recrutement. Créez-en un pour commencer."
+    },
+    "recruitment": {
+      "title": "Détails du recrutement",
+      "tabs": {
+        "overview": "Aperçu",
+        "stages": "Étapes",
+        "slots": "Créneaux",
+        "destinations": "Destinations"
+      },
+      "fields": {
+        "name": "Nom",
+        "description": "Description",
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "maxChoices": "Nombre max. de destinations"
+      },
+      "stages": {
+        "title": "Étapes",
+        "addStage": "Ajouter une étape",
+        "noStages": "Aucune étape",
+        "completeStage": "Terminer l'étape",
+        "startSupplementary": "Démarrer la phase complémentaire",
+        "viewResults": "Voir les résultats",
+        "liveDashboard": "Tableau de bord en direct"
+      },
+      "slots": {
+        "title": "Créneaux",
+        "addSlots": "Ajouter des créneaux",
+        "count": "Nombre de créneaux à ajouter",
+        "downloadPdf": "Télécharger le PDF",
+        "noSlots": "Aucun créneau",
+        "slotNumber": "Créneau #{number}",
+        "registrationLink": "Lien d'inscription",
+        "teacherLink": "Lien enseignant"
+      },
+      "destinations": {
+        "title": "Destinations",
+        "addDestination": "Ajouter une destination",
+        "noDestinations": "Aucune destination",
+        "slotsBachelor": "Places licence",
+        "slotsMaster": "Places master",
+        "slotsAny": "Places ouvertes",
+        "requiredLanguages": "Langues requises"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Tableau de bord d'étape en direct",
+      "registered": "Inscrits",
+      "openSlots": "Créneaux ouverts",
+      "totalSlots": "Total créneaux",
+      "recentRegistrations": "Inscriptions récentes",
+      "noRegistrations": "Aucune inscription"
+    },
+    "results": {
+      "title": "Résultats d'affectation",
+      "approve": "Tout approuver",
+      "approveConfirm": "Approuver ces résultats d'affectation ? Des e-mails seront envoyés à tous les étudiants.",
+      "approved": "Approuvé",
+      "unassigned": "Non affecté",
+      "score": "Score",
+      "destination": "Destination",
+      "student": "Étudiant"
+    },
+    "audit": {
+      "title": "Journal d'audit",
+      "actor": "Acteur",
+      "action": "Action",
+      "resource": "Ressource",
+      "timestamp": "Horodatage",
+      "details": "Détails",
+      "exportCsv": "Exporter CSV",
+      "filters": {
+        "all": "Tous",
+        "recruitment": "Recrutement",
+        "actorType": "Type d'acteur",
+        "actionType": "Action",
+        "dateFrom": "De",
+        "dateTo": "À"
+      }
+    }
+  },
+  "registration": {
+    "title": "Inscription étudiant",
+    "slotNumber": "Créneau #{number}",
+    "recruitment": "Recrutement",
+    "alreadyCompleted": "Votre inscription est terminée",
+    "alreadyCompletedDesc": "Vous avez déjà complété votre inscription. Vous pouvez mettre à jour vos informations jusqu'à la fin de la phase initiale.",
+    "initialStageClosed": "L'inscription est fermée",
+    "initialStageClosedDesc": "La phase initiale est terminée. Vous ne pouvez plus mettre à jour vos informations.",
+    "steps": {
+      "step1": "Contact & Consentement",
+      "step2": "Vérification",
+      "step3": "Informations personnelles",
+      "step4": "Niveau d'études",
+      "step5": "Langues",
+      "step6": "Destinations",
+      "step7": "Récapitulatif"
+    },
+    "step1": {
+      "title": "Coordonnées & Consentement",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "votre.email@universite.fr",
+      "emailConsentLabel": "Je consens à recevoir des e-mails concernant ce recrutement",
+      "privacyLabel": "J'ai lu et j'accepte la Politique de confidentialité",
+      "privacyLink": "Politique de confidentialité",
+      "sendCode": "Envoyer le code de vérification"
+    },
+    "step2": {
+      "title": "Vérification de l'e-mail",
+      "desc": "Nous avons envoyé un code à 6 caractères à {email}",
+      "codeLabel": "Code de vérification",
+      "codePlaceholder": "Entrez le code à 6 caractères",
+      "verify": "Vérifier l'e-mail",
+      "resend": "Renvoyer le code",
+      "invalidCode": "Code invalide ou expiré"
+    },
+    "step3": {
+      "title": "Informations personnelles",
+      "nameLabel": "Nom complet",
+      "namePlaceholder": "Votre nom complet",
+      "enrollmentLabel": "Numéro d'étudiant",
+      "enrollmentPlaceholder": "Numéro à 6 chiffres (ex: 123456)",
+      "enrollmentHelp": "Nombre à 6 chiffres, ne doit pas commencer par 0"
+    },
+    "step4": {
+      "title": "Niveau d'études",
+      "bachelor": "Licence",
+      "master": "Master"
+    },
+    "step5": {
+      "title": "Langues parlées",
+      "desc": "Sélectionnez toutes les langues que vous parlez à un niveau communicatif"
+    },
+    "step6": {
+      "title": "Préférences de destinations",
+      "desc": "Classez vos préférences de destinations (la plus préférée en premier). Vous pouvez sélectionner jusqu'à {max} destinations.",
+      "noDestinations": "Aucune destination ne correspond à votre profil linguistique et votre niveau d'études.",
+      "dragToReorder": "Glisser pour réorganiser",
+      "addDestination": "Ajouter une destination",
+      "removeDestination": "Supprimer"
+    },
+    "step7": {
+      "title": "Récapitulatif",
+      "desc": "Veuillez vérifier attentivement toutes vos informations.",
+      "confirmLabel": "J'ai vérifié toutes les informations ci-dessus et confirme leur exactitude",
+      "complete": "Finaliser l'inscription",
+      "personal": "Informations personnelles",
+      "contact": "Contact",
+      "level": "Niveau d'études",
+      "languages": "Langues",
+      "preferences": "Préférences de destinations",
+      "consent": "Consentements"
+    },
+    "completed": {
+      "title": "Inscription terminée !",
+      "desc": "Votre inscription a été soumise avec succès. Vous recevrez bientôt un e-mail de confirmation.",
+      "goBack": "Retour au début"
+    },
+    "errors": {
+      "slotNotFound": "Ce lien d'inscription est invalide",
+      "slotTaken": "Ce créneau d'inscription n'est plus disponible",
+      "destinationFull": "L'une de vos destinations sélectionnées n'est plus disponible. Veuillez mettre à jour vos préférences.",
+      "stageClosed": "La période d'inscription est terminée",
+      "privacyRequired": "Vous devez accepter la politique de confidentialité",
+      "emailConsentRequired": "Vous devez consentir à la communication par e-mail",
+      "invalidEnrollmentId": "Le numéro étudiant doit être un nombre à 6 chiffres ne commençant pas par 0"
+    }
+  },
+  "teacher": {
+    "title": "Gestion enseignant",
+    "slotInfo": "Informations sur le créneau",
+    "studentInfo": "Données de l'étudiant",
+    "scores": "Évaluations académiques",
+    "noStudent": "Aucun étudiant ne s'est encore inscrit pour ce créneau",
+    "averageResult": "Résultat moyen (0,0 – 6,0)",
+    "additionalActivities": "Nombre d'activités supplémentaires (0 – 4)",
+    "recommendationLetters": "Nombre de lettres de recommandation (0 – 10)",
+    "saveChanges": "Enregistrer les modifications",
+    "savedSuccessfully": "Modifications enregistrées avec succès",
+    "invalidSignature": "Ce lien est invalide ou a été falsifié"
+  },
+  "supplementary": {
+    "title": "Phase complémentaire",
+    "currentAssignment": "Votre affectation actuelle",
+    "unassigned": "Vous n'avez pas été affecté à une destination",
+    "cancelAssignment": "Annuler mon affectation",
+    "cancelConfirm": "Êtes-vous sûr de vouloir annuler votre affectation ? Votre place sera libérée et vous devrez concourir pour une nouvelle destination.",
+    "cancelled": "Votre affectation a été annulée",
+    "updatePreferences": "Mettre à jour les préférences de destinations",
+    "savePreferences": "Enregistrer les préférences",
+    "preferencesUpdated": "Vos préférences ont été mises à jour",
+    "expired": "Ce lien a expiré",
+    "stageNotActive": "La phase complémentaire n'est pas active actuellement"
+  }
+}

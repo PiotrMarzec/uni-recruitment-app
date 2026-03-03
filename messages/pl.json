@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "create": "Utwórz",
+    "back": "Wstecz",
+    "next": "Dalej",
+    "submit": "Wyślij",
+    "confirm": "Potwierdź",
+    "yes": "Tak",
+    "no": "Nie",
+    "close": "Zamknij",
+    "error": "Błąd",
+    "success": "Sukces",
+    "required": "Wymagane",
+    "optional": "Opcjonalne",
+    "search": "Szukaj",
+    "filter": "Filtruj",
+    "export": "Eksportuj",
+    "download": "Pobierz",
+    "noData": "Brak danych",
+    "actions": "Akcje",
+    "status": "Status",
+    "date": "Data",
+    "name": "Nazwa",
+    "email": "E-mail",
+    "description": "Opis"
+  },
+  "languages": {
+    "English": "Angielski",
+    "Spanish": "Hiszpański",
+    "German": "Niemiecki",
+    "French": "Francuski",
+    "Polish": "Polski",
+    "Portuguese": "Portugalski"
+  },
+  "studentLevel": {
+    "bachelor": "Licencjat",
+    "master": "Magister"
+  },
+  "stageType": {
+    "initial": "Wstępny",
+    "admin": "Administracyjny",
+    "supplementary": "Uzupełniający"
+  },
+  "stageStatus": {
+    "pending": "Oczekujący",
+    "active": "Aktywny",
+    "completed": "Zakończony"
+  },
+  "slotStatus": {
+    "open": "Wolny",
+    "registered": "Zajęty"
+  },
+  "admin": {
+    "login": {
+      "title": "Logowanie administratora",
+      "subtitle": "Podaj e-mail, aby otrzymać jednorazowy kod logowania",
+      "emailLabel": "Adres e-mail",
+      "emailPlaceholder": "admin@uczelnia.edu.pl",
+      "sendCode": "Wyślij kod",
+      "codeSent": "Kod wysłany! Sprawdź swoją skrzynkę.",
+      "codeLabel": "Jednorazowy kod",
+      "codePlaceholder": "Wpisz 6-znakowy kod",
+      "verify": "Weryfikuj i zaloguj",
+      "invalidEmail": "Podaj prawidłowy adres e-mail",
+      "notAdmin": "Ten e-mail nie jest zarejestrowany jako administrator",
+      "invalidCode": "Nieprawidłowy lub wygasły kod",
+      "logout": "Wyloguj"
+    },
+    "dashboard": {
+      "title": "Panel rekrutacji",
+      "createRecruitment": "Utwórz rekrutację",
+      "noRecruitments": "Brak rekrutacji. Utwórz pierwszą, aby rozpocząć."
+    },
+    "recruitment": {
+      "title": "Szczegóły rekrutacji",
+      "tabs": {
+        "overview": "Przegląd",
+        "stages": "Etapy",
+        "slots": "Sloty",
+        "destinations": "Destynacje"
+      },
+      "fields": {
+        "name": "Nazwa",
+        "description": "Opis",
+        "startDate": "Data rozpoczęcia",
+        "endDate": "Data zakończenia",
+        "maxChoices": "Maks. liczba wybranych destynacji"
+      },
+      "stages": {
+        "title": "Etapy",
+        "addStage": "Dodaj etap",
+        "noStages": "Brak etapów",
+        "completeStage": "Zakończ etap",
+        "startSupplementary": "Uruchom etap uzupełniający",
+        "viewResults": "Wyniki przydziałów",
+        "liveDashboard": "Panel na żywo"
+      },
+      "slots": {
+        "title": "Sloty",
+        "addSlots": "Dodaj sloty",
+        "count": "Liczba slotów do dodania",
+        "downloadPdf": "Pobierz PDF",
+        "noSlots": "Brak slotów",
+        "slotNumber": "Slot #{number}",
+        "registrationLink": "Link rejestracyjny",
+        "teacherLink": "Link nauczyciela"
+      },
+      "destinations": {
+        "title": "Destynacje",
+        "addDestination": "Dodaj destynację",
+        "noDestinations": "Brak destynacji",
+        "slotsBachelor": "Miejsca licencjat",
+        "slotsMaster": "Miejsca magister",
+        "slotsAny": "Miejsca ogólne",
+        "requiredLanguages": "Wymagane języki"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Panel etapu na żywo",
+      "registered": "Zarejestrowanych",
+      "openSlots": "Wolnych slotów",
+      "totalSlots": "Łącznie slotów",
+      "recentRegistrations": "Ostatnie rejestracje",
+      "noRegistrations": "Brak rejestracji"
+    },
+    "results": {
+      "title": "Wyniki przydziałów",
+      "approve": "Zatwierdź wszystkie",
+      "approveConfirm": "Zatwierdzić wyniki przydziałów? E-maile zostaną wysłane do wszystkich studentów.",
+      "approved": "Zatwierdzono",
+      "unassigned": "Nieprzydzielony",
+      "score": "Wynik",
+      "destination": "Destynacja",
+      "student": "Student"
+    },
+    "audit": {
+      "title": "Dziennik audytu",
+      "actor": "Aktor",
+      "action": "Akcja",
+      "resource": "Zasób",
+      "timestamp": "Czas",
+      "details": "Szczegóły",
+      "exportCsv": "Eksportuj CSV",
+      "filters": {
+        "all": "Wszystkie",
+        "recruitment": "Rekrutacja",
+        "actorType": "Typ aktora",
+        "actionType": "Akcja",
+        "dateFrom": "Od",
+        "dateTo": "Do"
+      }
+    }
+  },
+  "registration": {
+    "title": "Rejestracja studenta",
+    "slotNumber": "Slot #{number}",
+    "recruitment": "Rekrutacja",
+    "alreadyCompleted": "Twoja rejestracja jest zakończona",
+    "alreadyCompletedDesc": "Rejestracja została zakończona. Możesz aktualizować informacje do końca etapu wstępnego.",
+    "initialStageClosed": "Rejestracja jest zamknięta",
+    "initialStageClosedDesc": "Etap wstępny dobiegł końca. Nie można już aktualizować danych.",
+    "steps": {
+      "step1": "Kontakt i zgody",
+      "step2": "Weryfikacja",
+      "step3": "Dane osobowe",
+      "step4": "Poziom studiów",
+      "step5": "Języki",
+      "step6": "Destynacje",
+      "step7": "Podsumowanie"
+    },
+    "step1": {
+      "title": "Dane kontaktowe i zgody",
+      "emailLabel": "Adres e-mail",
+      "emailPlaceholder": "twoj.email@uczelnia.edu.pl",
+      "emailConsentLabel": "Wyrażam zgodę na otrzymywanie e-maili dotyczących tej rekrutacji",
+      "privacyLabel": "Zapoznałem/am się i akceptuję Politykę prywatności",
+      "privacyLink": "Politykę prywatności",
+      "sendCode": "Wyślij kod weryfikacyjny"
+    },
+    "step2": {
+      "title": "Weryfikacja e-maila",
+      "desc": "Wysłaliśmy 6-znakowy kod na adres {email}",
+      "codeLabel": "Kod weryfikacyjny",
+      "codePlaceholder": "Wpisz 6-znakowy kod",
+      "verify": "Zweryfikuj e-mail",
+      "resend": "Wyślij kod ponownie",
+      "invalidCode": "Nieprawidłowy lub wygasły kod"
+    },
+    "step3": {
+      "title": "Dane osobowe",
+      "nameLabel": "Imię i nazwisko",
+      "namePlaceholder": "Twoje imię i nazwisko",
+      "enrollmentLabel": "Numer albumu",
+      "enrollmentPlaceholder": "6-cyfrowy numer (np. 123456)",
+      "enrollmentHelp": "6-cyfrowy numer, nie może zaczynać się od 0"
+    },
+    "step4": {
+      "title": "Poziom studiów",
+      "bachelor": "Studia licencjackie",
+      "master": "Studia magisterskie"
+    },
+    "step5": {
+      "title": "Języki",
+      "desc": "Zaznacz wszystkie języki, którymi posługujesz się na poziomie komunikatywnym"
+    },
+    "step6": {
+      "title": "Preferencje destynacji",
+      "desc": "Uszereguj preferowane destynacje (od najbardziej preferowanej). Możesz wybrać maksymalnie {max} destynacji.",
+      "noDestinations": "Brak dostępnych destynacji dla Twojego profilu językowego i poziomu studiów.",
+      "dragToReorder": "Przeciągnij, aby zmienić kolejność",
+      "addDestination": "Dodaj destynację",
+      "removeDestination": "Usuń"
+    },
+    "step7": {
+      "title": "Podsumowanie",
+      "desc": "Sprawdź uważnie wszystkie swoje dane.",
+      "confirmLabel": "Sprawdziłem/am wszystkie powyższe informacje i potwierdzam ich poprawność",
+      "complete": "Zakończ rejestrację",
+      "personal": "Dane osobowe",
+      "contact": "Kontakt",
+      "level": "Poziom studiów",
+      "languages": "Języki",
+      "preferences": "Preferencje destynacji",
+      "consent": "Zgody"
+    },
+    "completed": {
+      "title": "Rejestracja zakończona!",
+      "desc": "Rejestracja została pomyślnie przesłana. Wkrótce otrzymasz e-mail potwierdzający.",
+      "goBack": "Wróć do początku"
+    },
+    "errors": {
+      "slotNotFound": "Ten link rejestracyjny jest nieprawidłowy",
+      "slotTaken": "Ten slot rejestracyjny nie jest już dostępny",
+      "destinationFull": "Jedna z wybranych destynacji nie jest już dostępna. Zaktualizuj preferencje.",
+      "stageClosed": "Okres rejestracji dobiegł końca",
+      "privacyRequired": "Musisz zaakceptować politykę prywatności",
+      "emailConsentRequired": "Musisz wyrazić zgodę na komunikację e-mailową",
+      "invalidEnrollmentId": "Numer albumu musi być 6-cyfrową liczbą, która nie zaczyna się od 0"
+    }
+  },
+  "teacher": {
+    "title": "Panel nauczyciela",
+    "slotInfo": "Informacje o slocie",
+    "studentInfo": "Dane studenta",
+    "scores": "Oceny akademickie",
+    "noStudent": "Żaden student nie zarejestrował się jeszcze na ten slot",
+    "averageResult": "Średnia ocen (0,0 – 6,0)",
+    "additionalActivities": "Liczba dodatkowych aktywności (0 – 4)",
+    "recommendationLetters": "Liczba listów polecających (0 – 10)",
+    "saveChanges": "Zapisz zmiany",
+    "savedSuccessfully": "Zmiany zapisane pomyślnie",
+    "invalidSignature": "Ten link jest nieprawidłowy lub został zmodyfikowany"
+  },
+  "supplementary": {
+    "title": "Etap uzupełniający",
+    "currentAssignment": "Twój obecny przydział",
+    "unassigned": "Nie zostałeś przydzielony do żadnej destynacji",
+    "cancelAssignment": "Anuluj mój przydział",
+    "cancelConfirm": "Czy na pewno chcesz anulować przydział? Twoje miejsce zostanie zwolnione i będziesz musiał ubiegać się o nową destynację.",
+    "cancelled": "Twój przydział został anulowany",
+    "updatePreferences": "Zaktualizuj preferencje destynacji",
+    "savePreferences": "Zapisz preferencje",
+    "preferencesUpdated": "Twoje preferencje zostały zaktualizowane",
+    "expired": "Ten link wygasł",
+    "stageNotActive": "Etap uzupełniający nie jest aktualnie aktywny"
+  }
+}

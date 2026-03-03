@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Lädt...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "submit": "Absenden",
+    "confirm": "Bestätigen",
+    "yes": "Ja",
+    "no": "Nein",
+    "close": "Schließen",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "required": "Pflichtfeld",
+    "optional": "Optional",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "export": "Exportieren",
+    "download": "Herunterladen",
+    "noData": "Keine Daten vorhanden",
+    "actions": "Aktionen",
+    "status": "Status",
+    "date": "Datum",
+    "name": "Name",
+    "email": "E-Mail",
+    "description": "Beschreibung"
+  },
+  "languages": {
+    "English": "Englisch",
+    "Spanish": "Spanisch",
+    "German": "Deutsch",
+    "French": "Französisch",
+    "Polish": "Polnisch",
+    "Portuguese": "Portugiesisch"
+  },
+  "studentLevel": {
+    "bachelor": "Bachelor",
+    "master": "Master"
+  },
+  "stageType": {
+    "initial": "Anfangsphase",
+    "admin": "Verwaltungsphase",
+    "supplementary": "Ergänzungsphase"
+  },
+  "stageStatus": {
+    "pending": "Ausstehend",
+    "active": "Aktiv",
+    "completed": "Abgeschlossen"
+  },
+  "slotStatus": {
+    "open": "Offen",
+    "registered": "Registriert"
+  },
+  "admin": {
+    "login": {
+      "title": "Administrator-Anmeldung",
+      "subtitle": "Geben Sie Ihre E-Mail-Adresse ein, um einen Einmalcode zu erhalten",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "admin@universitaet.de",
+      "sendCode": "Code senden",
+      "codeSent": "Code gesendet! Überprüfen Sie Ihre E-Mails.",
+      "codeLabel": "Einmalcode",
+      "codePlaceholder": "6-stelligen Code eingeben",
+      "verify": "Verifizieren & Anmelden",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+      "notAdmin": "Diese E-Mail-Adresse ist nicht als Administrator registriert",
+      "invalidCode": "Ungültiger oder abgelaufener Code",
+      "logout": "Abmelden"
+    },
+    "dashboard": {
+      "title": "Rekrutierungs-Dashboard",
+      "createRecruitment": "Rekrutierung erstellen",
+      "noRecruitments": "Keine Rekrutierungen vorhanden. Erstellen Sie eine, um zu beginnen."
+    },
+    "recruitment": {
+      "title": "Rekrutierungsdetails",
+      "tabs": {
+        "overview": "Übersicht",
+        "stages": "Phasen",
+        "slots": "Slots",
+        "destinations": "Zielorte"
+      },
+      "fields": {
+        "name": "Name",
+        "description": "Beschreibung",
+        "startDate": "Startdatum",
+        "endDate": "Enddatum",
+        "maxChoices": "Max. Zielortauswahl"
+      },
+      "stages": {
+        "title": "Phasen",
+        "addStage": "Phase hinzufügen",
+        "noStages": "Keine Phasen vorhanden",
+        "completeStage": "Phase abschließen",
+        "startSupplementary": "Ergänzungsphase starten",
+        "viewResults": "Ergebnisse anzeigen",
+        "liveDashboard": "Live-Dashboard"
+      },
+      "slots": {
+        "title": "Slots",
+        "addSlots": "Slots hinzufügen",
+        "count": "Anzahl der hinzuzufügenden Slots",
+        "downloadPdf": "PDF herunterladen",
+        "noSlots": "Keine Slots vorhanden",
+        "slotNumber": "Slot #{number}",
+        "registrationLink": "Registrierungslink",
+        "teacherLink": "Lehrerverwaltungslink"
+      },
+      "destinations": {
+        "title": "Zielorte",
+        "addDestination": "Zielort hinzufügen",
+        "noDestinations": "Keine Zielorte vorhanden",
+        "slotsBachelor": "Bachelor-Plätze",
+        "slotsMaster": "Master-Plätze",
+        "slotsAny": "Offene Plätze",
+        "requiredLanguages": "Erforderliche Sprachen"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Live-Phasen-Dashboard",
+      "registered": "Registriert",
+      "openSlots": "Offene Slots",
+      "totalSlots": "Gesamt Slots",
+      "recentRegistrations": "Neueste Registrierungen",
+      "noRegistrations": "Noch keine Registrierungen"
+    },
+    "results": {
+      "title": "Zuweisungsergebnisse",
+      "approve": "Alle genehmigen",
+      "approveConfirm": "Diese Zuweisungsergebnisse genehmigen? E-Mails werden an alle Studenten gesendet.",
+      "approved": "Genehmigt",
+      "unassigned": "Nicht zugewiesen",
+      "score": "Punkte",
+      "destination": "Zielort",
+      "student": "Student"
+    },
+    "audit": {
+      "title": "Prüfprotokoll",
+      "actor": "Akteur",
+      "action": "Aktion",
+      "resource": "Ressource",
+      "timestamp": "Zeitstempel",
+      "details": "Details",
+      "exportCsv": "CSV exportieren",
+      "filters": {
+        "all": "Alle",
+        "recruitment": "Rekrutierung",
+        "actorType": "Akteurtyp",
+        "actionType": "Aktion",
+        "dateFrom": "Von",
+        "dateTo": "Bis"
+      }
+    }
+  },
+  "registration": {
+    "title": "Studentenregistrierung",
+    "slotNumber": "Slot #{number}",
+    "recruitment": "Rekrutierung",
+    "alreadyCompleted": "Ihre Registrierung ist abgeschlossen",
+    "alreadyCompletedDesc": "Sie haben Ihre Registrierung bereits abgeschlossen. Sie können Ihre Daten bis zum Ende der Anfangsphase aktualisieren.",
+    "initialStageClosed": "Registrierung ist geschlossen",
+    "initialStageClosedDesc": "Die Anfangsphase ist beendet. Sie können Ihre Daten nicht mehr aktualisieren.",
+    "steps": {
+      "step1": "Kontakt & Einwilligung",
+      "step2": "Verifizierung",
+      "step3": "Persönliche Daten",
+      "step4": "Studienstufe",
+      "step5": "Sprachen",
+      "step6": "Zielorte",
+      "step7": "Zusammenfassung"
+    },
+    "step1": {
+      "title": "Kontaktdaten & Einwilligung",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "ihre.email@universitaet.de",
+      "emailConsentLabel": "Ich stimme dem Erhalt von E-Mails zu dieser Rekrutierung zu",
+      "privacyLabel": "Ich habe die Datenschutzrichtlinie gelesen und stimme zu",
+      "privacyLink": "Datenschutzrichtlinie",
+      "sendCode": "Bestätigungscode senden"
+    },
+    "step2": {
+      "title": "E-Mail-Verifizierung",
+      "desc": "Wir haben einen 6-stelligen Code an {email} gesendet",
+      "codeLabel": "Bestätigungscode",
+      "codePlaceholder": "6-stelligen Code eingeben",
+      "verify": "E-Mail verifizieren",
+      "resend": "Code erneut senden",
+      "invalidCode": "Ungültiger oder abgelaufener Code"
+    },
+    "step3": {
+      "title": "Persönliche Daten",
+      "nameLabel": "Vollständiger Name",
+      "namePlaceholder": "Ihr vollständiger Name",
+      "enrollmentLabel": "Matrikelnummer",
+      "enrollmentPlaceholder": "6-stellige Nummer (z.B. 123456)",
+      "enrollmentHelp": "6-stellige Zahl, darf nicht mit 0 beginnen"
+    },
+    "step4": {
+      "title": "Studienstufe",
+      "bachelor": "Bachelor-Studium",
+      "master": "Master-Studium"
+    },
+    "step5": {
+      "title": "Gesprochene Sprachen",
+      "desc": "Wählen Sie alle Sprachen aus, die Sie kommunikativ sprechen"
+    },
+    "step6": {
+      "title": "Zielortpräferenzen",
+      "desc": "Ordnen Sie Ihre Zielortpräferenzen (bevorzugteste zuerst). Sie können bis zu {max} Zielorte auswählen.",
+      "noDestinations": "Keine Zielorte entsprechen Ihrem Sprachprofil und Ihrer Studienstufe.",
+      "dragToReorder": "Ziehen zum Umsortieren",
+      "addDestination": "Zielort hinzufügen",
+      "removeDestination": "Entfernen"
+    },
+    "step7": {
+      "title": "Zusammenfassung",
+      "desc": "Bitte überprüfen Sie alle Ihre Angaben sorgfältig.",
+      "confirmLabel": "Ich habe alle oben genannten Informationen überprüft und bestätige deren Richtigkeit",
+      "complete": "Registrierung abschließen",
+      "personal": "Persönliche Daten",
+      "contact": "Kontakt",
+      "level": "Studienstufe",
+      "languages": "Sprachen",
+      "preferences": "Zielortpräferenzen",
+      "consent": "Einwilligungen"
+    },
+    "completed": {
+      "title": "Registrierung abgeschlossen!",
+      "desc": "Ihre Registrierung wurde erfolgreich eingereicht. Sie erhalten in Kürze eine Bestätigungs-E-Mail.",
+      "goBack": "Zurück zum Anfang"
+    },
+    "errors": {
+      "slotNotFound": "Dieser Registrierungslink ist ungültig",
+      "slotTaken": "Dieser Registrierungsslot ist nicht mehr verfügbar",
+      "destinationFull": "Einer Ihrer ausgewählten Zielorte ist nicht mehr verfügbar. Bitte aktualisieren Sie Ihre Präferenzen.",
+      "stageClosed": "Der Registrierungszeitraum ist abgelaufen",
+      "privacyRequired": "Sie müssen der Datenschutzrichtlinie zustimmen",
+      "emailConsentRequired": "Sie müssen der E-Mail-Kommunikation zustimmen",
+      "invalidEnrollmentId": "Die Matrikelnummer muss eine 6-stellige Zahl sein, die nicht mit 0 beginnt"
+    }
+  },
+  "teacher": {
+    "title": "Lehrerverwaltung",
+    "slotInfo": "Slot-Informationen",
+    "studentInfo": "Studentendaten",
+    "scores": "Akademische Bewertungen",
+    "noStudent": "Noch kein Student hat sich für diesen Slot registriert",
+    "averageResult": "Durchschnittliche Bewertung (0,0 – 6,0)",
+    "additionalActivities": "Anzahl zusätzlicher Aktivitäten (0 – 4)",
+    "recommendationLetters": "Anzahl der Empfehlungsschreiben (0 – 10)",
+    "saveChanges": "Änderungen speichern",
+    "savedSuccessfully": "Änderungen erfolgreich gespeichert",
+    "invalidSignature": "Dieser Link ist ungültig oder wurde manipuliert"
+  },
+  "supplementary": {
+    "title": "Ergänzungsphase",
+    "currentAssignment": "Ihre aktuelle Zuweisung",
+    "unassigned": "Sie wurden keinem Zielort zugewiesen",
+    "cancelAssignment": "Meine Zuweisung stornieren",
+    "cancelConfirm": "Möchten Sie Ihre Zuweisung wirklich stornieren? Ihr Platz wird freigegeben und Sie müssen sich um einen neuen Zielort bewerben.",
+    "cancelled": "Ihre Zuweisung wurde storniert",
+    "updatePreferences": "Zielortpräferenzen aktualisieren",
+    "savePreferences": "Präferenzen speichern",
+    "preferencesUpdated": "Ihre Präferenzen wurden aktualisiert",
+    "expired": "Dieser Link ist abgelaufen",
+    "stageNotActive": "Die Ergänzungsphase ist derzeit nicht aktiv"
+  }
+}

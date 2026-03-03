@@ -1,0 +1,272 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "create": "Crea",
+    "back": "Indietro",
+    "next": "Avanti",
+    "submit": "Invia",
+    "confirm": "Conferma",
+    "yes": "Sì",
+    "no": "No",
+    "close": "Chiudi",
+    "error": "Errore",
+    "success": "Successo",
+    "required": "Obbligatorio",
+    "optional": "Facoltativo",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "export": "Esporta",
+    "download": "Scarica",
+    "noData": "Nessun dato disponibile",
+    "actions": "Azioni",
+    "status": "Stato",
+    "date": "Data",
+    "name": "Nome",
+    "email": "E-mail",
+    "description": "Descrizione"
+  },
+  "languages": {
+    "English": "Inglese",
+    "Spanish": "Spagnolo",
+    "German": "Tedesco",
+    "French": "Francese",
+    "Polish": "Polacco",
+    "Portuguese": "Portoghese"
+  },
+  "studentLevel": {
+    "bachelor": "Triennale",
+    "master": "Magistrale"
+  },
+  "stageType": {
+    "initial": "Fase iniziale",
+    "admin": "Fase amministrativa",
+    "supplementary": "Fase supplementare"
+  },
+  "stageStatus": {
+    "pending": "In attesa",
+    "active": "Attivo",
+    "completed": "Completato"
+  },
+  "slotStatus": {
+    "open": "Aperto",
+    "registered": "Registrato"
+  },
+  "admin": {
+    "login": {
+      "title": "Accesso amministratore",
+      "subtitle": "Inserisci la tua email per ricevere un codice di accesso unico",
+      "emailLabel": "Indirizzo email",
+      "emailPlaceholder": "admin@universita.it",
+      "sendCode": "Invia codice",
+      "codeSent": "Codice inviato! Controlla la tua email.",
+      "codeLabel": "Codice unico",
+      "codePlaceholder": "Inserisci il codice a 6 caratteri",
+      "verify": "Verifica e Accedi",
+      "invalidEmail": "Inserisci un indirizzo email valido",
+      "notAdmin": "Questa email non è registrata come amministratore",
+      "invalidCode": "Codice non valido o scaduto",
+      "logout": "Esci"
+    },
+    "dashboard": {
+      "title": "Dashboard reclutamento",
+      "createRecruitment": "Crea reclutamento",
+      "noRecruitments": "Nessun reclutamento. Creane uno per iniziare."
+    },
+    "recruitment": {
+      "title": "Dettagli reclutamento",
+      "tabs": {
+        "overview": "Panoramica",
+        "stages": "Fasi",
+        "slots": "Posti",
+        "destinations": "Destinazioni"
+      },
+      "fields": {
+        "name": "Nome",
+        "description": "Descrizione",
+        "startDate": "Data di inizio",
+        "endDate": "Data di fine",
+        "maxChoices": "Max destinazioni scelte"
+      },
+      "stages": {
+        "title": "Fasi",
+        "addStage": "Aggiungi fase",
+        "noStages": "Nessuna fase",
+        "completeStage": "Completa fase",
+        "startSupplementary": "Avvia fase supplementare",
+        "viewResults": "Vedi risultati",
+        "liveDashboard": "Dashboard live"
+      },
+      "slots": {
+        "title": "Posti",
+        "addSlots": "Aggiungi posti",
+        "count": "Numero di posti da aggiungere",
+        "downloadPdf": "Scarica PDF",
+        "noSlots": "Nessun posto",
+        "slotNumber": "Posto #{number}",
+        "registrationLink": "Link di registrazione",
+        "teacherLink": "Link insegnante"
+      },
+      "destinations": {
+        "title": "Destinazioni",
+        "addDestination": "Aggiungi destinazione",
+        "noDestinations": "Nessuna destinazione",
+        "slotsBachelor": "Posti triennale",
+        "slotsMaster": "Posti magistrale",
+        "slotsAny": "Posti aperti",
+        "requiredLanguages": "Lingue richieste"
+      }
+    },
+    "stage": {
+      "liveDashboard": "Dashboard fase live",
+      "registered": "Registrati",
+      "openSlots": "Posti aperti",
+      "totalSlots": "Totale posti",
+      "recentRegistrations": "Registrazioni recenti",
+      "noRegistrations": "Nessuna registrazione ancora"
+    },
+    "results": {
+      "title": "Risultati di assegnazione",
+      "approve": "Approva tutto",
+      "approveConfirm": "Approvare questi risultati di assegnazione? Verranno inviate email a tutti gli studenti.",
+      "approved": "Approvato",
+      "unassigned": "Non assegnato",
+      "score": "Punteggio",
+      "destination": "Destinazione",
+      "student": "Studente"
+    },
+    "audit": {
+      "title": "Registro di audit",
+      "actor": "Attore",
+      "action": "Azione",
+      "resource": "Risorsa",
+      "timestamp": "Timestamp",
+      "details": "Dettagli",
+      "exportCsv": "Esporta CSV",
+      "filters": {
+        "all": "Tutti",
+        "recruitment": "Reclutamento",
+        "actorType": "Tipo attore",
+        "actionType": "Azione",
+        "dateFrom": "Da",
+        "dateTo": "A"
+      }
+    }
+  },
+  "registration": {
+    "title": "Registrazione studente",
+    "slotNumber": "Posto #{number}",
+    "recruitment": "Reclutamento",
+    "alreadyCompleted": "La tua registrazione è completa",
+    "alreadyCompletedDesc": "Hai già completato la registrazione. Puoi aggiornare le tue informazioni fino alla fine della fase iniziale.",
+    "initialStageClosed": "La registrazione è chiusa",
+    "initialStageClosedDesc": "La fase iniziale è terminata. Non puoi più aggiornare le tue informazioni.",
+    "steps": {
+      "step1": "Contatto e consenso",
+      "step2": "Verifica",
+      "step3": "Informazioni personali",
+      "step4": "Livello di studi",
+      "step5": "Lingue",
+      "step6": "Destinazioni",
+      "step7": "Riepilogo"
+    },
+    "step1": {
+      "title": "Dati di contatto e consenso",
+      "emailLabel": "Indirizzo email",
+      "emailPlaceholder": "tua.email@universita.it",
+      "emailConsentLabel": "Acconsento a ricevere email riguardanti questo reclutamento",
+      "privacyLabel": "Ho letto e accetto l'Informativa sulla privacy",
+      "privacyLink": "Informativa sulla privacy",
+      "sendCode": "Invia codice di verifica"
+    },
+    "step2": {
+      "title": "Verifica email",
+      "desc": "Abbiamo inviato un codice a 6 caratteri a {email}",
+      "codeLabel": "Codice di verifica",
+      "codePlaceholder": "Inserisci il codice a 6 caratteri",
+      "verify": "Verifica email",
+      "resend": "Invia codice di nuovo",
+      "invalidCode": "Codice non valido o scaduto"
+    },
+    "step3": {
+      "title": "Informazioni personali",
+      "nameLabel": "Nome completo",
+      "namePlaceholder": "Il tuo nome completo",
+      "enrollmentLabel": "Numero di matricola universitaria",
+      "enrollmentPlaceholder": "Numero a 6 cifre (es: 123456)",
+      "enrollmentHelp": "Numero a 6 cifre, non deve iniziare con 0"
+    },
+    "step4": {
+      "title": "Livello di studi",
+      "bachelor": "Laurea triennale",
+      "master": "Laurea magistrale"
+    },
+    "step5": {
+      "title": "Lingue parlate",
+      "desc": "Seleziona tutte le lingue che parli a livello comunicativo"
+    },
+    "step6": {
+      "title": "Preferenze destinazioni",
+      "desc": "Classifica le tue preferenze di destinazione (la più preferita prima). Puoi selezionare fino a {max} destinazioni.",
+      "noDestinations": "Nessuna destinazione corrisponde al tuo profilo linguistico e livello di studi.",
+      "dragToReorder": "Trascina per riordinare",
+      "addDestination": "Aggiungi destinazione",
+      "removeDestination": "Rimuovi"
+    },
+    "step7": {
+      "title": "Riepilogo",
+      "desc": "Si prega di rivedere attentamente tutte le informazioni.",
+      "confirmLabel": "Ho verificato tutte le informazioni sopra e confermo che sono corrette",
+      "complete": "Completa registrazione",
+      "personal": "Informazioni personali",
+      "contact": "Contatto",
+      "level": "Livello di studi",
+      "languages": "Lingue",
+      "preferences": "Preferenze destinazioni",
+      "consent": "Consensi"
+    },
+    "completed": {
+      "title": "Registrazione completata!",
+      "desc": "La tua registrazione è stata inviata con successo. Riceverai presto un'email di conferma.",
+      "goBack": "Torna all'inizio"
+    },
+    "errors": {
+      "slotNotFound": "Questo link di registrazione non è valido",
+      "slotTaken": "Questo posto di registrazione non è più disponibile",
+      "destinationFull": "Una delle destinazioni selezionate non è più disponibile. Aggiorna le tue preferenze.",
+      "stageClosed": "Il periodo di registrazione è terminato",
+      "privacyRequired": "Devi accettare l'informativa sulla privacy",
+      "emailConsentRequired": "Devi dare il consenso alla comunicazione via email",
+      "invalidEnrollmentId": "Il numero di matricola deve essere un numero a 6 cifre che non inizia con 0"
+    }
+  },
+  "teacher": {
+    "title": "Gestione insegnante",
+    "slotInfo": "Informazioni posto",
+    "studentInfo": "Dati studente",
+    "scores": "Valutazioni accademiche",
+    "noStudent": "Nessuno studente si è ancora registrato per questo posto",
+    "averageResult": "Risultato medio (0,0 – 6,0)",
+    "additionalActivities": "Numero attività aggiuntive (0 – 4)",
+    "recommendationLetters": "Numero lettere di raccomandazione (0 – 10)",
+    "saveChanges": "Salva modifiche",
+    "savedSuccessfully": "Modifiche salvate con successo",
+    "invalidSignature": "Questo link non è valido o è stato manomesso"
+  },
+  "supplementary": {
+    "title": "Fase supplementare",
+    "currentAssignment": "La tua assegnazione attuale",
+    "unassigned": "Non sei stato assegnato a nessuna destinazione",
+    "cancelAssignment": "Annulla la mia assegnazione",
+    "cancelConfirm": "Sei sicuro di voler annullare la tua assegnazione? Il tuo posto verrà liberato e dovrai competere per una nuova destinazione.",
+    "cancelled": "La tua assegnazione è stata annullata",
+    "updatePreferences": "Aggiorna preferenze destinazioni",
+    "savePreferences": "Salva preferenze",
+    "preferencesUpdated": "Le tue preferenze sono state aggiornate",
+    "expired": "Questo link è scaduto",
+    "stageNotActive": "La fase supplementare non è attualmente attiva"
+  }
+}
