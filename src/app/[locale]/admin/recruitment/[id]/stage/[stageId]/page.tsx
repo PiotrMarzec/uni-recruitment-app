@@ -38,12 +38,17 @@ export default function StageDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const mountedRef = useRef(true);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchDashboard();
     connectWebSocket();
 
     return () => {
+      mountedRef.current = false;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
     };
   }, [stageId]);
@@ -69,22 +74,19 @@ export default function StageDashboardPage() {
       try {
         const message = JSON.parse(event.data);
         if (message.type === "registration_update" && message.stageId === stageId) {
-          // Update counts
           setData((prev) => {
             if (!prev) return prev;
-            const newData = { ...prev };
-            newData.stats = {
-              ...prev.stats,
-              openSlots: message.openSlotsCount,
-              registeredSlots: prev.stats.totalSlots - message.openSlotsCount,
+            return {
+              ...prev,
+              stats: {
+                ...prev.stats,
+                openSlots: message.openSlotsCount,
+                registeredSlots: prev.stats.totalSlots - message.openSlotsCount,
+              },
+              recentRegistrations: message.latestRegistration
+                ? [message.latestRegistration, ...prev.recentRegistrations.slice(0, 49)]
+                : prev.recentRegistrations,
             };
-            if (message.latestRegistration) {
-              newData.recentRegistrations = [
-                message.latestRegistration,
-                ...prev.recentRegistrations.slice(0, 49),
-              ];
-            }
-            return newData;
           });
         }
       } catch {
@@ -94,8 +96,9 @@ export default function StageDashboardPage() {
 
     ws.onclose = () => {
       setConnected(false);
-      // Reconnect after 3 seconds
-      setTimeout(connectWebSocket, 3000);
+      if (mountedRef.current) {
+        reconnectTimerRef.current = setTimeout(connectWebSocket, 3000);
+      }
     };
 
     ws.onerror = () => {
