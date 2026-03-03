@@ -1,4 +1,4 @@
-import { getResend, EMAIL_FROM } from "./client";
+import { sendEmail, EMAIL_FROM } from "./client";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 
 interface EmailResult {
@@ -11,10 +11,8 @@ export async function sendOtpEmail(
   code: string,
   otpId: string
 ): Promise<EmailResult> {
-  const resend = getResend();
-
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: email,
       subject: "Your login code",
@@ -55,10 +53,8 @@ export async function sendRegistrationCompletedEmail(params: {
   destinationPreferences: string[];
   enrollmentId: string;
 }): Promise<EmailResult> {
-  const resend = getResend();
-
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
       subject: `Registration complete — ${params.recruitmentName}`,
@@ -91,7 +87,6 @@ export async function sendInitialStageClosedEmail(params: {
   recruitmentName: string;
   adminStageEndDate: Date | null;
 }): Promise<EmailResult> {
-  const resend = getResend();
   const endDateStr = params.adminStageEndDate
     ? params.adminStageEndDate.toLocaleDateString("en-GB", {
         day: "2-digit",
@@ -101,7 +96,7 @@ export async function sendInitialStageClosedEmail(params: {
     : "to be announced";
 
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
       subject: `Registration period closed — ${params.recruitmentName}`,
@@ -129,10 +124,8 @@ export async function sendAssignmentApprovedEmail(params: {
   destinationName: string;
   destinationDescription: string;
 }): Promise<EmailResult> {
-  const resend = getResend();
-
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
       subject: `Destination assignment — ${params.recruitmentName}`,
@@ -161,10 +154,8 @@ export async function sendAssignmentUnassignedEmail(params: {
   fullName: string;
   recruitmentName: string;
 }): Promise<EmailResult> {
-  const resend = getResend();
-
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
       subject: `Assignment result — ${params.recruitmentName}`,
@@ -194,7 +185,6 @@ export async function sendSupplementaryStageEmail(params: {
   preferencesLink: string;
   stageEndDate: Date;
 }): Promise<EmailResult> {
-  const resend = getResend();
   const endDateStr = params.stageEndDate.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "long",
@@ -204,7 +194,7 @@ export async function sendSupplementaryStageEmail(params: {
   });
 
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
       subject: `Supplementary stage open — ${params.recruitmentName}`,

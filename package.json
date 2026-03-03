@@ -4,11 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "tsx src/server.ts",
+    "services:up": "docker compose -f docker-compose.dev.yml up -d",
+    "services:down": "docker compose -f docker-compose.dev.yml down",
     "build": "next build",
     "start": "NODE_ENV=production tsx src/server.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
     "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -37,6 +39,7 @@
     "next": "^15.1.0",
     "next-intl": "^3.26.3",
     "node-cron": "^3.0.3",
+    "nodemailer": "^8.0.1",
     "pg": "^8.13.1",
     "qrcode": "^1.5.4",
     "react": "^19.0.0",
@@ -50,6 +53,7 @@
   "devDependencies": {
     "@types/node": "^22.10.5",
     "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^7.0.11",
     "@types/pg": "^8.11.10",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.0.2",
