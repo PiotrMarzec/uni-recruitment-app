@@ -12,6 +12,7 @@ interface SendEmailOptions {
 
 export async function sendEmail(opts: SendEmailOptions): Promise<void> {
   if (process.env.SMTP_HOST) {
+    console.log(`[email] sending via SMTP (${process.env.SMTP_HOST}:${process.env.SMTP_PORT ?? 1025}) to ${opts.to}`);
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: Number(process.env.SMTP_PORT ?? 1025),
@@ -20,7 +21,9 @@ export async function sendEmail(opts: SendEmailOptions): Promise<void> {
     });
     await transporter.sendMail(opts);
   } else {
+    console.log(`[email] sending via Resend to ${opts.to}`);
     const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send(opts);
+    const { error } = await resend.emails.send(opts);
+    if (error) throw new Error(`Resend error: ${error.message}`);
   }
 }

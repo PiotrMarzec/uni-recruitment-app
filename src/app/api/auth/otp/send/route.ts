@@ -32,8 +32,7 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (user.length === 0) {
-      // Return same response to prevent email enumeration
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ error: "No admin account found for this email" }, { status: 404 });
     }
   }
 

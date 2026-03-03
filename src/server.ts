@@ -5,16 +5,6 @@ import { WebSocketServer } from "ws";
 import { setupWebSocketServer } from "./lib/websocket/server";
 import { startJobs } from "./lib/jobs";
 
-// Load env vars from .env.local in development
-if (process.env.NODE_ENV !== "production") {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require("dotenv").config({ path: ".env.local" });
-  } catch {
-    // dotenv not required — env vars may be set externally
-  }
-}
-
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
