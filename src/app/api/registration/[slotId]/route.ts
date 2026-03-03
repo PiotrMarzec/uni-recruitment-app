@@ -8,7 +8,8 @@ import {
   users,
   destinations,
 } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
+import { eq, and, count } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -57,6 +58,34 @@ export async function GET(
     .limit(1);
 
   const isInitialActive = initialStage?.status === "active";
+
+  // Mark slot as registration_started when the link is opened (only from "open")
+  if (isInitialActive && slot.status === "open") {
+    await db
+      .update(slots)
+      .set({ status: "registration_started" })
+      .where(and(eq(slots.id, slotId), eq(slots.status, "open")));
+
+    slot.status = "registration_started";
+
+    // Broadcast updated counts to admin dashboard
+    const counts = await db
+      .select({ status: slots.status, n: count() })
+      .from(slots)
+      .where(eq(slots.recruitmentId, slot.recruitmentId))
+      .groupBy(slots.status);
+
+    const byStatus = Object.fromEntries(counts.map((r) => [r.status, Number(r.n)]));
+
+    if (initialStage) {
+      broadcastSlotStatusUpdate({
+        type: "slot_status_update",
+        stageId: initialStage.id,
+        openSlotsCount: byStatus["open"] ?? 0,
+        startedSlotsCount: byStatus["registration_started"] ?? 0,
+      });
+    }
+  }
 
   // Get existing registration if any
   let registration = null;

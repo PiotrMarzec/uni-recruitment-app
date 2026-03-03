@@ -2,7 +2,7 @@ import { pgTable, uuid, integer, pgEnum, timestamp } from "drizzle-orm/pg-core";
 import { recruitments } from "./recruitments";
 import { users } from "./users";
 
-export const slotStatusEnum = pgEnum("slot_status", ["open", "registered"]);
+export const slotStatusEnum = pgEnum("slot_status", ["open", "registration_started", "registered"]);
 
 export const slots = pgTable("slots", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -8,6 +8,13 @@
       "when": 1772562391633,
       "tag": "0000_watery_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1772576362635,
+      "tag": "0001_ancient_pride",
+      "breakpoints": true
     }
   ]
 }

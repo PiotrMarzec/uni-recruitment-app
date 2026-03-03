@@ -123,6 +123,7 @@
     "stage": {
       "liveDashboard": "Panel etapu na żywo",
       "registered": "Zarejestrowanych",
+      "inProgress": "W trakcie",
       "openSlots": "Wolnych slotów",
       "totalSlots": "Łącznie slotów",
       "recentRegistrations": "Ostatnie rejestracje",

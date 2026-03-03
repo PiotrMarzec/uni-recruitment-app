@@ -1,0 +1,1 @@
+ALTER TYPE "public"."slot_status" ADD VALUE 'registration_started' BEFORE 'registered';

@@ -19,6 +19,7 @@ interface DashboardData {
   stats: {
     totalSlots: number;
     openSlots: number;
+    startedSlots: number;
     registeredSlots: number;
   };
   recentRegistrations: Array<{
@@ -73,6 +74,21 @@ export default function StageDashboardPage() {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
+
+        if (message.type === "slot_status_update" && message.stageId === stageId) {
+          setData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              stats: {
+                ...prev.stats,
+                openSlots: message.openSlotsCount,
+                startedSlots: message.startedSlotsCount,
+              },
+            };
+          });
+        }
+
         if (message.type === "registration_update" && message.stageId === stageId) {
           setData((prev) => {
             if (!prev) return prev;
@@ -81,7 +97,8 @@ export default function StageDashboardPage() {
               stats: {
                 ...prev.stats,
                 openSlots: message.openSlotsCount,
-                registeredSlots: prev.stats.totalSlots - message.openSlotsCount,
+                startedSlots: prev.stats.startedSlots - 1,
+                registeredSlots: prev.stats.registeredSlots + 1,
               },
               recentRegistrations: message.latestRegistration
                 ? [message.latestRegistration, ...prev.recentRegistrations.slice(0, 49)]
@@ -134,11 +151,17 @@ export default function StageDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6 text-center">
             <div className="text-4xl font-bold">{data.stats.registeredSlots}</div>
             <p className="text-sm text-muted-foreground mt-1">{t("registered")}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <div className="text-4xl font-bold text-yellow-500">{data.stats.startedSlots}</div>
+            <p className="text-sm text-muted-foreground mt-1">{t("inProgress")}</p>
           </CardContent>
         </Card>
         <Card>

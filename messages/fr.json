@@ -123,6 +123,7 @@
     "stage": {
       "liveDashboard": "Tableau de bord d'étape en direct",
       "registered": "Inscrits",
+      "inProgress": "In Progress",
       "openSlots": "Créneaux ouverts",
       "totalSlots": "Total créneaux",
       "recentRegistrations": "Inscriptions récentes",

@@ -37,7 +37,8 @@ export async function GET(
 
   const totalSlots = allSlots.length;
   const openSlots = allSlots.filter((s) => s.status === "open").length;
-  const registeredSlots = totalSlots - openSlots;
+  const startedSlots = allSlots.filter((s) => s.status === "registration_started").length;
+  const registeredSlots = allSlots.filter((s) => s.status === "registered").length;
 
   // Get recent registrations (completed, newest first)
   const recentRegistrations = await db
@@ -64,6 +65,7 @@ export async function GET(
     stats: {
       totalSlots,
       openSlots,
+      startedSlots,
       registeredSlots,
     },
     recentRegistrations,

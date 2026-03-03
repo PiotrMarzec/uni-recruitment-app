@@ -123,6 +123,7 @@
     "stage": {
       "liveDashboard": "Live Stage Dashboard",
       "registered": "Registered",
+      "inProgress": "In Progress",
       "openSlots": "Open Slots",
       "totalSlots": "Total Slots",
       "recentRegistrations": "Recent Registrations",

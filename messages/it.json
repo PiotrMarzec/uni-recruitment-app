@@ -123,6 +123,7 @@
     "stage": {
       "liveDashboard": "Dashboard fase live",
       "registered": "Registrati",
+      "inProgress": "In Progress",
       "openSlots": "Posti aperti",
       "totalSlots": "Totale posti",
       "recentRegistrations": "Registrazioni recenti",
