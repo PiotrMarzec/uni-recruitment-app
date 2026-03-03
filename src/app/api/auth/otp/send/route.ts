@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { code, id: otpId } = await issueOtp(email);
-  await sendOtpEmail(email, code);
+  await sendOtpEmail(email, code, otpId);
 
   await logAuditEvent({
     actorType: "system",

@@ -8,7 +8,8 @@ interface EmailResult {
 
 export async function sendOtpEmail(
   email: string,
-  code: string
+  code: string,
+  otpId: string
 ): Promise<EmailResult> {
   const resend = getResend();
 
@@ -34,7 +35,7 @@ export async function sendOtpEmail(
       actorLabel: "System",
       action: ACTIONS.EMAIL_SENT,
       resourceType: "otp",
-      resourceId: email,
+      resourceId: otpId,
       details: { template: "otp", recipient: email },
     });
 

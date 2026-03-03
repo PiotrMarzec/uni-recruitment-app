@@ -116,8 +116,8 @@ export async function POST(
     }
 
     // Send OTP
-    const { code } = await issueOtp(data.email);
-    await sendOtpEmail(data.email, code);
+    const { code, id: otpId } = await issueOtp(data.email);
+    await sendOtpEmail(data.email, code, otpId);
 
     // Store email/consent in session temporarily
     const res = NextResponse.json({ success: true });
