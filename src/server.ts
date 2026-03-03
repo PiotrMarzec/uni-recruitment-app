@@ -26,7 +26,9 @@ app.prepare().then(() => {
   const wss = new WebSocketServer({ noServer: true });
   setupWebSocketServer(wss);
 
-  // Handle WebSocket upgrade for /api/ws endpoint
+  const nextUpgrade = app.getUpgradeHandler();
+
+  // Handle WebSocket upgrade for /api/ws endpoint; forward everything else to Next.js (e.g. HMR)
   httpServer.on("upgrade", (request, socket, head) => {
     const { pathname } = new URL(request.url!, `http://${hostname}`);
 
@@ -35,7 +37,7 @@ app.prepare().then(() => {
         wss.emit("connection", ws, request);
       });
     } else {
-      socket.destroy();
+      nextUpgrade(request, socket, head);
     }
   });
 
