@@ -1,5 +1,4 @@
 import { createServer } from "http";
-import { parse } from "url";
 import next from "next";
 import { WebSocketServer } from "ws";
 import { setupWebSocketServer } from "./lib/websocket/server";
@@ -15,8 +14,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
-      const parsedUrl = parse(req.url!, true);
-      await handle(req, res, parsedUrl);
+      await handle(req, res);
     } catch (err) {
       console.error("Error handling request:", req.url, err);
       res.statusCode = 500;
@@ -30,7 +28,7 @@ app.prepare().then(() => {
 
   // Handle WebSocket upgrade for /api/ws endpoint
   httpServer.on("upgrade", (request, socket, head) => {
-    const { pathname } = parse(request.url!);
+    const { pathname } = new URL(request.url!, `http://${hostname}`);
 
     if (pathname === "/api/ws") {
       wss.handleUpgrade(request, socket as import("net").Socket, head, (ws) => {
