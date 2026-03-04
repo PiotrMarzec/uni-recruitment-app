@@ -13,7 +13,7 @@ import {
   sendAssignmentApprovedEmail,
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
-import { eq } from "drizzle-orm";
+import { eq, and, gt } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -34,11 +34,32 @@ export async function POST(
     return NextResponse.json({ error: "Stage not found" }, { status: 404 });
   }
 
-  // Mark all results as approved
+  const now = new Date();
+
+  // Mark all results as approved and end the stage
   await db
     .update(assignmentResults)
     .set({ approved: true })
     .where(eq(assignmentResults.stageId, id));
+
+  await db
+    .update(stages)
+    .set({ endDate: now, status: "completed", updatedAt: now })
+    .where(eq(stages.id, id));
+
+  // Find the next pending stage by order
+  const [nextStage] = await db
+    .select({ id: stages.id, name: stages.name })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.status, "pending"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
 
   // Fetch all results with student and destination info for emails
   const results = await db
@@ -86,9 +107,13 @@ export async function POST(
     resourceType: "stage",
     resourceId: id,
     recruitmentId: stage.recruitmentId,
-    details: { emailsSent, totalResults: results.length },
+    details: { emailsSent, totalResults: results.length, nextStageId: nextStage?.id ?? null },
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({ success: true, emailsSent });
+  return NextResponse.json({
+    success: true,
+    emailsSent,
+    nextStage: nextStage ?? null,
+  });
 }

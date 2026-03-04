@@ -7,6 +7,13 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface AssignmentResult {
   id: string;
@@ -29,6 +36,8 @@ export default function AssignmentResultsPage() {
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [nextStage, setNextStage] = useState<{ id: string; name: string } | null>(null);
+  const [activating, setActivating] = useState(false);
 
   useEffect(() => {
     fetchResults();
@@ -57,10 +66,26 @@ export default function AssignmentResultsPage() {
         const data = await res.json();
         alert(`Approved! ${data.emailsSent} emails sent.`);
         setApproved(true);
+        if (data.nextStage) {
+          setNextStage(data.nextStage);
+        }
         await fetchResults();
       }
     } finally {
       setApproving(false);
+    }
+  }
+
+  async function activateNextStage() {
+    if (!nextStage) return;
+    setActivating(true);
+    try {
+      const res = await fetch(`/api/admin/stages/${nextStage.id}/activate`, { method: "POST" });
+      if (res.ok) {
+        setNextStage(null);
+      }
+    } finally {
+      setActivating(false);
     }
   }
 
@@ -133,6 +158,25 @@ export default function AssignmentResultsPage() {
           </table>
         </div>
       )}
+
+      <Dialog open={!!nextStage} onOpenChange={(open) => { if (!open) setNextStage(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Activate Next Stage?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            The next stage <strong>{nextStage?.name}</strong> is pending. Do you want to activate it now? Its start date will be set to the current time.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNextStage(null)}>
+              Not Now
+            </Button>
+            <Button onClick={activateNextStage} disabled={activating}>
+              {activating ? "Activating..." : "Activate Next Stage"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
