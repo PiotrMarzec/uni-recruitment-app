@@ -41,7 +41,7 @@ export async function GET(
   const startedSlots = allSlots.filter((s) => s.status === "registration_started").length;
   const registeredSlots = allSlots.filter((s) => s.status === "registered").length;
 
-  // Get recent registrations (completed, newest first)
+  // Get recent registrations (all active, newest update first)
   const recentRegistrationsRaw = await db
     .select({
       slotId: slots.id,
@@ -49,17 +49,14 @@ export async function GET(
       studentName: users.fullName,
       studentEmail: users.email,
       completedAt: registrations.registrationCompletedAt,
+      updatedAt: registrations.updatedAt,
+      registrationCompleted: registrations.registrationCompleted,
     })
     .from(registrations)
     .innerJoin(users, eq(registrations.studentId, users.id))
     .innerJoin(slots, eq(registrations.slotId, slots.id))
-    .where(
-      and(
-        eq(slots.recruitmentId, stage.recruitmentId),
-        eq(registrations.registrationCompleted, true)
-      )
-    )
-    .orderBy(desc(registrations.registrationCompletedAt))
+    .where(eq(slots.recruitmentId, stage.recruitmentId))
+    .orderBy(desc(registrations.updatedAt))
     .limit(50);
 
   const recentRegistrations = recentRegistrationsRaw.map((r) => ({

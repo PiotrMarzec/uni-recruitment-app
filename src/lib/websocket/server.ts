@@ -26,7 +26,6 @@ export function setupWebSocketServer(wss: WebSocketServer): void {
             subscriptions.set(stageId, new Set());
           }
           subscriptions.get(stageId)!.add(ws);
-
           // Send confirmation
           ws.send(JSON.stringify({ type: "subscribed", stageId: subscribedStageId }));
         }

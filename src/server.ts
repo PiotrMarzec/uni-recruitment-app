@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import next from "next";
 import { WebSocketServer } from "ws";
-import { setupWebSocketServer } from "./lib/websocket/server";
+import { setupWebSocketServer, broadcastToStage } from "./lib/websocket/server";
 import { startJobs } from "./lib/jobs";
 
 const dev = process.env.NODE_ENV !== "production";
@@ -25,6 +25,10 @@ app.prepare().then(() => {
   // Set up WebSocket server
   const wss = new WebSocketServer({ noServer: true });
   setupWebSocketServer(wss);
+
+  // Register broadcast function in global so Next.js API routes (which run in a
+  // separate module context) can call it and reach the actual connected clients.
+  (global as any).__broadcastToStage = broadcastToStage;
 
   const nextUpgrade = app.getUpgradeHandler();
 

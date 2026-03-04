@@ -9,6 +9,8 @@ import {
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { issueOtp, verifyOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email/send";
+import { broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
+import { getTeacherPath } from "@/lib/auth/hmac";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
@@ -211,6 +213,21 @@ export async function POST(
       ipAddress: getIpAddress(req),
     });
 
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: initialStage.id,
+      registration: {
+        slotId,
+        slotNumber: slot.number,
+        studentName: user.fullName,
+        studentEmail: user.email,
+        completedAt: null,
+        updatedAt: new Date().toISOString(),
+        registrationCompleted: false,
+        teacherManagementLink: getTeacherPath(slotId),
+      },
+    });
+
     return res;
   }
 
@@ -277,6 +294,28 @@ export async function POST(
     resourceId: existingReg.id,
     details: { step: data.step },
     ipAddress: getIpAddress(req),
+  });
+
+  const [updatedUser] = await db
+    .select({ fullName: users.fullName, email: users.email })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  const now = new Date().toISOString();
+  broadcastRegistrationStepUpdate({
+    type: "registration_step_update",
+    stageId: initialStage.id,
+    registration: {
+      slotId,
+      slotNumber: slot.number,
+      studentName: updatedUser?.fullName ?? "",
+      studentEmail: updatedUser?.email ?? "",
+      completedAt: existingReg.registrationCompletedAt?.toISOString() ?? null,
+      updatedAt: now,
+      registrationCompleted: existingReg.registrationCompleted,
+      teacherManagementLink: getTeacherPath(slotId),
+    },
   });
 
   const res = NextResponse.json({ success: true });

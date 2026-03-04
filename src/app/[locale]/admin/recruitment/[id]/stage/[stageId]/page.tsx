@@ -23,10 +23,13 @@ interface DashboardData {
     registeredSlots: number;
   };
   recentRegistrations: Array<{
+    slotId: string;
     slotNumber: number;
     studentName: string;
     studentEmail: string;
-    completedAt: string;
+    completedAt: string | null;
+    updatedAt: string;
+    registrationCompleted: boolean;
     teacherManagementLink: string;
   }>;
 }
@@ -101,10 +104,22 @@ export default function StageDashboardPage() {
                 startedSlots: prev.stats.startedSlots - 1,
                 registeredSlots: prev.stats.registeredSlots + 1,
               },
-              recentRegistrations: message.latestRegistration
-                ? [message.latestRegistration, ...prev.recentRegistrations.slice(0, 49)]
-                : prev.recentRegistrations,
             };
+          });
+        }
+
+        if (message.type === "registration_step_update" && message.stageId === stageId) {
+          setData((prev) => {
+            if (!prev) return prev;
+            const incoming = message.registration;
+            const idx = prev.recentRegistrations.findIndex((r) => r.slotId === incoming.slotId);
+            const updated = idx >= 0
+              ? prev.recentRegistrations.map((r, i) => (i === idx ? incoming : r))
+              : [incoming, ...prev.recentRegistrations];
+            const sorted = [...updated].sort(
+              (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            );
+            return { ...prev, recentRegistrations: sorted.slice(0, 50) };
           });
         }
       } catch {
@@ -195,29 +210,37 @@ export default function StageDashboardPage() {
             <p className="text-muted-foreground text-sm">{t("noRegistrations")}</p>
           ) : (
             <div className="space-y-2">
-              {data.recentRegistrations.map((reg, i) => (
+              {data.recentRegistrations.map((reg) => (
                 <div
-                  key={i}
+                  key={reg.slotId}
                   className="flex items-center justify-between py-2 border-b last:border-0"
                 >
-                  <div>
-                    <span className="font-medium">{reg.studentName}</span>
-                    <span className="text-muted-foreground text-sm ml-2">
-                      — Slot #{reg.slotNumber}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${reg.registrationCompleted ? "bg-green-500" : "bg-yellow-400"}`} />
+                    <div>
+                      <span className="font-medium">{reg.studentName}</span>
+                      <span className="text-muted-foreground text-sm ml-2">
+                        — Slot #{reg.slotNumber}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground">
-                      {reg.completedAt ? formatDate(reg.completedAt) : ""}
-                    </span>
-                    <a
-                      href={reg.teacherManagementLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline whitespace-nowrap"
-                    >
-                      Manage
-                    </a>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <div className="text-right space-y-0.5">
+                      <div>Updated: {formatDate(reg.updatedAt)}</div>
+                      {reg.completedAt && (
+                        <div>Completed: {formatDate(reg.completedAt)}</div>
+                      )}
+                    </div>
+                    {reg.registrationCompleted && (
+                      <a
+                        href={reg.teacherManagementLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline whitespace-nowrap"
+                      >
+                        Manage
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}

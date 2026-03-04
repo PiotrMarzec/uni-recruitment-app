@@ -392,7 +392,7 @@ export default function RegisterPage() {
             {currentStep === 2 && (
               <form onSubmit={handleStep2} className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("step2.desc").replace("{email}", email)}
+                  {t("step2.desc", { email })}
                 </p>
                 <div className="space-y-2">
                   <Label>{t("step2.codeLabel")}</Label>
@@ -517,8 +517,7 @@ export default function RegisterPage() {
             {currentStep === 6 && (
               <form onSubmit={handleStep6} className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("step6.desc")
-                    .replace("{max}", String(slotInfo.recruitment.maxDestinationChoices))}
+                  {t("step6.desc", { max: slotInfo.recruitment.maxDestinationChoices })}
                 </p>
 
                 {availableDestinations.length === 0 ? (
