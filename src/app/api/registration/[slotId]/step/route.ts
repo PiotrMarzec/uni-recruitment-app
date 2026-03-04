@@ -58,8 +58,9 @@ const stepSchema = z.discriminatedUnion("step", [
   step6Schema,
 ]);
 
-async function getActiveInitialStage(recruitmentId: string) {
-  const [stage] = await db
+async function getActiveRegistrationStage(recruitmentId: string) {
+  // Check initial stage first
+  const [initialStage] = await db
     .select()
     .from(stages)
     .where(
@@ -70,7 +71,23 @@ async function getActiveInitialStage(recruitmentId: string) {
       )
     )
     .limit(1);
-  return stage;
+  if (initialStage) return { stage: initialStage, isInitial: true };
+
+  // Fall back to supplementary stage
+  const [suppStage] = await db
+    .select()
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, recruitmentId),
+        eq(stages.type, "supplementary"),
+        eq(stages.status, "active")
+      )
+    )
+    .limit(1);
+  if (suppStage) return { stage: suppStage, isInitial: false };
+
+  return null;
 }
 
 export async function POST(
@@ -90,14 +107,15 @@ export async function POST(
     return NextResponse.json({ error: "Slot not found" }, { status: 404 });
   }
 
-  // Verify initial stage is active
-  const initialStage = await getActiveInitialStage(slot.recruitmentId);
-  if (!initialStage) {
+  // Verify initial or supplementary stage is active
+  const activeStageInfo = await getActiveRegistrationStage(slot.recruitmentId);
+  if (!activeStageInfo) {
     return NextResponse.json(
       { error: "Registration is not currently open" },
       { status: 400 }
     );
   }
+  const initialStage = activeStageInfo.isInitial ? activeStageInfo.stage : null;
 
   const body = await req.json().catch(() => ({}));
   const parsed = stepSchema.safeParse(body);
@@ -215,7 +233,7 @@ export async function POST(
 
     broadcastRegistrationStepUpdate({
       type: "registration_step_update",
-      stageId: initialStage.id,
+      stageId: activeStageInfo.stage.id,
       registration: {
         slotId,
         slotNumber: slot.number,
@@ -305,7 +323,7 @@ export async function POST(
   const now = new Date().toISOString();
   broadcastRegistrationStepUpdate({
     type: "registration_step_update",
-    stageId: initialStage.id,
+    stageId: activeStageInfo.stage.id,
     registration: {
       slotId,
       slotNumber: slot.number,

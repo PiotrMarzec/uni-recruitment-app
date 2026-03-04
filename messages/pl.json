@@ -241,7 +241,13 @@
       "stageClosed": "Okres rejestracji dobiegł końca",
       "privacyRequired": "Musisz zaakceptować politykę prywatności",
       "emailConsentRequired": "Musisz wyrazić zgodę na komunikację e-mailową",
-      "invalidEnrollmentId": "Numer albumu musi być 6-cyfrową liczbą, która nie zaczyna się od 0"
+      "invalidEnrollmentId": "Numer albumu musi być 6-cyfrową liczbą, która nie zaczyna się od 0",
+      "assignmentLossConfirmRequired": "Musisz potwierdzić, że rozumiesz, iż edycja spowoduje utratę aktualnego przydziału"
+    },
+    "supplementaryWarning": {
+      "title": "Etap uzupełniający — Twój przydział może zostać zmieniony",
+      "message": "Masz aktualny przydział do: {destination}. Edycja rejestracji spowoduje utratę tego przydziału. Studenci, którzy nie edytują rejestracji, mają zagwarantowane zachowanie aktualnego przydziału.",
+      "confirmLabel": "Rozumiem, że edycja mojej rejestracji oznacza utratę aktualnego przydziału ({assignment})"
     }
   },
   "teacher": {

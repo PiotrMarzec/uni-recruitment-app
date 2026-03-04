@@ -170,16 +170,18 @@ function makeStepRequest(slotId: string, body: object): NextRequest {
  *   1. select slot
  *   2. select recruitment
  *   3. select initial stage
- *   4. update slot  registered → registration_started
- *   5. select counts by status  (for slot_status_update broadcast)
- *   6. select registration      (slot.studentId is still set → fetched via studentId check)
- *   7. select user
+ *   4. select supplementary stage  (returns [] — only initial is active here)
+ *   5. update slot  registered → registration_started
+ *   6. select counts by status  (for slot_status_update broadcast)
+ *   7. select registration      (slot.studentId is still set → fetched via studentId check)
+ *   8. select user
  */
 function queueGetRegisteredSlot() {
   dbQueue.push(
     [{ id: SLOT_ID, number: 1, status: "registered", studentId: USER_EMMA_ID, recruitmentId: RECRUITMENT_ID }],
     [{ id: RECRUITMENT_ID, name: "Winter Erasmus 2026", description: "", maxDestinationChoices: 5 }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID, endDate: new Date("2026-03-11") }],
+    [],  // supplementary stage → not active
     [],  // update: slot registered → registration_started
     [{ status: "registration_started", n: 1 }, { status: "open", n: 5 }],  // counts
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, spokenLanguages: "[]", destinationPreferences: "[]", registrationCompletedAt: new Date("2026-03-01"), updatedAt: new Date() }],
@@ -280,19 +282,21 @@ describe("Bug 2 – Step route broadcasts registrationCompleted: true during re-
  * DB call order in complete/route.ts:
  *   1. select slot
  *   2. select initial stage
- *   3. select registration
- *   4. update registration   (set registrationCompleted: true)
- *   5. select user            (for email)
- *   6. select destinations    (for email body)
- *   7. update slot            (registration_started → registered)
- *   8. select open count
- *   9. select started count
- *  10. select registered count
+ *   3. select supplementary stage  (returns [] — only initial is active here)
+ *   4. select registration
+ *   5. update registration   (set registrationCompleted: true)
+ *   6. select user            (for email)
+ *   7. select destinations    (for email body)
+ *   8. update slot            (registration_started → registered)
+ *   9. select open count
+ *  10. select started count
+ *  11. select registered count
  */
 function queueCompleteReEdit() {
   dbQueue.push(
     [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
+    [],  // supplementary stage → not active
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01"), level: "master", destinationPreferences: "[\"dest-uuid\"]", spokenLanguages: "[\"en\"]", enrollmentId: "123456" }],
     [],  // update registration
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],

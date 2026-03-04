@@ -234,6 +234,11 @@
       "desc": "Your registration has been submitted successfully. You will receive a confirmation email shortly.",
       "goBack": "Back to start"
     },
+    "supplementaryWarning": {
+      "title": "Supplementary Stage — Your assignment may be affected",
+      "message": "You are currently assigned to {destination}. Editing your registration will cancel your current assignment. Students who do not edit their registration are guaranteed to keep their current assignment.",
+      "confirmLabel": "I understand that editing my registration means I lose my current assignment ({assignment})"
+    },
     "errors": {
       "slotNotFound": "This registration link is invalid",
       "slotTaken": "This registration slot is no longer available",
@@ -241,7 +246,8 @@
       "stageClosed": "The registration period has ended",
       "privacyRequired": "You must agree to the privacy policy",
       "emailConsentRequired": "You must consent to email communication",
-      "invalidEnrollmentId": "Enrollment ID must be a 6-digit number not starting with 0"
+      "invalidEnrollmentId": "Enrollment ID must be a 6-digit number not starting with 0",
+      "assignmentLossConfirmRequired": "You must confirm that you understand editing will cancel your current assignment"
     }
   },
   "teacher": {

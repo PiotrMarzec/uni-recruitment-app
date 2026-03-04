@@ -6,13 +6,14 @@ import {
   users,
   stages,
   destinations,
+  stageEnrollments,
 } from "@/db/schema";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendRegistrationCompletedEmail } from "@/lib/email/send";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { broadcastRegistrationUpdate, broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, desc, isNotNull } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -40,7 +41,7 @@ export async function POST(
     return NextResponse.json({ error: "Slot not found" }, { status: 404 });
   }
 
-  // Verify initial stage is still active
+  // Verify initial or supplementary stage is still active
   const [initialStage] = await db
     .select()
     .from(stages)
@@ -53,7 +54,19 @@ export async function POST(
     )
     .limit(1);
 
-  if (!initialStage) {
+  const [supplementaryStage] = await db
+    .select()
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, slot.recruitmentId),
+        eq(stages.type, "supplementary"),
+        eq(stages.status, "active")
+      )
+    )
+    .limit(1);
+
+  if (!initialStage && !supplementaryStage) {
     return NextResponse.json({ error: "Registration period has ended" }, { status: 400 });
   }
 
@@ -95,6 +108,36 @@ export async function POST(
     })
     .where(eq(registrations.id, registration.id));
 
+  // If completing during supplementary stage, clear the student's assignment
+  // from the most recently completed admin stage so they re-enter the pool.
+  if (supplementaryStage && !initialStage) {
+    const [adminStage] = await db
+      .select()
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, slot.recruitmentId),
+          eq(stages.type, "admin"),
+          eq(stages.status, "completed")
+        )
+      )
+      .orderBy(desc(stages.order))
+      .limit(1);
+
+    if (adminStage) {
+      await db
+        .update(stageEnrollments)
+        .set({ assignedDestinationId: null })
+        .where(
+          and(
+            eq(stageEnrollments.stageId, adminStage.id),
+            eq(stageEnrollments.registrationId, registration.id),
+            isNotNull(stageEnrollments.assignedDestinationId)
+          )
+        );
+    }
+  }
+
   // Get student info for email
   const [student] = await db
     .select()
@@ -132,54 +175,58 @@ export async function POST(
     .set({ status: "registered" })
     .where(and(eq(slots.id, slotId), eq(slots.status, "registration_started")));
 
-  // Broadcast WebSocket update to admin dashboards
-  const [openCount] = await db
-    .select({ count: count() })
-    .from(slots)
-    .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
+  // Broadcast WebSocket update to the active stage's dashboard.
+  // The dashboard subscribes by stageId — use whichever stage is currently active.
+  const broadcastStageId = initialStage?.id ?? supplementaryStage?.id;
+  if (broadcastStageId) {
+    const [openCount] = await db
+      .select({ count: count() })
+      .from(slots)
+      .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
 
-  const [startedCount] = await db
-    .select({ count: count() })
-    .from(slots)
-    .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "registration_started")));
+    const [startedCount] = await db
+      .select({ count: count() })
+      .from(slots)
+      .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "registration_started")));
 
-  const [regCount] = await db
-    .select({ count: count() })
-    .from(registrations)
-    .where(eq(registrations.registrationCompleted, true));
+    const [regCount] = await db
+      .select({ count: count() })
+      .from(registrations)
+      .where(eq(registrations.registrationCompleted, true));
 
-  broadcastRegistrationUpdate({
-    type: "registration_update",
-    stageId: initialStage.id,
-    registeredCount: regCount?.count ?? 0,
-    openSlotsCount: openCount?.count ?? 0,
-    startedSlotsCount: startedCount?.count ?? 0,
-    latestRegistration: student
-      ? {
-          studentName: student.fullName,
-          slotNumber: slot.number,
-          completedAt: now.toISOString(),
-          teacherManagementLink: getTeacherPath(slotId),
-        }
-      : undefined,
-  });
+    broadcastRegistrationUpdate({
+      type: "registration_update",
+      stageId: broadcastStageId,
+      registeredCount: regCount?.count ?? 0,
+      openSlotsCount: openCount?.count ?? 0,
+      startedSlotsCount: startedCount?.count ?? 0,
+      latestRegistration: student
+        ? {
+            studentName: student.fullName,
+            slotNumber: slot.number,
+            completedAt: now.toISOString(),
+            teacherManagementLink: getTeacherPath(slotId),
+          }
+        : undefined,
+    });
 
-  // Update the slot row in the dashboard's recentRegistrations list so its
-  // status dot turns green immediately (registration_update only updates counters).
-  broadcastRegistrationStepUpdate({
-    type: "registration_step_update",
-    stageId: initialStage.id,
-    registration: {
-      slotId,
-      slotNumber: slot.number,
-      studentName: student?.fullName ?? "",
-      studentEmail: student?.email ?? "",
-      completedAt: completedAt?.toISOString() ?? now.toISOString(),
-      updatedAt: now.toISOString(),
-      registrationCompleted: true,
-      teacherManagementLink: getTeacherPath(slotId),
-    },
-  });
+    // Update the slot row in the dashboard's recentRegistrations list so its
+    // status dot turns green immediately (registration_update only updates counters).
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: broadcastStageId,
+      registration: {
+        slotId,
+        slotNumber: slot.number,
+        studentName: student?.fullName ?? "",
+        studentEmail: student?.email ?? "",
+        completedAt: completedAt?.toISOString() ?? now.toISOString(),
+        updatedAt: now.toISOString(),
+        registrationCompleted: true,
+        teacherManagementLink: getTeacherPath(slotId),
+      },
+    });
+  }
 
   await logAuditEvent({
     actorType: "student",

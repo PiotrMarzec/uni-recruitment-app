@@ -16,6 +16,8 @@ interface SlotInfo {
   recruitment: { id: string; name: string; maxDestinationChoices: number };
   initialStage: { id: string; status: string; endDate: string } | null;
   isInitialActive: boolean;
+  isSupplementaryActive: boolean;
+  currentAssignment: { destinationId: string; destinationName: string } | null;
   registration: {
     emailConsent: boolean;
     privacyConsent: boolean;
@@ -69,6 +71,7 @@ export default function RegisterPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [stepError, setStepError] = useState("");
+  const [assignmentLossConfirmed, setAssignmentLossConfirmed] = useState(false);
 
   useEffect(() => {
     loadSlotInfo();
@@ -97,7 +100,7 @@ export default function RegisterPage() {
         setDestinationPreferences(data.registration.destinationPreferences || []);
 
         if (data.registration.registrationCompleted) {
-          if (!data.isInitialActive) {
+          if (!data.isInitialActive && !data.isSupplementaryActive) {
             setCompleted(true);
           } else {
             // Can still edit — start from step 1
@@ -163,6 +166,10 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!privacyConsent) {
       setStepError(t("errors.privacyRequired"));
+      return;
+    }
+    if (slotInfo?.isSupplementaryActive && slotInfo.currentAssignment && !assignmentLossConfirmed) {
+      setStepError(t("errors.assignmentLossConfirmRequired"));
       return;
     }
     const ok = await submitStep(1, { email, emailConsent, privacyConsent });
@@ -280,7 +287,9 @@ export default function RegisterPage() {
 
   if (!slotInfo) return null;
 
-  if (completed || (!slotInfo.isInitialActive && slotInfo.registration?.registrationCompleted)) {
+  const registrationOpen = slotInfo.isInitialActive || slotInfo.isSupplementaryActive;
+
+  if (completed || (!registrationOpen && slotInfo.registration?.registrationCompleted)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -293,7 +302,7 @@ export default function RegisterPage() {
     );
   }
 
-  if (!slotInfo.isInitialActive) {
+  if (!registrationOpen) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -325,6 +334,16 @@ export default function RegisterPage() {
           <p className="text-muted-foreground">{slotInfo.recruitment.name}</p>
           <Badge variant="outline" className="mt-2">Slot #{slotInfo.slot.number}</Badge>
         </div>
+
+        {/* Supplementary stage assignment loss warning */}
+        {slotInfo.isSupplementaryActive && slotInfo.currentAssignment && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg text-sm">
+            <p className="font-semibold text-amber-800 mb-1">{t("supplementaryWarning.title")}</p>
+            <p className="text-amber-700">
+              {t("supplementaryWarning.message", { destination: slotInfo.currentAssignment.destinationName })}
+            </p>
+          </div>
+        )}
 
         {/* Step indicator */}
         <div className="flex gap-1 mb-6 overflow-x-auto pb-2">
@@ -387,6 +406,21 @@ export default function RegisterPage() {
                     <span className="text-primary">{t("step1.privacyLink")}</span>
                   </span>
                 </label>
+                {slotInfo.isSupplementaryActive && slotInfo.currentAssignment && (
+                  <label className="flex items-start gap-2 cursor-pointer p-3 border border-amber-300 bg-amber-50 rounded-lg">
+                    <input
+                      type="checkbox"
+                      checked={assignmentLossConfirmed}
+                      onChange={(e) => setAssignmentLossConfirmed(e.target.checked)}
+                      className="mt-1"
+                    />
+                    <span className="text-sm text-amber-800">
+                      {t("supplementaryWarning.confirmLabel", {
+                        assignment: slotInfo.currentAssignment.destinationName,
+                      })}
+                    </span>
+                  </label>
+                )}
                 {stepError && <p className="text-sm text-destructive">{stepError}</p>}
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? tc("loading") : t("step1.sendCode")}

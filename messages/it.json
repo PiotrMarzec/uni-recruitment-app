@@ -241,7 +241,13 @@
       "stageClosed": "Il periodo di registrazione è terminato",
       "privacyRequired": "Devi accettare l'informativa sulla privacy",
       "emailConsentRequired": "Devi dare il consenso alla comunicazione via email",
-      "invalidEnrollmentId": "Il numero di matricola deve essere un numero a 6 cifre che non inizia con 0"
+      "invalidEnrollmentId": "Il numero di matricola deve essere un numero a 6 cifre che non inizia con 0",
+      "assignmentLossConfirmRequired": "Devi confermare che capisci che la modifica annullerà la tua assegnazione attuale"
+    },
+    "supplementaryWarning": {
+      "title": "Fase supplementare — La tua assegnazione potrebbe essere interessata",
+      "message": "Sei attualmente assegnato/a a {destination}. Modificare la tua candidatura annullerà questa assegnazione. Gli studenti che non modificano la propria candidatura hanno la garanzia di mantenere la propria assegnazione attuale.",
+      "confirmLabel": "Capisco che modificare la mia candidatura significa perdere la mia assegnazione attuale ({assignment})"
     }
   },
   "teacher": {

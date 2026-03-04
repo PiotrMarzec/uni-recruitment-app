@@ -7,9 +7,10 @@ import {
   registrations,
   users,
   destinations,
+  stageEnrollments,
 } from "@/db/schema";
 import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, desc } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -59,9 +60,24 @@ export async function GET(
 
   const isInitialActive = initialStage?.status === "active";
 
+  // Find active supplementary stage
+  const [supplementaryStage] = await db
+    .select()
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, slot.recruitmentId),
+        eq(stages.type, "supplementary"),
+        eq(stages.status, "active")
+      )
+    )
+    .limit(1);
+
+  const isSupplementaryActive = !!supplementaryStage;
+
   // Mark slot as registration_started when the link is opened.
   // Handles both first-time opens ("open") and re-edits of completed registrations ("registered").
-  if (isInitialActive && (slot.status === "open" || slot.status === "registered")) {
+  if ((isInitialActive || isSupplementaryActive) && (slot.status === "open" || slot.status === "registered")) {
     await db
       .update(slots)
       .set({ status: "registration_started" })
@@ -78,10 +94,12 @@ export async function GET(
 
     const byStatus = Object.fromEntries(counts.map((r) => [r.status, Number(r.n)]));
 
-    if (initialStage) {
+    // Broadcast to whichever stage is active — the dashboard subscribes by stageId.
+    const broadcastStageId = initialStage?.id ?? supplementaryStage?.id;
+    if (broadcastStageId) {
       broadcastSlotStatusUpdate({
         type: "slot_status_update",
-        stageId: initialStage.id,
+        stageId: broadcastStageId,
         openSlotsCount: byStatus["open"] ?? 0,
         startedSlotsCount: byStatus["registration_started"] ?? 0,
       });
@@ -91,6 +109,7 @@ export async function GET(
   // Get existing registration if any
   let registration = null;
   let student = null;
+  let currentAssignment: { destinationId: string; destinationName: string } | null = null;
 
   // Fetch existing registration when the slot has an assigned student.
   // Use studentId rather than slot status because the status may have just been
@@ -115,6 +134,50 @@ export async function GET(
         .where(eq(users.id, slot.studentId))
         .limit(1);
       student = studentResult;
+
+      // If supplementary stage is active, look up the student's current assignment
+      // from the most recently completed admin stage.
+      if (isSupplementaryActive) {
+        const [adminStage] = await db
+          .select()
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, slot.recruitmentId),
+              eq(stages.type, "admin"),
+              eq(stages.status, "completed")
+            )
+          )
+          .orderBy(desc(stages.order))
+          .limit(1);
+
+        if (adminStage) {
+          const [enrollment] = await db
+            .select({ assignedDestinationId: stageEnrollments.assignedDestinationId })
+            .from(stageEnrollments)
+            .where(
+              and(
+                eq(stageEnrollments.stageId, adminStage.id),
+                eq(stageEnrollments.registrationId, regResult[0].id),
+                eq(stageEnrollments.cancelled, false)
+              )
+            )
+            .limit(1);
+
+          if (enrollment?.assignedDestinationId) {
+            const [dest] = await db
+              .select({ name: destinations.name })
+              .from(destinations)
+              .where(eq(destinations.id, enrollment.assignedDestinationId))
+              .limit(1);
+
+            currentAssignment = {
+              destinationId: enrollment.assignedDestinationId,
+              destinationName: dest?.name ?? enrollment.assignedDestinationId,
+            };
+          }
+        }
+      }
     }
   }
 
@@ -130,6 +193,8 @@ export async function GET(
       ? { id: initialStage.id, status: initialStage.status, endDate: initialStage.endDate }
       : null,
     isInitialActive,
+    isSupplementaryActive,
+    currentAssignment,
     registration,
     student,
   });

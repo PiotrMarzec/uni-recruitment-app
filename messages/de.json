@@ -241,7 +241,13 @@
       "stageClosed": "Der Registrierungszeitraum ist abgelaufen",
       "privacyRequired": "Sie müssen der Datenschutzrichtlinie zustimmen",
       "emailConsentRequired": "Sie müssen der E-Mail-Kommunikation zustimmen",
-      "invalidEnrollmentId": "Die Matrikelnummer muss eine 6-stellige Zahl sein, die nicht mit 0 beginnt"
+      "invalidEnrollmentId": "Die Matrikelnummer muss eine 6-stellige Zahl sein, die nicht mit 0 beginnt",
+      "assignmentLossConfirmRequired": "Sie müssen bestätigen, dass Sie verstehen, dass die Bearbeitung Ihre aktuelle Zuweisung aufhebt"
+    },
+    "supplementaryWarning": {
+      "title": "Ergänzungsphase — Ihre Zuweisung kann betroffen sein",
+      "message": "Sie sind derzeit {destination} zugeteilt. Das Bearbeiten Ihrer Bewerbung hebt diese Zuweisung auf. Studierende, die ihre Bewerbung nicht bearbeiten, behalten garantiert ihre aktuelle Zuweisung.",
+      "confirmLabel": "Ich verstehe, dass das Bearbeiten meiner Bewerbung den Verlust meiner aktuellen Zuweisung ({assignment}) bedeutet"
     }
   },
   "teacher": {

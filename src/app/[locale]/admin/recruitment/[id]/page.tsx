@@ -389,7 +389,7 @@ export default function RecruitmentDetailPage() {
                             Activate Now
                           </Button>
                         )}
-                        {stage.type === "initial" && stage.status === "active" && (
+                        {(stage.type === "initial" || stage.type === "supplementary") && stage.status === "active" && (
                           <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
                             <Button size="sm" variant="outline">Live Dashboard</Button>
                           </Link>

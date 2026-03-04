@@ -241,7 +241,13 @@
       "stageClosed": "El período de registro ha finalizado",
       "privacyRequired": "Debes aceptar la política de privacidad",
       "emailConsentRequired": "Debes dar tu consentimiento para la comunicación por correo electrónico",
-      "invalidEnrollmentId": "El número de matrícula debe ser un número de 6 dígitos que no empiece por 0"
+      "invalidEnrollmentId": "El número de matrícula debe ser un número de 6 dígitos que no empiece por 0",
+      "assignmentLossConfirmRequired": "Debes confirmar que entiendes que editar tu solicitud cancelará tu asignación actual"
+    },
+    "supplementaryWarning": {
+      "title": "Fase complementaria — Tu asignación puede verse afectada",
+      "message": "Actualmente estás asignado/a a {destination}. Editar tu solicitud cancelará esta asignación. Los estudiantes que no editen su solicitud tienen garantizada su asignación actual.",
+      "confirmLabel": "Entiendo que editar mi solicitud significa perder mi asignación actual ({assignment})"
     }
   },
   "teacher": {

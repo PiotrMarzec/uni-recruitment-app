@@ -241,7 +241,13 @@
       "stageClosed": "La période d'inscription est terminée",
       "privacyRequired": "Vous devez accepter la politique de confidentialité",
       "emailConsentRequired": "Vous devez consentir à la communication par e-mail",
-      "invalidEnrollmentId": "Le numéro étudiant doit être un nombre à 6 chiffres ne commençant pas par 0"
+      "invalidEnrollmentId": "Le numéro étudiant doit être un nombre à 6 chiffres ne commençant pas par 0",
+      "assignmentLossConfirmRequired": "Vous devez confirmer que vous comprenez que la modification annulera votre affectation actuelle"
+    },
+    "supplementaryWarning": {
+      "title": "Phase complémentaire — Votre affectation peut être affectée",
+      "message": "Vous êtes actuellement affecté(e) à {destination}. Modifier votre candidature annulera cette affectation. Les étudiants qui ne modifient pas leur candidature conservent garantiment leur affectation actuelle.",
+      "confirmLabel": "Je comprends que modifier ma candidature signifie perdre mon affectation actuelle ({assignment})"
     }
   },
   "teacher": {
