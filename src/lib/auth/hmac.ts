@@ -29,6 +29,11 @@ export function getTeacherLink(slotId: string): string {
   return `${appUrl}/en/manage/${slotId}/${sig}`;
 }
 
+export function getTeacherPath(slotId: string): string {
+  const sig = signTeacherLink(slotId);
+  return `/en/manage/${slotId}/${sig}`;
+}
+
 export function getStudentRegistrationLink(slotId: string): string {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
   return `${appUrl}/en/register/${slotId}`;

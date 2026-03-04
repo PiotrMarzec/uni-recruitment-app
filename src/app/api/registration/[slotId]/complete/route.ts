@@ -11,6 +11,7 @@ import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendRegistrationCompletedEmail } from "@/lib/email/send";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { broadcastRegistrationUpdate } from "@/lib/websocket/events";
+import { getTeacherPath } from "@/lib/auth/hmac";
 import { eq, and, count } from "drizzle-orm";
 
 export async function POST(
@@ -145,6 +146,7 @@ export async function POST(
           studentName: student.fullName,
           slotNumber: slot.number,
           completedAt: now.toISOString(),
+          teacherManagementLink: getTeacherPath(slotId),
         }
       : undefined,
   });

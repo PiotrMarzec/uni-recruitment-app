@@ -27,6 +27,7 @@ interface DashboardData {
     studentName: string;
     studentEmail: string;
     completedAt: string;
+    teacherManagementLink: string;
   }>;
 }
 
@@ -205,9 +206,19 @@ export default function StageDashboardPage() {
                       — Slot #{reg.slotNumber}
                     </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">
-                    {reg.completedAt ? formatDate(reg.completedAt) : ""}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground">
+                      {reg.completedAt ? formatDate(reg.completedAt) : ""}
+                    </span>
+                    <a
+                      href={reg.teacherManagementLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                    >
+                      Manage
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>

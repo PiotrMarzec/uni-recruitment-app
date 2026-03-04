@@ -8,6 +8,7 @@ import {
   slots,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
+import { getTeacherPath } from "@/lib/auth/hmac";
 import { eq, and, count, desc } from "drizzle-orm";
 
 export async function GET(
@@ -41,8 +42,9 @@ export async function GET(
   const registeredSlots = allSlots.filter((s) => s.status === "registered").length;
 
   // Get recent registrations (completed, newest first)
-  const recentRegistrations = await db
+  const recentRegistrationsRaw = await db
     .select({
+      slotId: slots.id,
       slotNumber: slots.number,
       studentName: users.fullName,
       studentEmail: users.email,
@@ -59,6 +61,11 @@ export async function GET(
     )
     .orderBy(desc(registrations.registrationCompletedAt))
     .limit(50);
+
+  const recentRegistrations = recentRegistrationsRaw.map((r) => ({
+    ...r,
+    teacherManagementLink: getTeacherPath(r.slotId),
+  }));
 
   return NextResponse.json({
     stage,

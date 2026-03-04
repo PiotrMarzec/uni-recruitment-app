@@ -9,6 +9,7 @@ export interface RegistrationEvent {
     studentName: string;
     slotNumber: number;
     completedAt: string;
+    teacherManagementLink: string;
   };
 }
 
