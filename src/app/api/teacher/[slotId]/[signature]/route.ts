@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { slots, registrations, users } from "@/db/schema";
+import { slots, registrations, users, destinations } from "@/db/schema";
 import { verifyTeacherSignature } from "@/lib/auth/hmac";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { z } from "zod";
@@ -37,10 +37,18 @@ export async function GET(
       .limit(1);
 
     if (reg) {
+      const prefIds: string[] = JSON.parse(reg.destinationPreferences || "[]");
+
+      const destRows = await db
+        .select({ id: destinations.id, name: destinations.name })
+        .from(destinations)
+        .where(eq(destinations.recruitmentId, slot.recruitmentId));
+      const destNameMap = Object.fromEntries(destRows.map((d) => [d.id, d.name]));
+
       registration = {
         ...reg,
         spokenLanguages: JSON.parse(reg.spokenLanguages || "[]"),
-        destinationPreferences: JSON.parse(reg.destinationPreferences || "[]"),
+        destinationPreferences: prefIds.map((id) => destNameMap[id] ?? id),
       };
 
       if (reg.studentId) {

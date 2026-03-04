@@ -160,8 +160,8 @@ export default function TeacherManagePage() {
               <div>
                 <p className="text-muted-foreground mb-1">Destination preferences</p>
                 <ol className="list-decimal list-inside space-y-0.5 pl-1">
-                  {reg.destinationPreferences.map((id, i) => (
-                    <li key={id} className="text-xs text-muted-foreground font-mono">{id}</li>
+                  {reg.destinationPreferences.map((name) => (
+                    <li key={name} className="text-xs text-muted-foreground">{name}</li>
                   ))}
                 </ol>
               </div>
