@@ -13,7 +13,7 @@ import {
   sendAssignmentApprovedEmail,
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
-import { eq, and, gt } from "drizzle-orm";
+import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -78,9 +78,31 @@ export async function POST(
     .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
     .where(eq(assignmentResults.stageId, id));
 
-  // Send emails to all students
+  // Find registrations that already had an approved assignment from a previous stage
+  const registrationIds = results.map((r) => r.registrationId);
+  const previouslyAssigned = new Set<string>();
+  if (registrationIds.length > 0) {
+    const previousAssignments = await db
+      .select({ registrationId: assignmentResults.registrationId })
+      .from(assignmentResults)
+      .where(
+        and(
+          inArray(assignmentResults.registrationId, registrationIds),
+          ne(assignmentResults.stageId, id),
+          eq(assignmentResults.approved, true),
+          isNotNull(assignmentResults.destinationId)
+        )
+      );
+    for (const row of previousAssignments) {
+      previouslyAssigned.add(row.registrationId);
+    }
+  }
+
+  // Send emails only to students newly assigned in this stage
   let emailsSent = 0;
   for (const result of results) {
+    if (previouslyAssigned.has(result.registrationId)) continue;
+
     if (result.destinationId && result.destinationName) {
       await sendAssignmentApprovedEmail({
         email: result.studentEmail,
