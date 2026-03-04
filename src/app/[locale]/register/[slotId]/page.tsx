@@ -64,6 +64,7 @@ export default function RegisterPage() {
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [destinationPreferences, setDestinationPreferences] = useState<string[]>([]);
   const [availableDestinations, setAvailableDestinations] = useState<Destination[]>([]);
+  const [destinationsLoading, setDestinationsLoading] = useState(false);
   const [confirmSummary, setConfirmSummary] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
@@ -111,16 +112,21 @@ export default function RegisterPage() {
 
   async function loadDestinations() {
     if (!slotId || !level || spokenLanguages.length === 0) return;
-    const res = await fetch(
-      `/api/registration/${slotId}/destinations?level=${level}&languages=${JSON.stringify(spokenLanguages)}`
-    );
-    if (res.ok) {
-      const data = await res.json();
-      setAvailableDestinations(data);
-      // Filter preferences to only include available destinations
-      setDestinationPreferences((prev) =>
-        prev.filter((id) => data.some((d: Destination) => d.id === id))
+    setDestinationsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/registration/${slotId}/destinations?level=${level}&languages=${JSON.stringify(spokenLanguages)}`
       );
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableDestinations(data);
+        // Filter preferences to only include available destinations
+        setDestinationPreferences((prev) =>
+          prev.filter((id) => data.some((d: Destination) => d.id === id))
+        );
+      }
+    } finally {
+      setDestinationsLoading(false);
     }
   }
 
@@ -520,7 +526,11 @@ export default function RegisterPage() {
                   {t("step6.desc", { max: slotInfo.recruitment.maxDestinationChoices })}
                 </p>
 
-                {availableDestinations.length === 0 ? (
+                {destinationsLoading ? (
+                  <p className="text-muted-foreground text-sm p-3 bg-muted/30 rounded-lg">
+                    {tc("loading")} possible destinations...
+                  </p>
+                ) : availableDestinations.length === 0 ? (
                   <p className="text-amber-600 text-sm p-3 bg-amber-50 rounded-lg">
                     {t("step6.noDestinations")}
                   </p>
