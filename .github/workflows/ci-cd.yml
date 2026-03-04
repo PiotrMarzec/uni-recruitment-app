@@ -124,7 +124,7 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          username: deploy
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: DB_PASSWORD,DB_DATA_PATH,SESSION_SECRET,HMAC_SECRET,RESEND_API_KEY,EMAIL_FROM,APP_URL,IMAGE_TAG,GH_TOKEN,GH_ACTOR
           script: |
