@@ -208,6 +208,14 @@ export default function RecruitmentDetailPage() {
     }
   }
 
+  async function endStage(stageId: string) {
+    if (!confirm("End this stage now? The end date will be set to now and the next stage will become active.")) return;
+    const res = await fetch(`/api/admin/stages/${stageId}/end`, { method: "POST" });
+    if (res.ok) {
+      await fetchRecruitment();
+    }
+  }
+
   if (loading || !recruitment) {
     return <AdminLayout><p>Loading...</p></AdminLayout>;
   }
@@ -362,6 +370,11 @@ export default function RecruitmentDetailPage() {
                         <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
                           <Button size="sm" variant="outline">Live Dashboard</Button>
                         </Link>
+                      )}
+                      {stage.status === "active" && (
+                        <Button size="sm" variant="outline" onClick={() => endStage(stage.id)}>
+                          End Stage
+                        </Button>
                       )}
                       {stage.type === "admin" && stage.status === "active" && (
                         <Button size="sm" variant="destructive" onClick={() => completeStage(stage.id)}>
