@@ -31,6 +31,7 @@ interface DashboardData {
     updatedAt: string;
     registrationCompleted: boolean;
     teacherManagementLink: string;
+    assignedDestination?: string | null;
   }>;
 }
 
@@ -222,6 +223,11 @@ export default function StageDashboardPage() {
                       <span className="text-muted-foreground text-sm ml-2">
                         — Slot #{reg.slotNumber}
                       </span>
+                      {reg.assignedDestination && (
+                        <span className="text-blue-600 text-sm ml-2">
+                          → {reg.assignedDestination}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">

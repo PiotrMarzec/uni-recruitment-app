@@ -243,6 +243,7 @@ export async function POST(
         updatedAt: new Date().toISOString(),
         registrationCompleted: false,
         teacherManagementLink: getTeacherPath(slotId),
+        assignedDestination: null,
       },
     });
 
@@ -333,6 +334,7 @@ export async function POST(
       updatedAt: now,
       registrationCompleted: false, // always false while student is actively editing
       teacherManagementLink: getTeacherPath(slotId),
+      assignedDestination: null,
     },
   });
 

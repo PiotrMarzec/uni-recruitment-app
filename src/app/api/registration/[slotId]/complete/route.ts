@@ -224,6 +224,7 @@ export async function POST(
         updatedAt: now.toISOString(),
         registrationCompleted: true,
         teacherManagementLink: getTeacherPath(slotId),
+        assignedDestination: null, // assignment was cleared when editing during supplementary stage
       },
     });
   }

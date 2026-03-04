@@ -39,6 +39,7 @@ export interface RegistrationStepUpdateEvent {
     updatedAt: string;
     registrationCompleted: boolean;
     teacherManagementLink: string;
+    assignedDestination?: string | null;
   };
 }
 
