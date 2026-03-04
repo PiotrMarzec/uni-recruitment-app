@@ -10,7 +10,7 @@ import {
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendRegistrationCompletedEmail } from "@/lib/email/send";
 import { getSessionFromRequest } from "@/lib/auth/session";
-import { broadcastRegistrationUpdate } from "@/lib/websocket/events";
+import { broadcastRegistrationUpdate, broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
 import { eq, and, count } from "drizzle-orm";
 
@@ -125,11 +125,23 @@ export async function POST(
     });
   }
 
+  // Move slot back to "registered" if a re-edit flow left it as "registration_started".
+  // (For new registrations the slot is already "registered" so this is a no-op.)
+  await db
+    .update(slots)
+    .set({ status: "registered" })
+    .where(and(eq(slots.id, slotId), eq(slots.status, "registration_started")));
+
   // Broadcast WebSocket update to admin dashboards
   const [openCount] = await db
     .select({ count: count() })
     .from(slots)
     .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
+
+  const [startedCount] = await db
+    .select({ count: count() })
+    .from(slots)
+    .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "registration_started")));
 
   const [regCount] = await db
     .select({ count: count() })
@@ -141,6 +153,7 @@ export async function POST(
     stageId: initialStage.id,
     registeredCount: regCount?.count ?? 0,
     openSlotsCount: openCount?.count ?? 0,
+    startedSlotsCount: startedCount?.count ?? 0,
     latestRegistration: student
       ? {
           studentName: student.fullName,
@@ -149,6 +162,23 @@ export async function POST(
           teacherManagementLink: getTeacherPath(slotId),
         }
       : undefined,
+  });
+
+  // Update the slot row in the dashboard's recentRegistrations list so its
+  // status dot turns green immediately (registration_update only updates counters).
+  broadcastRegistrationStepUpdate({
+    type: "registration_step_update",
+    stageId: initialStage.id,
+    registration: {
+      slotId,
+      slotNumber: slot.number,
+      studentName: student?.fullName ?? "",
+      studentEmail: student?.email ?? "",
+      completedAt: completedAt?.toISOString() ?? now.toISOString(),
+      updatedAt: now.toISOString(),
+      registrationCompleted: true,
+      teacherManagementLink: getTeacherPath(slotId),
+    },
   });
 
   await logAuditEvent({

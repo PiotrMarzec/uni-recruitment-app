@@ -221,7 +221,7 @@ export async function POST(
         slotNumber: slot.number,
         studentName: user.fullName,
         studentEmail: user.email,
-        completedAt: null,
+        completedAt: existingReg?.registrationCompletedAt?.toISOString() ?? null,
         updatedAt: new Date().toISOString(),
         registrationCompleted: false,
         teacherManagementLink: getTeacherPath(slotId),
@@ -313,7 +313,7 @@ export async function POST(
       studentEmail: updatedUser?.email ?? "",
       completedAt: existingReg.registrationCompletedAt?.toISOString() ?? null,
       updatedAt: now,
-      registrationCompleted: existingReg.registrationCompleted,
+      registrationCompleted: false, // always false while student is actively editing
       teacherManagementLink: getTeacherPath(slotId),
     },
   });

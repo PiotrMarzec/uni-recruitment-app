@@ -101,7 +101,7 @@ export default function StageDashboardPage() {
               stats: {
                 ...prev.stats,
                 openSlots: message.openSlotsCount,
-                startedSlots: prev.stats.startedSlots - 1,
+                startedSlots: message.startedSlotsCount,
                 registeredSlots: prev.stats.registeredSlots + 1,
               },
             };

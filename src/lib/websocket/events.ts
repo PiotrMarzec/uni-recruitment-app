@@ -14,6 +14,7 @@ export interface RegistrationEvent {
   stageId: string;
   registeredCount: number;
   openSlotsCount: number;
+  startedSlotsCount: number;
   latestRegistration?: {
     studentName: string;
     slotNumber: number;

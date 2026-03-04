@@ -59,12 +59,13 @@ export async function GET(
 
   const isInitialActive = initialStage?.status === "active";
 
-  // Mark slot as registration_started when the link is opened (only from "open")
-  if (isInitialActive && slot.status === "open") {
+  // Mark slot as registration_started when the link is opened.
+  // Handles both first-time opens ("open") and re-edits of completed registrations ("registered").
+  if (isInitialActive && (slot.status === "open" || slot.status === "registered")) {
     await db
       .update(slots)
       .set({ status: "registration_started" })
-      .where(and(eq(slots.id, slotId), eq(slots.status, "open")));
+      .where(and(eq(slots.id, slotId), eq(slots.status, slot.status)));
 
     slot.status = "registration_started";
 
@@ -91,7 +92,10 @@ export async function GET(
   let registration = null;
   let student = null;
 
-  if (slot.status === "registered" && slot.studentId) {
+  // Fetch existing registration when the slot has an assigned student.
+  // Use studentId rather than slot status because the status may have just been
+  // changed to "registration_started" above for re-edit flows.
+  if (slot.studentId) {
     const regResult = await db
       .select()
       .from(registrations)

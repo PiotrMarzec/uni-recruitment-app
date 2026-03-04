@@ -5,6 +5,12 @@
  * a connected admin dashboard WebSocket client receives a `registration_step_update`
  * message with the updated data — without requiring a page reload.
  *
+ * Also verifies counter (in-progress / registered) changes for:
+ *   - New registrations: slot_status_update increments startedSlots when a student
+ *     opens their link for the first time.
+ *   - registration_update includes the authoritative startedSlotsCount from the DB
+ *     so that the dashboard never has to guess (fixes the -1 bug when re-editing).
+ *
  * The test wires up the same setup that src/server.ts performs at startup:
  *   1. Creates a real WebSocket server using the same `setupWebSocketServer` and
  *      `broadcastToStage` from websocket/server.ts.
@@ -13,8 +19,7 @@
  *      the same subscriptions Map.
  *   3. Connects a WebSocket client and subscribes to a stage, simulating the admin
  *      dashboard.
- *   4. Calls `broadcastRegistrationStepUpdate` from events.ts, simulating the step
- *      API route handler.
+ *   4. Calls broadcast helpers from events.ts, simulating the API route handlers.
  *   5. Asserts the client received the correct message.
  */
 
@@ -22,9 +27,56 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import http from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupWebSocketServer, broadcastToStage } from "../server";
-import { broadcastRegistrationStepUpdate } from "../events";
+import {
+  broadcastRegistrationStepUpdate,
+  broadcastSlotStatusUpdate,
+  broadcastRegistrationUpdate,
+} from "../events";
+import {
+  WINTER_STAGE_INITIAL_ID,
+  WINTER_SLOT_IDS,
+  USER_EMMA_ID,
+} from "../../../../scripts/seed-data";
 
 const STAGE_ID = "test-stage-live-dashboard";
+
+// Winter initial stage from seed — matches the dashboard URL used in manual testing:
+// /pl/admin/recruitment/10000000-0000-0000-0000-000000000002/stage/20000002-0000-0000-0000-000000000001
+const WINTER_STAGE = WINTER_STAGE_INITIAL_ID;
+
+// Open slot (seed index 6): the link used in manual testing
+// /en/register/50000002-0000-0000-0000-000000000007
+const OPEN_SLOT_ID = WINTER_SLOT_IDS[6];
+const OPEN_SLOT_NUMBER = 7;
+
+// Registered slot (Emma Johnson, seed index 0): already has a completed registration
+const EMMA_SLOT_ID = WINTER_SLOT_IDS[0];
+const EMMA_SLOT_NUMBER = 1;
+const EMMA_TEACHER_LINK = `/en/manage/${EMMA_SLOT_ID}/fake-sig`;
+
+// Utility: collect exactly `count` WebSocket messages, or reject on timeout.
+function collectMessages(ws: WebSocket, count: number, timeoutMs = 500): Promise<unknown[]> {
+  return new Promise((resolve, reject) => {
+    const messages: unknown[] = [];
+    const timer = setTimeout(() => {
+      reject(new Error(`Timed out waiting for ${count} messages, got ${messages.length}`));
+    }, timeoutMs);
+    ws.on("message", (raw) => {
+      try {
+        messages.push(JSON.parse(raw.toString()));
+      } catch {
+        clearTimeout(timer);
+        reject(new Error("Received non-JSON WebSocket message"));
+        return;
+      }
+      if (messages.length >= count) {
+        clearTimeout(timer);
+        resolve(messages);
+      }
+    });
+    ws.once("error", (err) => { clearTimeout(timer); reject(err); });
+  });
+}
 
 // Utility: connect a WebSocket client, wait for it to open and subscribe, then
 // wait for the subscription confirmation before returning.
@@ -145,6 +197,7 @@ describe("Live dashboard – registration_step_update broadcast", () => {
   });
 
   it("reflects a completed registration as registrationCompleted: true with a completedAt timestamp", async () => {
+
     const completedAt = new Date().toISOString();
     const client = await subscribeClient(wsUrl, STAGE_ID);
     const pending = nextMessage(client);
@@ -168,6 +221,418 @@ describe("Live dashboard – registration_step_update broadcast", () => {
 
     expect(message.registration.registrationCompleted).toBe(true);
     expect(message.registration.completedAt).toBe(completedAt);
+
+    client.close();
+  });
+});
+
+describe("Live dashboard – slot counter updates", () => {
+  let httpServer: http.Server;
+  let wss: WebSocketServer;
+  let wsUrl: string;
+
+  beforeAll(async () => {
+    httpServer = http.createServer();
+    wss = new WebSocketServer({ noServer: true });
+    setupWebSocketServer(wss);
+    (global as any).__broadcastToStage = broadcastToStage;
+    httpServer.on("upgrade", (req, socket, head) => {
+      wss.handleUpgrade(req, socket as import("net").Socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    });
+    await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+    const port = (httpServer.address() as { port: number }).port;
+    wsUrl = `ws://localhost:${port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => wss.close(() => resolve()));
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    delete (global as any).__broadcastToStage;
+  });
+
+  it("slot_status_update increments startedSlots when a new student opens their link", async () => {
+    const client = await subscribeClient(wsUrl, STAGE_ID);
+    const pending = nextMessage(client);
+
+    // Simulate GET /api/registration/[slotId]: slot just moved open → registration_started
+    broadcastSlotStatusUpdate({
+      type: "slot_status_update",
+      stageId: STAGE_ID,
+      openSlotsCount: 9,
+      startedSlotsCount: 1, // was 0, now 1
+    });
+
+    const message = (await pending) as any;
+
+    expect(message.type).toBe("slot_status_update");
+    expect(message.openSlotsCount).toBe(9);
+    expect(message.startedSlotsCount).toBe(1);
+
+    client.close();
+  });
+
+  it("registration_update carries the DB-accurate startedSlotsCount after a new registration completes", async () => {
+    const client = await subscribeClient(wsUrl, STAGE_ID);
+    const pending = nextMessage(client);
+
+    // Simulate POST /api/registration/[slotId]/complete for a fresh registration.
+    // The slot moved registration_started → registered, so startedSlotsCount drops to 0.
+    broadcastRegistrationUpdate({
+      type: "registration_update",
+      stageId: STAGE_ID,
+      registeredCount: 1,
+      openSlotsCount: 9,
+      startedSlotsCount: 0,
+      latestRegistration: {
+        studentName: "Alice",
+        slotNumber: 3,
+        completedAt: new Date().toISOString(),
+        teacherManagementLink: "/en/manage/slot-00000003/abc",
+      },
+    });
+
+    const message = (await pending) as any;
+
+    expect(message.type).toBe("registration_update");
+    expect(message.startedSlotsCount).toBe(0);
+    expect(message.registeredCount).toBe(1);
+    expect(message.latestRegistration.studentName).toBe("Alice");
+
+    client.close();
+  });
+
+  it("registration_update carries startedSlotsCount=0 when re-editing student completes (no -1 bug)", async () => {
+    const client = await subscribeClient(wsUrl, STAGE_ID);
+    const pending = nextMessage(client);
+
+    // Simulate re-edit completion: the slot was already "registered" throughout,
+    // so startedSlotsCount in the DB is 0 — the dashboard must use this value
+    // directly rather than decrementing its local counter (which would go to -1).
+    broadcastRegistrationUpdate({
+      type: "registration_update",
+      stageId: STAGE_ID,
+      registeredCount: 5,
+      openSlotsCount: 4,
+      startedSlotsCount: 0, // slot was never re-moved to registration_started
+      latestRegistration: {
+        studentName: "Bob",
+        slotNumber: 7,
+        completedAt: new Date().toISOString(),
+        teacherManagementLink: "/en/manage/slot-00000007/xyz",
+      },
+    });
+
+    const message = (await pending) as any;
+
+    expect(message.type).toBe("registration_update");
+    // The dashboard must display this exact count, not prev - 1
+    expect(message.startedSlotsCount).toBe(0);
+    expect(message.registeredCount).toBe(5);
+
+    client.close();
+  });
+
+  it("slot_status_update IS emitted when a re-editing student opens a registered slot", async () => {
+    // When an existing (completed) registration is opened for re-editing, the GET
+    // route now moves the slot registered → registration_started and broadcasts
+    // slot_status_update so the in-progress counter increments correctly.
+    const client = await subscribeClient(wsUrl, STAGE_ID);
+    const pending = nextMessage(client);
+
+    broadcastSlotStatusUpdate({
+      type: "slot_status_update",
+      stageId: STAGE_ID,
+      openSlotsCount: 5,
+      startedSlotsCount: 1, // was 0, now 1 — re-edit student is in progress
+    });
+
+    const message = (await pending) as any;
+
+    expect(message.type).toBe("slot_status_update");
+    expect(message.startedSlotsCount).toBe(1);
+    client.close();
+  });
+});
+
+// ─── Scenario: new registration on an open slot ───────────────────────────────
+//
+// Mirrors the flow for slot 50000002-0000-0000-0000-000000000007 (Winter open slot)
+// watched from the dashboard at stage 20000002-0000-0000-0000-000000000001.
+//
+// Event sequence emitted by the API routes:
+//   1. GET /api/registration/[slotId]          → slot_status_update   (open→started)
+//   2. POST …/step  { step: 2 } (OTP verified) → registration_step_update (in-progress)
+//   3. POST …/step  { step: 3 } (name changed) → registration_step_update (name updated)
+//   4. POST …/complete                         → registration_update  (finished)
+
+describe("Live dashboard – new registration scenario (open slot, Winter stage)", () => {
+  let httpServer: http.Server;
+  let wss: WebSocketServer;
+  let wsUrl: string;
+
+  beforeAll(async () => {
+    httpServer = http.createServer();
+    wss = new WebSocketServer({ noServer: true });
+    setupWebSocketServer(wss);
+    (global as any).__broadcastToStage = broadcastToStage;
+    httpServer.on("upgrade", (req, socket, head) => {
+      wss.handleUpgrade(req, socket as import("net").Socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    });
+    await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+    const port = (httpServer.address() as { port: number }).port;
+    wsUrl = `ws://localhost:${port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => wss.close(() => resolve()));
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    delete (global as any).__broadcastToStage;
+  });
+
+  it("receives all four events in the correct order with consistent data", async () => {
+    const client = await subscribeClient(wsUrl, WINTER_STAGE);
+    const pending = collectMessages(client, 4);
+
+    const openedAt = new Date().toISOString();
+    const completedAt = new Date(Date.now() + 5000).toISOString();
+    const teacherLink = `/en/manage/${OPEN_SLOT_ID}/fake-sig`;
+
+    // 1. Student opens the link → slot moves open → registration_started
+    broadcastSlotStatusUpdate({
+      type: "slot_status_update",
+      stageId: WINTER_STAGE,
+      openSlotsCount: 4,   // one fewer open slot
+      startedSlotsCount: 1,
+    });
+
+    // 2. Student verifies OTP → registration created, shown as in-progress
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: WINTER_STAGE,
+      registration: {
+        slotId: OPEN_SLOT_ID,
+        slotNumber: OPEN_SLOT_NUMBER,
+        studentName: "new.student",           // placeholder until step 3
+        studentEmail: "new.student@uni.edu",
+        completedAt: null,
+        updatedAt: openedAt,
+        registrationCompleted: false,
+        teacherManagementLink: teacherLink,
+      },
+    });
+
+    // 3. Student fills in their real name (step 3)
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: WINTER_STAGE,
+      registration: {
+        slotId: OPEN_SLOT_ID,
+        slotNumber: OPEN_SLOT_NUMBER,
+        studentName: "New Student",           // updated name
+        studentEmail: "new.student@uni.edu",
+        completedAt: null,
+        updatedAt: new Date(Date.now() + 1000).toISOString(),
+        registrationCompleted: false,
+        teacherManagementLink: teacherLink,
+      },
+    });
+
+    // 4. Student submits → registration_update with DB-accurate started count
+    broadcastRegistrationUpdate({
+      type: "registration_update",
+      stageId: WINTER_STAGE,
+      registeredCount: 6,
+      openSlotsCount: 4,
+      startedSlotsCount: 0,   // slot is now registered, not started
+      latestRegistration: {
+        studentName: "New Student",
+        slotNumber: OPEN_SLOT_NUMBER,
+        completedAt,
+        teacherManagementLink: teacherLink,
+      },
+    });
+
+    const [msg1, msg2, msg3, msg4] = (await pending) as any[];
+
+    // Event 1: counter shows +1 in-progress, -1 open
+    expect(msg1.type).toBe("slot_status_update");
+    expect(msg1.startedSlotsCount).toBe(1);
+    expect(msg1.openSlotsCount).toBe(4);
+
+    // Event 2: registration appears as in-progress in recent list
+    expect(msg2.type).toBe("registration_step_update");
+    expect(msg2.registration.slotId).toBe(OPEN_SLOT_ID);
+    expect(msg2.registration.registrationCompleted).toBe(false);
+    expect(msg2.registration.completedAt).toBeNull();
+
+    // Event 3: name change is immediately visible on the dashboard
+    expect(msg3.type).toBe("registration_step_update");
+    expect(msg3.registration.studentName).toBe("New Student");
+    expect(msg3.registration.registrationCompleted).toBe(false);
+
+    // Event 4: counters correct — started goes to 0 (from DB), registered +1
+    expect(msg4.type).toBe("registration_update");
+    expect(msg4.startedSlotsCount).toBe(0);
+    expect(msg4.registeredCount).toBe(6);
+    expect(msg4.latestRegistration.studentName).toBe("New Student");
+    expect(msg4.latestRegistration.slotNumber).toBe(OPEN_SLOT_NUMBER);
+
+    client.close();
+  });
+});
+
+// ─── Scenario: existing registration re-edit ─────────────────────────────────
+//
+// Mirrors editing Emma Johnson's completed registration on slot
+// 50000002-0000-0000-0000-000000000001, watched from the same Winter dashboard.
+//
+// After the Bug 1 + Bug 2 fixes:
+//   • GET now moves the slot registered → registration_started and emits
+//     slot_status_update, so the in-progress counter increments for re-edits too.
+//   • Steps 3-6 always broadcast registrationCompleted: false while editing.
+//   • registration_update on completion includes the DB-accurate startedSlotsCount
+//     so the dashboard counter returns to 0 (not -1).
+//
+// Event sequence:
+//   1. GET /api/registration/[slotId]          → slot_status_update (registered→started)
+//   2. POST …/step  { step: 2 } (OTP verified) → registration_step_update (in-progress, false)
+//   3. POST …/step  { step: 3 } (name changed) → registration_step_update (still false)
+//   4. POST …/complete                         → registration_update  (re-confirmed)
+
+describe("Live dashboard – existing registration re-edit scenario (Winter stage)", () => {
+  let httpServer: http.Server;
+  let wss: WebSocketServer;
+  let wsUrl: string;
+
+  beforeAll(async () => {
+    httpServer = http.createServer();
+    wss = new WebSocketServer({ noServer: true });
+    setupWebSocketServer(wss);
+    (global as any).__broadcastToStage = broadcastToStage;
+    httpServer.on("upgrade", (req, socket, head) => {
+      wss.handleUpgrade(req, socket as import("net").Socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    });
+    await new Promise<void>((resolve) => httpServer.listen(0, resolve));
+    const port = (httpServer.address() as { port: number }).port;
+    wsUrl = `ws://localhost:${port}`;
+  });
+
+  afterAll(async () => {
+    await new Promise<void>((resolve) => wss.close(() => resolve()));
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    delete (global as any).__broadcastToStage;
+  });
+
+  it("opening the link emits slot_status_update — in-progress counter increments for re-edits", async () => {
+    const client = await subscribeClient(wsUrl, WINTER_STAGE);
+    const pending = nextMessage(client);
+
+    // GET /api/registration/[slotId] now moves registered → registration_started
+    broadcastSlotStatusUpdate({
+      type: "slot_status_update",
+      stageId: WINTER_STAGE,
+      openSlotsCount: 5,
+      startedSlotsCount: 1, // re-editing student now counted as in-progress
+    });
+
+    const message = (await pending) as any;
+    expect(message.type).toBe("slot_status_update");
+    expect(message.startedSlotsCount).toBe(1);
+    client.close();
+  });
+
+  it("receives four events (slot-started, step2, name-change, complete) with registrationCompleted: false during editing", async () => {
+    const originalCompletedAt = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+    const reEditUpdatedAt = new Date().toISOString();
+    const reConfirmedAt = new Date(Date.now() + 1000).toISOString();
+
+    const client = await subscribeClient(wsUrl, WINTER_STAGE);
+    const pending = collectMessages(client, 4);
+
+    // 1. Emma opens her link — slot registered → registration_started
+    broadcastSlotStatusUpdate({
+      type: "slot_status_update",
+      stageId: WINTER_STAGE,
+      openSlotsCount: 5,
+      startedSlotsCount: 1,
+    });
+
+    // 2. Emma re-authenticates via OTP — dashboard sees her as in-progress (not complete)
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: WINTER_STAGE,
+      registration: {
+        slotId: EMMA_SLOT_ID,
+        slotNumber: EMMA_SLOT_NUMBER,
+        studentName: "Emma Johnson",
+        studentEmail: "emma.johnson@student.edu",
+        completedAt: originalCompletedAt,
+        updatedAt: reEditUpdatedAt,
+        registrationCompleted: false,        // Bug 2 fix: always false while editing
+        teacherManagementLink: EMMA_TEACHER_LINK,
+      },
+    });
+
+    // 3. Emma changes her name — still in-progress
+    broadcastRegistrationStepUpdate({
+      type: "registration_step_update",
+      stageId: WINTER_STAGE,
+      registration: {
+        slotId: EMMA_SLOT_ID,
+        slotNumber: EMMA_SLOT_NUMBER,
+        studentName: "Emma J. Johnson",      // updated name
+        studentEmail: "emma.johnson@student.edu",
+        completedAt: originalCompletedAt,
+        updatedAt: new Date(Date.now() + 500).toISOString(),
+        registrationCompleted: false,        // still false while editing
+        teacherManagementLink: EMMA_TEACHER_LINK,
+      },
+    });
+
+    // 4. Emma re-submits — registration_update with DB-accurate startedSlotsCount
+    broadcastRegistrationUpdate({
+      type: "registration_update",
+      stageId: WINTER_STAGE,
+      registeredCount: 5,    // unchanged — Emma was already counted
+      openSlotsCount: 5,
+      startedSlotsCount: 0,  // slot moved back to registered → counter returns to 0
+      latestRegistration: {
+        studentName: "Emma J. Johnson",
+        slotNumber: EMMA_SLOT_NUMBER,
+        completedAt: reConfirmedAt,
+        teacherManagementLink: EMMA_TEACHER_LINK,
+      },
+    });
+
+    const [msg1, msg2, msg3, msg4] = (await pending) as any[];
+
+    // Event 1: in-progress counter increments when Emma opens her link
+    expect(msg1.type).toBe("slot_status_update");
+    expect(msg1.startedSlotsCount).toBe(1);
+
+    // Event 2: re-auth shows Emma as in-progress (registrationCompleted: false, not true)
+    expect(msg2.type).toBe("registration_step_update");
+    expect(msg2.registration.slotId).toBe(EMMA_SLOT_ID);
+    expect(msg2.registration.studentName).toBe("Emma Johnson");
+    expect(msg2.registration.registrationCompleted).toBe(false);
+
+    // Event 3: name change is immediately visible on the dashboard
+    expect(msg3.type).toBe("registration_step_update");
+    expect(msg3.registration.studentName).toBe("Emma J. Johnson");
+    expect(msg3.registration.registrationCompleted).toBe(false);
+
+    // Event 4: startedSlotsCount comes from DB (0), counter returns to 0 (not -1)
+    expect(msg4.type).toBe("registration_update");
+    expect(msg4.startedSlotsCount).toBe(0);
+    expect(msg4.registeredCount).toBe(5);
+    expect(msg4.latestRegistration.studentName).toBe("Emma J. Johnson");
+    expect(msg4.latestRegistration.slotNumber).toBe(EMMA_SLOT_NUMBER);
 
     client.close();
   });
