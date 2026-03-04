@@ -109,13 +109,6 @@ jobs:
     if: github.ref == 'refs/heads/master'
 
     steps:
-      - name: Debug - print SSH key fingerprint from secret
-        run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/k
-          chmod 600 /tmp/k
-          ssh-keygen -l -f /tmp/k
-          rm /tmp/k
-
       - name: Deploy on VM
         uses: appleboy/ssh-action@v1.2.0
         env:
