@@ -53,7 +53,7 @@ export async function POST(
   if (nextStage && nextStage.order > stage.order) {
     await db
       .update(stages)
-      .set({ status: "active", updatedAt: now })
+      .set({ startDate: now, status: "active", updatedAt: now })
       .where(eq(stages.id, nextStage.id));
   }
 

@@ -216,6 +216,21 @@ export default function RecruitmentDetailPage() {
     }
   }
 
+  async function activateStageNow(stage: Stage) {
+    if (!confirm(`Activate "${stage.name}" now? Its start date will be set to now.`)) return;
+    const sortedStages = [...(recruitment?.stages ?? [])].sort((a, b) => a.order - b.order);
+    const prevStage = sortedStages.findLast((s) => s.order < stage.order);
+    if (prevStage && prevStage.status === "active") {
+      // End the previous active stage — it will auto-activate this one with startDate=now
+      const res = await fetch(`/api/admin/stages/${prevStage.id}/end`, { method: "POST" });
+      if (res.ok) await fetchRecruitment();
+    } else {
+      // No active predecessor — directly activate this pending stage
+      const res = await fetch(`/api/admin/stages/${stage.id}/activate`, { method: "POST" });
+      if (res.ok) await fetchRecruitment();
+    }
+  }
+
   if (loading || !recruitment) {
     return <AdminLayout><p>Loading...</p></AdminLayout>;
   }
@@ -350,46 +365,55 @@ export default function RecruitmentDetailPage() {
             <p className="text-muted-foreground">{t("stages.noStages")}</p>
           ) : (
             <div className="space-y-3">
-              {recruitment.stages.map((stage) => (
-                <Card key={stage.id}>
-                  <CardContent className="pt-4 flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium">{stage.name}</span>
-                        <Badge variant={stageStatusColors[stage.status] || "default"}>
-                          {stage.status}
-                        </Badge>
-                        <Badge variant="outline">{stage.type}</Badge>
+              {(() => {
+                const sorted = [...recruitment.stages].sort((a, b) => a.order - b.order);
+                const firstPendingId = sorted.find((s) => s.status === "pending")?.id;
+                return sorted.map((stage) => (
+                  <Card key={stage.id}>
+                    <CardContent className="pt-4 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium">{stage.name}</span>
+                          <Badge variant={stageStatusColors[stage.status] || "default"}>
+                            {stage.status}
+                          </Badge>
+                          <Badge variant="outline">{stage.type}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {stage.type === "initial" && stage.status === "active" && (
-                        <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
-                          <Button size="sm" variant="outline">Live Dashboard</Button>
-                        </Link>
-                      )}
-                      {stage.status === "active" && (
-                        <Button size="sm" variant="outline" onClick={() => endStage(stage.id)}>
-                          End Stage
-                        </Button>
-                      )}
-                      {stage.type === "admin" && stage.status === "active" && (
-                        <Button size="sm" variant="destructive" onClick={() => completeStage(stage.id)}>
-                          Complete Stage
-                        </Button>
-                      )}
-                      {stage.type === "admin" && stage.status === "completed" && (
-                        <Link href={`/admin/recruitment/${id}/results/${stage.id}`}>
-                          <Button size="sm" variant="outline">{t("stages.viewResults")}</Button>
-                        </Link>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex gap-2">
+                        {stage.id === firstPendingId && (
+                          <Button size="sm" onClick={() => activateStageNow(stage)}>
+                            Activate Now
+                          </Button>
+                        )}
+                        {stage.type === "initial" && stage.status === "active" && (
+                          <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
+                            <Button size="sm" variant="outline">Live Dashboard</Button>
+                          </Link>
+                        )}
+                        {stage.status === "active" && (
+                          <Button size="sm" variant="outline" onClick={() => endStage(stage.id)}>
+                            End Stage
+                          </Button>
+                        )}
+                        {stage.type === "admin" && stage.status === "active" && (
+                          <Button size="sm" variant="destructive" onClick={() => completeStage(stage.id)}>
+                            Complete Stage
+                          </Button>
+                        )}
+                        {stage.type === "admin" && stage.status === "completed" && (
+                          <Link href={`/admin/recruitment/${id}/results/${stage.id}`}>
+                            <Button size="sm" variant="outline">{t("stages.viewResults")}</Button>
+                          </Link>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ));
+              })()}
             </div>
           )}
         </div>
