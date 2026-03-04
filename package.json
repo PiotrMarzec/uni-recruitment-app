@@ -12,6 +12,7 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "tsx --env-file=.env scripts/migrate.ts",
     "create-admin": "tsx --env-file=.env scripts/create-admin.ts",
+    "seed": "tsx --env-file=.env scripts/seed.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
