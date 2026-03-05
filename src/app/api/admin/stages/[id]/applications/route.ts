@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stages, registrations, users, slots, destinations, recruitments } from "@/db/schema";
+import {
+  stages,
+  registrations,
+  users,
+  slots,
+  destinations,
+  recruitments,
+  assignmentResults,
+} from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { eq, and } from "drizzle-orm";
-import { asc } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -78,6 +85,19 @@ export async function GET(
       .orderBy(asc(slots.number)),
   ]);
 
+  // Fetch current assignment results for this stage (keyed by registrationId)
+  const existingAssignments = await db
+    .select({
+      registrationId: assignmentResults.registrationId,
+      destinationId: assignmentResults.destinationId,
+    })
+    .from(assignmentResults)
+    .where(eq(assignmentResults.stageId, id));
+
+  const assignmentMap = new Map(
+    existingAssignments.map((a) => [a.registrationId, a.destinationId ?? null])
+  );
+
   function mapRow(row: (typeof completedRows)[number]) {
     const prefIds: string[] = JSON.parse(row.destinationPreferences || "[]");
     const langs: string[] = JSON.parse(row.spokenLanguages || "[]");
@@ -86,6 +106,8 @@ export async function GET(
       (avgResult ?? 0) * 3 +
       (row.additionalActivities ?? 0) +
       (row.recommendationLetters ?? 0);
+
+    const assignedDestId = assignmentMap.get(row.registrationId) ?? null;
 
     return {
       registrationId: row.registrationId,
@@ -101,6 +123,8 @@ export async function GET(
       additionalActivities: row.additionalActivities,
       recommendationLetters: row.recommendationLetters,
       score,
+      assignedDestinationId: assignedDestId,
+      assignedDestinationName: assignedDestId ? (destMap[assignedDestId] ?? null) : null,
     };
   }
 

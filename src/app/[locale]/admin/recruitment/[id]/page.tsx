@@ -400,9 +400,14 @@ export default function RecruitmentDetailPage() {
                           </Button>
                         )}
                         {stage.type === "admin" && stage.status === "active" && (
-                          <Link href={`/admin/recruitment/${id}/applications/${stage.id}`}>
-                            <Button size="sm">Review Applications</Button>
-                          </Link>
+                          <>
+                            <Link href={`/admin/recruitment/${id}/applications/${stage.id}`}>
+                              <Button size="sm">Review Applications</Button>
+                            </Link>
+                            <Button size="sm" variant="destructive" onClick={() => completeStage(stage.id)}>
+                              Complete Stage
+                            </Button>
+                          </>
                         )}
                         {stage.type === "admin" && stage.status === "completed" && (
                           <Link href={`/admin/recruitment/${id}/results/${stage.id}`}>

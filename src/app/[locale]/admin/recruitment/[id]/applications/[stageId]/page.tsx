@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useRouter } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +26,8 @@ interface Application {
   additionalActivities: number | null;
   recommendationLetters: number | null;
   score: number;
+  assignedDestinationId: string | null;
+  assignedDestinationName: string | null;
 }
 
 interface EditState {
@@ -44,7 +45,6 @@ type Tab = "completed" | "incomplete";
 
 export default function ApplicationsPage() {
   const params = useParams();
-  const router = useRouter();
   const recruitmentId = params.id as string;
   const stageId = params.stageId as string;
 
@@ -57,7 +57,8 @@ export default function ApplicationsPage() {
   const [activeTab, setActiveTab] = useState<Tab>("completed");
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
   const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
-  const [completing, setCompleting] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [lastAssignResult, setLastAssignResult] = useState<{ assigned: number; unassigned: number } | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -179,34 +180,19 @@ export default function ApplicationsPage() {
     }
   }
 
-  async function completeStage() {
-    if (!confirm("Complete this stage and run the assignment algorithm?")) return;
-    setCompleting(true);
+  async function assignStudents() {
+    setAssigning(true);
     try {
-      const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
+      const res = await fetch(`/api/admin/stages/${stageId}/assign`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        alert(`Stage completed! ${data.assigned} assigned, ${data.unassigned} unassigned.`);
-        router.push(`/admin/recruitment/${recruitmentId}`);
+        setLastAssignResult({ assigned: data.assigned, unassigned: data.unassigned });
+        await fetchApplications();
       }
     } finally {
-      setCompleting(false);
+      setAssigning(false);
     }
   }
-
-  const allScoresFilled = applications.every(
-    (a) =>
-      a.averageResult !== null &&
-      a.additionalActivities !== null &&
-      a.recommendationLetters !== null
-  );
-
-  const missingCount = applications.filter(
-    (a) =>
-      a.averageResult === null ||
-      a.additionalActivities === null ||
-      a.recommendationLetters === null
-  ).length;
 
   function renderGrid(rows: Application[], emptyMessage: string) {
     return (
@@ -224,6 +210,7 @@ export default function ApplicationsPage() {
               <th className="text-left p-3 font-medium">Activities</th>
               <th className="text-left p-3 font-medium">Letters</th>
               <th className="text-left p-3 font-medium">Score</th>
+              <th className="text-left p-3 font-medium">Assigned</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -371,6 +358,17 @@ export default function ApplicationsPage() {
                     <td className="p-3 font-mono text-muted-foreground align-top">
                       {app.score.toFixed(1)}
                     </td>
+                    <td className="p-3 align-top text-sm">
+                      {app.assignedDestinationName ? (
+                        <Badge variant="success" className="whitespace-nowrap">
+                          {app.assignedDestinationName}
+                        </Badge>
+                      ) : app.assignedDestinationId === null && lastAssignResult ? (
+                        <span className="text-amber-500 font-medium">Unassigned</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                     <td className="p-3 align-top">
                       <div className="flex flex-col gap-1">
                         <Button
@@ -469,6 +467,17 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="p-3 font-mono">{app.score.toFixed(1)}</td>
                   <td className="p-3">
+                    {app.assignedDestinationName ? (
+                      <Badge variant="success" className="whitespace-nowrap">
+                        {app.assignedDestinationName}
+                      </Badge>
+                    ) : app.assignedDestinationId === null && lastAssignResult ? (
+                      <span className="text-amber-500 font-medium text-sm">Unassigned</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
                     <Button size="sm" variant="outline" onClick={() => startEdit(app)}>
                       Edit
                     </Button>
@@ -500,24 +509,20 @@ export default function ApplicationsPage() {
           <p className="text-muted-foreground">{stageName}</p>
         </div>
         <div className="flex items-center gap-3">
-          {!allScoresFilled && missingCount > 0 && (
-            <p className="text-sm text-amber-600">
-              {missingCount} student{missingCount !== 1 ? "s" : ""} missing scores
+          {lastAssignResult && (
+            <p className="text-sm text-muted-foreground">
+              Last run: <span className="text-green-600 font-medium">{lastAssignResult.assigned} assigned</span>
+              {lastAssignResult.unassigned > 0 && (
+                <span className="text-amber-600 font-medium">, {lastAssignResult.unassigned} unassigned</span>
+              )}
             </p>
           )}
           <Button
-            variant="destructive"
-            onClick={completeStage}
-            disabled={completing || !allScoresFilled || editingRows.size > 0}
-            title={
-              !allScoresFilled
-                ? "All students must have scores before completing"
-                : editingRows.size > 0
-                ? "Save or cancel pending edits first"
-                : undefined
-            }
+            onClick={assignStudents}
+            disabled={assigning || editingRows.size > 0}
+            title={editingRows.size > 0 ? "Save or cancel pending edits first" : undefined}
           >
-            {completing ? "Completing..." : "Complete Stage"}
+            {assigning ? "Assigning..." : "Assign Students"}
           </Button>
         </div>
       </div>
