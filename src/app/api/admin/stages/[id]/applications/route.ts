@@ -37,32 +37,48 @@ export async function GET(
 
   const destMap = Object.fromEntries(allDestinations.map((d) => [d.id, d.name]));
 
-  const rows = await db
-    .select({
-      registrationId: registrations.id,
-      slotId: slots.id,
-      slotNumber: slots.number,
-      studentName: users.fullName,
-      enrollmentId: registrations.enrollmentId,
-      level: registrations.level,
-      spokenLanguages: registrations.spokenLanguages,
-      destinationPreferences: registrations.destinationPreferences,
-      averageResult: registrations.averageResult,
-      additionalActivities: registrations.additionalActivities,
-      recommendationLetters: registrations.recommendationLetters,
-    })
-    .from(registrations)
-    .innerJoin(users, eq(registrations.studentId, users.id))
-    .innerJoin(slots, eq(registrations.slotId, slots.id))
-    .where(
-      and(
-        eq(slots.recruitmentId, stage.recruitmentId),
-        eq(registrations.registrationCompleted, true)
-      )
-    )
-    .orderBy(asc(slots.number));
+  const selectFields = {
+    registrationId: registrations.id,
+    slotId: slots.id,
+    slotNumber: slots.number,
+    studentName: users.fullName,
+    enrollmentId: registrations.enrollmentId,
+    level: registrations.level,
+    spokenLanguages: registrations.spokenLanguages,
+    destinationPreferences: registrations.destinationPreferences,
+    averageResult: registrations.averageResult,
+    additionalActivities: registrations.additionalActivities,
+    recommendationLetters: registrations.recommendationLetters,
+  };
 
-  const applications = rows.map((row) => {
+  const [completedRows, incompleteRows] = await Promise.all([
+    db
+      .select(selectFields)
+      .from(registrations)
+      .innerJoin(users, eq(registrations.studentId, users.id))
+      .innerJoin(slots, eq(registrations.slotId, slots.id))
+      .where(
+        and(
+          eq(slots.recruitmentId, stage.recruitmentId),
+          eq(registrations.registrationCompleted, true)
+        )
+      )
+      .orderBy(asc(slots.number)),
+    db
+      .select(selectFields)
+      .from(registrations)
+      .innerJoin(users, eq(registrations.studentId, users.id))
+      .innerJoin(slots, eq(registrations.slotId, slots.id))
+      .where(
+        and(
+          eq(slots.recruitmentId, stage.recruitmentId),
+          eq(registrations.registrationCompleted, false)
+        )
+      )
+      .orderBy(asc(slots.number)),
+  ]);
+
+  function mapRow(row: (typeof completedRows)[number]) {
     const prefIds: string[] = JSON.parse(row.destinationPreferences || "[]");
     const langs: string[] = JSON.parse(row.spokenLanguages || "[]");
     const avgResult = row.averageResult !== null ? parseFloat(row.averageResult) : null;
@@ -86,11 +102,12 @@ export async function GET(
       recommendationLetters: row.recommendationLetters,
       score,
     };
-  });
+  }
 
   return NextResponse.json({
     stage,
-    applications,
+    applications: completedRows.map(mapRow),
+    incompleteApplications: incompleteRows.map(mapRow),
     destinations: allDestinations,
     maxDestinationChoices: recruitment?.maxDestinationChoices ?? 3,
   });

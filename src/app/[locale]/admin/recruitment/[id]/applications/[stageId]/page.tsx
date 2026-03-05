@@ -34,11 +34,13 @@ interface EditState {
   enrollmentId: string;
   level: string;
   spokenLanguages: string[];
-  destinationPrefs: string[]; // fixed-length array, empty string = no choice
+  destinationPrefs: string[];
   averageResult: string;
   additionalActivities: string;
   recommendationLetters: string;
 }
+
+type Tab = "completed" | "incomplete";
 
 export default function ApplicationsPage() {
   const params = useParams();
@@ -48,9 +50,11 @@ export default function ApplicationsPage() {
 
   const [stageName, setStageName] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
+  const [incompleteApplications, setIncompleteApplications] = useState<Application[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [maxDestChoices, setMaxDestChoices] = useState(3);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<Tab>("completed");
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
   const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
   const [completing, setCompleting] = useState(false);
@@ -67,6 +71,7 @@ export default function ApplicationsPage() {
         const data = await res.json();
         setStageName(data.stage.name);
         setApplications(data.applications);
+        setIncompleteApplications(data.incompleteApplications);
         setDestinations(data.destinations);
         setMaxDestChoices(data.maxDestinationChoices ?? 3);
       }
@@ -75,22 +80,23 @@ export default function ApplicationsPage() {
     }
   }
 
-  function startEdit(app: Application, maxChoices: number) {
+  function startEdit(app: Application) {
     const prefs = app.destinationPreferences;
-    const destPrefs = Array.from({ length: maxChoices }, (_, i) => prefs[i] ?? "");
-    const state: EditState = {
-      fullName: app.studentName,
-      enrollmentId: app.enrollmentId ?? "",
-      level: app.level ?? "bachelor",
-      spokenLanguages: [...app.spokenLanguages],
-      destinationPrefs: destPrefs,
-      averageResult: app.averageResult !== null ? String(app.averageResult) : "",
-      additionalActivities:
-        app.additionalActivities !== null ? String(app.additionalActivities) : "",
-      recommendationLetters:
-        app.recommendationLetters !== null ? String(app.recommendationLetters) : "",
-    };
-    setEditingRows((prev) => new Map(prev).set(app.registrationId, state));
+    const destPrefs = Array.from({ length: maxDestChoices }, (_, i) => prefs[i] ?? "");
+    setEditingRows((prev) =>
+      new Map(prev).set(app.registrationId, {
+        fullName: app.studentName,
+        enrollmentId: app.enrollmentId ?? "",
+        level: app.level ?? "bachelor",
+        spokenLanguages: [...app.spokenLanguages],
+        destinationPrefs: destPrefs,
+        averageResult: app.averageResult !== null ? String(app.averageResult) : "",
+        additionalActivities:
+          app.additionalActivities !== null ? String(app.additionalActivities) : "",
+        recommendationLetters:
+          app.recommendationLetters !== null ? String(app.recommendationLetters) : "",
+      })
+    );
   }
 
   function cancelEdit(registrationId: string) {
@@ -114,7 +120,6 @@ export default function ApplicationsPage() {
       const curr = prev.get(registrationId);
       if (!curr) return prev;
       const prefs = [...curr.destinationPrefs];
-      // Remove same value from other positions to avoid duplicates
       const deduped = prefs.map((p, j) =>
         j !== index && p === value && value !== "" ? "" : p
       );
@@ -135,9 +140,9 @@ export default function ApplicationsPage() {
     if (edit.enrollmentId !== (app.enrollmentId ?? "")) body.enrollmentId = edit.enrollmentId;
     if (edit.level !== (app.level ?? "bachelor")) body.level = edit.level;
 
-    const sortedOld = [...app.spokenLanguages].sort().join();
-    const sortedNew = [...edit.spokenLanguages].sort().join();
-    if (sortedOld !== sortedNew) body.spokenLanguages = edit.spokenLanguages;
+    if ([...edit.spokenLanguages].sort().join() !== [...app.spokenLanguages].sort().join()) {
+      body.spokenLanguages = edit.spokenLanguages;
+    }
 
     const newPrefs = edit.destinationPrefs.filter(Boolean);
     if (JSON.stringify(newPrefs) !== JSON.stringify(app.destinationPreferences)) {
@@ -203,48 +208,8 @@ export default function ApplicationsPage() {
       a.recommendationLetters === null
   ).length;
 
-  if (loading) {
-    return <AdminLayout><p>Loading...</p></AdminLayout>;
-  }
-
-  return (
-    <AdminLayout
-      breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
-        { label: "Recruitment", href: `/admin/recruitment/${recruitmentId}` },
-        { label: "Review Applications" },
-      ]}
-    >
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">Review Applications</h1>
-          <p className="text-muted-foreground">
-            {stageName} — {applications.length} student{applications.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {!allScoresFilled && missingCount > 0 && (
-            <p className="text-sm text-amber-600">
-              {missingCount} student{missingCount !== 1 ? "s" : ""} missing scores
-            </p>
-          )}
-          <Button
-            variant="destructive"
-            onClick={completeStage}
-            disabled={completing || !allScoresFilled || editingRows.size > 0}
-            title={
-              !allScoresFilled
-                ? "All students must have scores before completing"
-                : editingRows.size > 0
-                ? "Save or cancel pending edits first"
-                : undefined
-            }
-          >
-            {completing ? "Completing..." : "Complete Stage"}
-          </Button>
-        </div>
-      </div>
-
+  function renderGrid(rows: Application[], emptyMessage: string) {
+    return (
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-b">
@@ -263,14 +228,14 @@ export default function ApplicationsPage() {
             </tr>
           </thead>
           <tbody>
-            {applications.length === 0 && (
+            {rows.length === 0 && (
               <tr>
                 <td colSpan={11} className="p-8 text-center text-muted-foreground">
-                  No completed registrations yet
+                  {emptyMessage}
                 </td>
               </tr>
             )}
-            {applications.map((app) => {
+            {rows.map((app) => {
               const edit = editingRows.get(app.registrationId);
               const saving = savingRows.has(app.registrationId);
 
@@ -443,9 +408,7 @@ export default function ApplicationsPage() {
                   <td className="p-3 font-mono text-muted-foreground">#{app.slotNumber}</td>
                   <td className="p-3 font-medium">{app.studentName}</td>
                   <td className="p-3 font-mono">
-                    {app.enrollmentId ?? (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {app.enrollmentId ?? <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className="p-3">
                     {app.level ? (
@@ -506,11 +469,7 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="p-3 font-mono">{app.score.toFixed(1)}</td>
                   <td className="p-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEdit(app, maxDestChoices)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => startEdit(app)}>
                       Edit
                     </Button>
                   </td>
@@ -520,6 +479,85 @@ export default function ApplicationsPage() {
           </tbody>
         </table>
       </div>
+    );
+  }
+
+  if (loading) {
+    return <AdminLayout><p>Loading...</p></AdminLayout>;
+  }
+
+  return (
+    <AdminLayout
+      breadcrumbs={[
+        { label: "Dashboard", href: "/admin/dashboard" },
+        { label: "Recruitment", href: `/admin/recruitment/${recruitmentId}` },
+        { label: "Review Applications" },
+      ]}
+    >
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Review Applications</h1>
+          <p className="text-muted-foreground">{stageName}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {!allScoresFilled && missingCount > 0 && (
+            <p className="text-sm text-amber-600">
+              {missingCount} student{missingCount !== 1 ? "s" : ""} missing scores
+            </p>
+          )}
+          <Button
+            variant="destructive"
+            onClick={completeStage}
+            disabled={completing || !allScoresFilled || editingRows.size > 0}
+            title={
+              !allScoresFilled
+                ? "All students must have scores before completing"
+                : editingRows.size > 0
+                ? "Save or cancel pending edits first"
+                : undefined
+            }
+          >
+            {completing ? "Completing..." : "Complete Stage"}
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="border-b mb-6">
+        <nav className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("completed")}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === "completed"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Completed registrations
+            <span className="text-xs bg-muted rounded-full px-2 py-0.5">
+              {applications.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("incomplete")}
+            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === "incomplete"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Not completed registrations
+            <span className="text-xs bg-muted rounded-full px-2 py-0.5">
+              {incompleteApplications.length}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      {activeTab === "completed" &&
+        renderGrid(applications, "No completed registrations yet")}
+      {activeTab === "incomplete" &&
+        renderGrid(incompleteApplications, "No incomplete registrations")}
     </AdminLayout>
   );
 }
