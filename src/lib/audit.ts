@@ -79,6 +79,8 @@ export const ACTIONS = {
   OTP_ISSUED: "otp.issued",
   OTP_VERIFIED: "otp.verified",
   OTP_EXPIRED: "otp.expired",
+  // Admin
+  ADMIN_INVITED: "admin.invited",
   // Email
   EMAIL_SENT: "email.sent",
 } as const;

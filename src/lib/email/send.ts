@@ -176,6 +176,37 @@ export async function sendAssignmentUnassignedEmail(params: {
   }
 }
 
+export async function sendAdminInviteEmail(params: {
+  email: string;
+  fullName: string;
+  invitedByName: string;
+  adminUrl: string;
+}): Promise<EmailResult> {
+  try {
+    await sendEmail({
+      from: EMAIL_FROM,
+      to: params.email,
+      subject: "You've been invited to the admin panel",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+          <h2>Admin Panel Invitation</h2>
+          <p>Dear ${params.fullName},</p>
+          <p>${params.invitedByName} has granted you admin access to the University Recruitment platform.</p>
+          <div style="margin: 32px 0;">
+            <a href="${params.adminUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Access Admin Panel</a>
+          </div>
+          <p style="color: #71717a; font-size: 14px;">You can log in using this email address. A one-time code will be sent to you when you sign in.</p>
+        </div>
+      `,
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to send admin invite email:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 export async function sendSupplementaryStageEmail(params: {
   email: string;
   fullName: string;
