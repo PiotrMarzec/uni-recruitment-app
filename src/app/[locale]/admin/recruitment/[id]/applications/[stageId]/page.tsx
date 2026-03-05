@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ type Tab = "completed" | "incomplete";
 
 export default function ApplicationsPage() {
   const params = useParams();
+  const router = useRouter();
   const recruitmentId = params.id as string;
   const stageId = params.stageId as string;
 
@@ -53,11 +55,13 @@ export default function ApplicationsPage() {
   const [incompleteApplications, setIncompleteApplications] = useState<Application[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [maxDestChoices, setMaxDestChoices] = useState(3);
+  const [hasAssignments, setHasAssignments] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("completed");
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
   const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState(false);
+  const [completing, setCompleting] = useState(false);
   const [lastAssignResult, setLastAssignResult] = useState<{ assigned: number; unassigned: number } | null>(null);
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export default function ApplicationsPage() {
         setIncompleteApplications(data.incompleteApplications);
         setDestinations(data.destinations);
         setMaxDestChoices(data.maxDestinationChoices ?? 3);
+        setHasAssignments(data.hasAssignments ?? false);
       }
     } finally {
       setLoading(false);
@@ -191,6 +196,21 @@ export default function ApplicationsPage() {
       }
     } finally {
       setAssigning(false);
+    }
+  }
+
+  async function completeStage() {
+    if (!confirm("Complete this stage? The current assignments will be finalized.")) return;
+    setCompleting(true);
+    try {
+      const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
+      if (res.ok) {
+        const data = await res.json();
+        alert(`Stage completed! ${data.assigned} assigned, ${data.unassigned} unassigned.`);
+        router.push(`/admin/recruitment/${recruitmentId}`);
+      }
+    } finally {
+      setCompleting(false);
     }
   }
 
@@ -519,11 +539,20 @@ export default function ApplicationsPage() {
           )}
           <Button
             onClick={assignStudents}
-            disabled={assigning || editingRows.size > 0}
+            disabled={assigning || completing || editingRows.size > 0}
             title={editingRows.size > 0 ? "Save or cancel pending edits first" : undefined}
           >
             {assigning ? "Assigning..." : "Assign Students"}
           </Button>
+          {hasAssignments && (
+            <Button
+              variant="destructive"
+              onClick={completeStage}
+              disabled={completing || assigning || editingRows.size > 0}
+            >
+              {completing ? "Completing..." : "Complete Stage"}
+            </Button>
+          )}
         </div>
       </div>
 

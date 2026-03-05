@@ -134,5 +134,6 @@ export async function GET(
     incompleteApplications: incompleteRows.map(mapRow),
     destinations: allDestinations,
     maxDestinationChoices: recruitment?.maxDestinationChoices ?? 3,
+    hasAssignments: existingAssignments.length > 0,
   });
 }
