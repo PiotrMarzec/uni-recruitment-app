@@ -39,9 +39,9 @@ export default function AdminDashboardPage() {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    startDate: "",
-    endDate: "",
     maxDestinationChoices: 3,
+    initialStage: { name: "", startDate: "", endDate: "" },
+    adminStage: { name: "", startDate: "", endDate: "" },
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -78,9 +78,19 @@ export default function AdminDashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
-          startDate: new Date(form.startDate).toISOString(),
-          endDate: new Date(form.endDate).toISOString(),
+          name: form.name,
+          description: form.description,
+          maxDestinationChoices: form.maxDestinationChoices,
+          initialStage: {
+            name: form.initialStage.name,
+            startDate: new Date(form.initialStage.startDate).toISOString(),
+            endDate: new Date(form.initialStage.endDate).toISOString(),
+          },
+          adminStage: {
+            name: form.adminStage.name,
+            startDate: new Date(form.adminStage.startDate).toISOString(),
+            endDate: new Date(form.adminStage.endDate).toISOString(),
+          },
         }),
       });
 
@@ -91,7 +101,7 @@ export default function AdminDashboardPage() {
       }
 
       setCreateOpen(false);
-      setForm({ name: "", description: "", startDate: "", endDate: "", maxDestinationChoices: 3 });
+      setForm({ name: "", description: "", maxDestinationChoices: 3, initialStage: { name: "", startDate: "", endDate: "" }, adminStage: { name: "", startDate: "", endDate: "" } });
       await fetchRecruitments();
     } finally {
       setSaving(false);
@@ -187,58 +197,117 @@ export default function AdminDashboardPage() {
           <DialogTrigger asChild>
             <Button>{t("createRecruitment")}</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("createRecruitment")}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={createRecruitment} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={createRecruitment} className="space-y-6">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Start Date</Label>
+                  <Label>Name</Label>
                   <Input
-                    type="datetime-local"
-                    value={form.startDate}
-                    onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>End Date</Label>
+                  <Label>Description</Label>
+                  <Textarea
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Max Destination Choices</Label>
                   <Input
-                    type="datetime-local"
-                    value={form.endDate}
-                    onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+                    type="number"
+                    min={1}
+                    value={form.maxDestinationChoices}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, maxDestinationChoices: parseInt(e.target.value) }))
+                    }
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label>Max Destination Choices</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={form.maxDestinationChoices}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, maxDestinationChoices: parseInt(e.target.value) }))
-                  }
-                  required
-                />
+
+              <div className="space-y-3 rounded-lg border p-4">
+                <p className="text-sm font-medium">Initial Stage</p>
+                <div className="space-y-2">
+                  <Label>Stage Name</Label>
+                  <Input
+                    value={form.initialStage.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, initialStage: { ...f.initialStage, name: e.target.value } }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.initialStage.startDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, initialStage: { ...f.initialStage, startDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.initialStage.endDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, initialStage: { ...f.initialStage, endDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                </div>
               </div>
+
+              <div className="space-y-3 rounded-lg border p-4">
+                <p className="text-sm font-medium">Admin Stage</p>
+                <div className="space-y-2">
+                  <Label>Stage Name</Label>
+                  <Input
+                    value={form.adminStage.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, adminStage: { ...f.adminStage, name: e.target.value } }))
+                    }
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.adminStage.startDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, adminStage: { ...f.adminStage, startDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.adminStage.endDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, adminStage: { ...f.adminStage, endDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
               {error && <p className="text-sm text-destructive">{error}</p>}
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
