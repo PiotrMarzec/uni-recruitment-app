@@ -69,7 +69,7 @@ export default function RecruitmentDetailPage() {
   const t = useTranslations("admin.recruitment");
   const tc = useTranslations("common");
 
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<Tab>("stages");
   const [recruitment, setRecruitment] = useState<Recruitment | null>(null);
   const [loading, setLoading] = useState(true);
 
