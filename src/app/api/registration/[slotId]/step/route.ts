@@ -217,7 +217,6 @@ export async function POST(
     finalSession.userId = user.id;
     finalSession.email = user.email;
     finalSession.name = user.fullName;
-    finalSession.isAdmin = false;
     await finalSession.save();
 
     await logAuditEvent({

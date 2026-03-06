@@ -10,7 +10,7 @@ import {
 } from "@/db/schema";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendRegistrationCompletedEmail } from "@/lib/email/send";
-import { getSessionFromRequest } from "@/lib/auth/session";
+import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
 import { broadcastRegistrationUpdate, broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
 import { eq, and, count, desc, isNotNull } from "drizzle-orm";
@@ -22,7 +22,7 @@ export async function POST(
   const { slotId } = await params;
 
   const authRes = NextResponse.json({});
-  const session = await getSessionFromRequest(req, authRes);
+  const session = await getRegistrationSessionFromRequest(req, authRes);
 
   if (!session.userId) {
     return NextResponse.json({ error: "Authentication required" }, { status: 401 });

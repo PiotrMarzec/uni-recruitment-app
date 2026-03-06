@@ -13,7 +13,6 @@ export interface RegistrationSessionData {
   userId?: string;
   email?: string;
   name?: string;
-  isAdmin?: boolean;
   pendingEmail?: string;
   emailConsent?: boolean;
   privacyConsent?: boolean;
@@ -28,6 +27,21 @@ const sessionOptions = {
     httpOnly: true,
     sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 7, // 7 days
+  },
+};
+
+// Separate cookie for student registration sessions so they never collide with
+// the admin session. Without this, completing registration step 2 (which sets
+// isAdmin: false) would overwrite an admin's session when both are open in the
+// same browser.
+const registrationSessionOptions = {
+  password: process.env.SESSION_SECRET || "fallback-dev-secret-32-characters!!",
+  cookieName: "reg_session",
+  cookieOptions: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24, // 1 day — registration sessions are short-lived
   },
 };
 
@@ -52,7 +66,7 @@ export async function getRegistrationSessionFromRequest(
   req: NextRequest,
   res: NextResponse
 ): Promise<IronSession<RegistrationSessionData>> {
-  const session = await getIronSession<RegistrationSessionData>(req, res, sessionOptions);
+  const session = await getIronSession<RegistrationSessionData>(req, res, registrationSessionOptions);
   return session;
 }
 
