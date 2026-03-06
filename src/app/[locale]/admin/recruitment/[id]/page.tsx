@@ -237,6 +237,13 @@ export default function RecruitmentDetailPage() {
 
   const tabs: Tab[] = ["overview", "stages", "slots", "destinations"];
 
+  const tabLabels: Record<Tab, string> = {
+    overview: t("tabs.overview"),
+    stages: `${t("tabs.stages")} (${recruitment.stages.length})`,
+    slots: `${t("tabs.slots")} (${recruitment.slots.filter((s) => s.status !== "open").length}/${recruitment.slots.length})`,
+    destinations: `${t("tabs.destinations")} (${recruitment.destinations.length})`,
+  };
+
   return (
     <AdminLayout
       breadcrumbs={[
@@ -262,7 +269,7 @@ export default function RecruitmentDetailPage() {
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t(`tabs.${tab}`)}
+              {tabLabels[tab]}
             </button>
           ))}
         </nav>
