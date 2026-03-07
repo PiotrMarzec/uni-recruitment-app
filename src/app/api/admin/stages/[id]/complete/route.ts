@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stages, stageEnrollments, registrations, slots } from "@/db/schema";
+import {
+  stages,
+  stageEnrollments,
+  registrations,
+  slots,
+  assignmentResults,
+  users,
+  destinations,
+} from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
-import { eq, and } from "drizzle-orm";
+import {
+  sendAssignmentApprovedEmail,
+  sendAssignmentUnassignedEmail,
+} from "@/lib/email/send";
+import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -57,11 +69,101 @@ export async function POST(
       .onConflictDoNothing();
   }
 
+  const now = new Date();
+
   // Mark stage as completed
   await db
     .update(stages)
-    .set({ status: "completed", updatedAt: new Date() })
+    .set({ status: "completed", endDate: now, updatedAt: now })
     .where(eq(stages.id, id));
+
+  // Auto-approve all assignment results for this stage
+  await db
+    .update(assignmentResults)
+    .set({ approved: true })
+    .where(eq(assignmentResults.stageId, id));
+
+  // Fetch results with student and destination info for emails
+  const results = await db
+    .select({
+      id: assignmentResults.id,
+      registrationId: assignmentResults.registrationId,
+      destinationId: assignmentResults.destinationId,
+      studentName: users.fullName,
+      studentEmail: users.email,
+      destinationName: destinations.name,
+      destinationDescription: destinations.description,
+    })
+    .from(assignmentResults)
+    .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
+    .innerJoin(users, eq(registrations.studentId, users.id))
+    .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
+    .where(eq(assignmentResults.stageId, id));
+
+  // Determine students previously assigned in an earlier stage (skip re-sending email)
+  const registrationIds = results.map((r) => r.registrationId);
+  const previouslyAssigned = new Set<string>();
+  if (registrationIds.length > 0) {
+    const previousAssignments = await db
+      .select({
+        registrationId: assignmentResults.registrationId,
+        registrationCompletedAt: registrations.registrationCompletedAt,
+        stageEndDate: stages.endDate,
+      })
+      .from(assignmentResults)
+      .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
+      .innerJoin(stages, eq(assignmentResults.stageId, stages.id))
+      .where(
+        and(
+          inArray(assignmentResults.registrationId, registrationIds),
+          ne(assignmentResults.stageId, id),
+          eq(assignmentResults.approved, true),
+          isNotNull(assignmentResults.destinationId)
+        )
+      );
+    for (const row of previousAssignments) {
+      if (row.registrationCompletedAt && row.stageEndDate && row.registrationCompletedAt > row.stageEndDate) {
+        continue;
+      }
+      previouslyAssigned.add(row.registrationId);
+    }
+  }
+
+  // Send emails to newly assigned/unassigned students
+  let emailsSent = 0;
+  for (const result of results) {
+    if (previouslyAssigned.has(result.registrationId)) continue;
+    if (result.destinationId && result.destinationName) {
+      await sendAssignmentApprovedEmail({
+        email: result.studentEmail,
+        fullName: result.studentName,
+        recruitmentName: stage.name,
+        destinationName: result.destinationName,
+        destinationDescription: result.destinationDescription || "",
+      });
+    } else {
+      await sendAssignmentUnassignedEmail({
+        email: result.studentEmail,
+        fullName: result.studentName,
+        recruitmentName: stage.name,
+      });
+    }
+    emailsSent++;
+  }
+
+  // Find the next pending stage
+  const [nextStage] = await db
+    .select({ id: stages.id, name: stages.name })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.status, "pending"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
 
   await logAuditEvent({
     actorType: "admin",
@@ -71,9 +173,9 @@ export async function POST(
     resourceType: "stage",
     resourceId: id,
     recruitmentId: stage.recruitmentId,
-    details: {},
+    details: { emailsSent, totalResults: results.length },
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, emailsSent, nextStage: nextStage ?? null });
 }
