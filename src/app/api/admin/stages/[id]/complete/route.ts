@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { stages, stageEnrollments, registrations, slots } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { runAssignmentAlgorithm } from "@/lib/algorithm/assignment";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { eq, and } from "drizzle-orm";
 
@@ -58,9 +57,6 @@ export async function POST(
       .onConflictDoNothing();
   }
 
-  // Run assignment algorithm
-  const result = await runAssignmentAlgorithm(id);
-
   // Mark stage as completed
   await db
     .update(stages)
@@ -75,13 +71,9 @@ export async function POST(
     resourceType: "stage",
     resourceId: id,
     recruitmentId: stage.recruitmentId,
-    details: { assigned: result.assigned, unassigned: result.unassigned },
+    details: {},
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({
-    success: true,
-    assigned: result.assigned,
-    unassigned: result.unassigned,
-  });
+  return NextResponse.json({ success: true });
 }

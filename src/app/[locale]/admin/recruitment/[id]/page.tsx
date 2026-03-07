@@ -199,11 +199,9 @@ export default function RecruitmentDetailPage() {
   }
 
   async function completeStage(stageId: string) {
-    if (!confirm("Complete this stage and run the assignment algorithm?")) return;
+    if (!confirm("Complete this stage?")) return;
     const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
     if (res.ok) {
-      const data = await res.json();
-      alert(`Assignment complete: ${data.assigned} assigned, ${data.unassigned} unassigned`);
       await fetchRecruitment();
     }
   }

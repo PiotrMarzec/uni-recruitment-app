@@ -294,8 +294,7 @@ export default function ApplicationsPage() {
     try {
       const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
       if (res.ok) {
-        const data = await res.json();
-        alert(`Stage completed! ${data.assigned} assigned, ${data.unassigned} unassigned.`);
+        alert("Stage completed!");
         router.push(`/admin/recruitment/${recruitmentId}`);
       }
     } finally {
