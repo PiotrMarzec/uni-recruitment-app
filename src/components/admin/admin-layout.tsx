@@ -1,9 +1,37 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Link, useRouter } from "@/i18n/navigation";
+import { useTranslations, useLocale } from "next-intl";
+import { Link, useRouter, usePathname } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
-import { usePathname } from "@/i18n/navigation";
+
+const LOCALE_LABELS: Record<string, string> = {
+  en: "EN", pl: "PL", de: "DE", fr: "FR", es: "ES", it: "IT",
+};
+
+function LanguageSwitcher() {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (
+    <div className="flex gap-1">
+      {routing.locales.map((loc) => (
+        <button
+          key={loc}
+          onClick={() => router.replace(pathname, { locale: loc })}
+          className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+            loc === locale
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          {LOCALE_LABELS[loc]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -29,6 +57,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
             University Recruitment
           </Link>
           <nav className="flex items-center gap-4">
+            <LanguageSwitcher />
             <Link
               href="/admin/audit"
               className="text-sm text-muted-foreground hover:text-foreground"
