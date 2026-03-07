@@ -1,9 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ClipboardList, UserPlus, LogOut } from "lucide-react";
 
 const LOCALE_LABELS: Record<string, string> = {
   en: "EN", pl: "PL", de: "DE", fr: "FR", es: "ES", it: "IT",
@@ -40,12 +51,42 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
   const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const router = useRouter();
   const pathname = usePathname();
+
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ email: "", fullName: "" });
+  const [inviteSaving, setInviteSaving] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/admin/login");
+  }
+
+  async function inviteAdmin(e: React.FormEvent) {
+    e.preventDefault();
+    setInviteError("");
+    setInviteSuccess(false);
+    setInviteSaving(true);
+    try {
+      const res = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inviteForm),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setInviteError(data.error || "Failed to invite admin");
+        return;
+      }
+      setInviteSuccess(true);
+      setInviteForm({ email: "", fullName: "" });
+    } finally {
+      setInviteSaving(false);
+    }
   }
 
   return (
@@ -58,14 +99,68 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
           </Link>
           <nav className="flex items-center gap-4">
             <LanguageSwitcher />
-            <Link
-              href="/admin/audit"
-              className="text-sm text-muted-foreground hover:text-foreground"
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/admin/audit"><ClipboardList className="w-4 h-4 mr-2" />Audit Log</Link>
+            </Button>
+            <Dialog
+              open={inviteOpen}
+              onOpenChange={(open) => {
+                setInviteOpen(open);
+                if (!open) {
+                  setInviteError("");
+                  setInviteSuccess(false);
+                  setInviteForm({ email: "", fullName: "" });
+                }
+              }}
             >
-              Audit Log
-            </Link>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm"><UserPlus className="w-4 h-4 mr-2" />Invite New Admin</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Invite New Admin</DialogTitle>
+                </DialogHeader>
+                {inviteSuccess ? (
+                  <div className="py-4 text-center space-y-4">
+                    <p className="text-sm text-green-600">Invitation sent successfully.</p>
+                    <Button onClick={() => setInviteOpen(false)}>Close</Button>
+                  </div>
+                ) : (
+                  <form onSubmit={inviteAdmin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Full Name</Label>
+                      <Input
+                        value={inviteForm.fullName}
+                        onChange={(e) => setInviteForm((f) => ({ ...f, fullName: e.target.value }))}
+                        placeholder="Jane Smith"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Email Address</Label>
+                      <Input
+                        type="email"
+                        value={inviteForm.email}
+                        onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))}
+                        placeholder="jane@example.com"
+                        required
+                      />
+                    </div>
+                    {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>
+                        {tc("cancel")}
+                      </Button>
+                      <Button type="submit" disabled={inviteSaving}>
+                        {inviteSaving ? tc("loading") : "Send Invite"}
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
-              {t("login.logout")}
+              <LogOut className="w-4 h-4 mr-2" />{t("login.logout")}
             </Button>
           </nav>
         </div>

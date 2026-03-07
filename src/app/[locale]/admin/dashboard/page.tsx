@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
+
 interface Recruitment {
   id: string;
   name: string;
@@ -45,12 +46,6 @@ export default function AdminDashboardPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: "", fullName: "" });
-  const [inviteSaving, setInviteSaving] = useState(false);
-  const [inviteError, setInviteError] = useState("");
-  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   useEffect(() => {
     fetchRecruitments();
@@ -108,91 +103,11 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function inviteAdmin(e: React.FormEvent) {
-    e.preventDefault();
-    setInviteError("");
-    setInviteSuccess(false);
-    setInviteSaving(true);
-    try {
-      const res = await fetch("/api/admin/admins", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inviteForm),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setInviteError(data.error || "Failed to invite admin");
-        return;
-      }
-      setInviteSuccess(true);
-      setInviteForm({ email: "", fullName: "" });
-    } finally {
-      setInviteSaving(false);
-    }
-  }
-
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-bold">{t("title")}</h1>
         <div className="flex items-center gap-2">
-          <Dialog
-            open={inviteOpen}
-            onOpenChange={(open) => {
-              setInviteOpen(open);
-              if (!open) {
-                setInviteError("");
-                setInviteSuccess(false);
-                setInviteForm({ email: "", fullName: "" });
-              }
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button variant="outline">Invite Admin</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Invite Admin</DialogTitle>
-              </DialogHeader>
-              {inviteSuccess ? (
-                <div className="py-4 text-center space-y-4">
-                  <p className="text-sm text-green-600">Invitation sent successfully.</p>
-                  <Button onClick={() => setInviteOpen(false)}>Close</Button>
-                </div>
-              ) : (
-                <form onSubmit={inviteAdmin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input
-                      value={inviteForm.fullName}
-                      onChange={(e) => setInviteForm((f) => ({ ...f, fullName: e.target.value }))}
-                      placeholder="Jane Smith"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email Address</Label>
-                    <Input
-                      type="email"
-                      value={inviteForm.email}
-                      onChange={(e) => setInviteForm((f) => ({ ...f, email: e.target.value }))}
-                      placeholder="jane@example.com"
-                      required
-                    />
-                  </div>
-                  {inviteError && <p className="text-sm text-destructive">{inviteError}</p>}
-                  <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setInviteOpen(false)}>
-                      {tc("cancel")}
-                    </Button>
-                    <Button type="submit" disabled={inviteSaving}>
-                      {inviteSaving ? tc("loading") : "Send Invite"}
-                    </Button>
-                  </div>
-                </form>
-              )}
-            </DialogContent>
-          </Dialog>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button>{t("createRecruitment")}</Button>
