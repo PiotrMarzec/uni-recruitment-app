@@ -181,7 +181,8 @@
       "emailConsentLabel": "Consiento recibir correos electrónicos sobre este reclutamiento",
       "privacyLabel": "He leído y acepto la Política de Privacidad",
       "privacyLink": "Política de Privacidad",
-      "sendCode": "Enviar código de verificación"
+      "sendCode": "Enviar código de verificación",
+      "emailLockedNote": "La dirección de correo electrónico está bloqueada. Verifique su identidad con el código enviado a este correo para continuar editando."
     },
     "step2": {
       "title": "Verificación de correo electrónico",
@@ -198,7 +199,8 @@
       "namePlaceholder": "Tu nombre completo",
       "enrollmentLabel": "Número de matrícula universitaria",
       "enrollmentPlaceholder": "Número de 6 dígitos (ej: 123456)",
-      "enrollmentHelp": "Número de 6 dígitos, no debe empezar por 0"
+      "enrollmentHelp": "Número de 6 dígitos, no debe empezar por 0",
+      "nameLockedNote": "El nombre está bloqueado. Complete la verificación de correo electrónico para editar."
     },
     "step4": {
       "title": "Nivel de estudios",

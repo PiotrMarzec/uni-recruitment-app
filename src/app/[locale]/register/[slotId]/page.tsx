@@ -72,6 +72,9 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [stepError, setStepError] = useState("");
   const [assignmentLossConfirmed, setAssignmentLossConfirmed] = useState(false);
+  // True once the student completes OTP verification in this page session.
+  // Prevents changing email/name without re-verifying when a registration already exists.
+  const [emailVerifiedThisSession, setEmailVerifiedThisSession] = useState(false);
 
   useEffect(() => {
     loadSlotInfo();
@@ -179,7 +182,10 @@ export default function RegisterPage() {
   async function handleStep2(e: React.FormEvent) {
     e.preventDefault();
     const ok = await submitStep(2, { email, code: otpCode });
-    if (ok) setCurrentStep(3);
+    if (ok) {
+      setEmailVerifiedThisSession(true);
+      setCurrentStep(3);
+    }
   }
 
   async function handleStep3(e: React.FormEvent) {
@@ -382,7 +388,12 @@ export default function RegisterPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    readOnly={!!slotInfo?.student}
+                    className={slotInfo?.student ? "bg-muted text-muted-foreground cursor-not-allowed" : ""}
                   />
+                  {slotInfo?.student && (
+                    <p className="text-xs text-muted-foreground">{t("step1.emailLockedNote")}</p>
+                  )}
                 </div>
                 <label className="flex items-start gap-2 cursor-pointer">
                   <input
@@ -466,7 +477,12 @@ export default function RegisterPage() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
+                    readOnly={!!slotInfo?.student && !emailVerifiedThisSession}
+                    className={slotInfo?.student && !emailVerifiedThisSession ? "bg-muted text-muted-foreground cursor-not-allowed" : ""}
                   />
+                  {slotInfo?.student && !emailVerifiedThisSession && (
+                    <p className="text-xs text-muted-foreground">{t("step3.nameLockedNote")}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>{t("step3.enrollmentLabel")}</Label>

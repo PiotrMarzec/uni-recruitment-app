@@ -181,7 +181,8 @@
       "emailConsentLabel": "Wyrażam zgodę na otrzymywanie e-maili dotyczących tej rekrutacji",
       "privacyLabel": "Zapoznałem/am się i akceptuję Politykę prywatności",
       "privacyLink": "Politykę prywatności",
-      "sendCode": "Wyślij kod weryfikacyjny"
+      "sendCode": "Wyślij kod weryfikacyjny",
+      "emailLockedNote": "Adres e-mail jest zablokowany. Zweryfikuj swoją tożsamość kodem wysłanym na ten adres, aby kontynuować edycję."
     },
     "step2": {
       "title": "Weryfikacja e-maila",
@@ -198,7 +199,8 @@
       "namePlaceholder": "Twoje imię i nazwisko",
       "enrollmentLabel": "Numer albumu",
       "enrollmentPlaceholder": "6-cyfrowy numer (np. 123456)",
-      "enrollmentHelp": "6-cyfrowy numer, nie może zaczynać się od 0"
+      "enrollmentHelp": "6-cyfrowy numer, nie może zaczynać się od 0",
+      "nameLockedNote": "Imię i nazwisko jest zablokowane. Najpierw zweryfikuj adres e-mail, aby edytować."
     },
     "step4": {
       "title": "Poziom studiów",

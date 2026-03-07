@@ -130,6 +130,23 @@ export async function POST(
   const data = parsed.data;
 
   if (data.step === 1) {
+    // If this slot already has a verified student, reject attempts to switch to a different email.
+    // The registered student must re-verify using their original email address.
+    if (slot.studentId) {
+      const [existingStudent] = await db
+        .select({ email: users.email })
+        .from(users)
+        .where(eq(users.id, slot.studentId))
+        .limit(1);
+
+      if (existingStudent && existingStudent.email !== data.email.toLowerCase()) {
+        return NextResponse.json(
+          { error: "This slot is registered to a different email address. Please use the original email." },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check privacy consent
     if (!data.privacyConsent) {
       return NextResponse.json({ error: "Privacy consent is required" }, { status: 400 });

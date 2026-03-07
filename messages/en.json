@@ -181,7 +181,8 @@
       "emailConsentLabel": "I consent to receiving emails about this recruitment",
       "privacyLabel": "I have read and agree to the Privacy Policy",
       "privacyLink": "Privacy Policy",
-      "sendCode": "Send verification code"
+      "sendCode": "Send verification code",
+      "emailLockedNote": "Email address is locked. Verify your identity via the code sent to this email to continue editing."
     },
     "step2": {
       "title": "Email Verification",
@@ -198,7 +199,8 @@
       "namePlaceholder": "Your full name",
       "enrollmentLabel": "University enrollment ID",
       "enrollmentPlaceholder": "6-digit ID (e.g. 123456)",
-      "enrollmentHelp": "6-digit number, must not start with 0"
+      "enrollmentHelp": "6-digit number, must not start with 0",
+      "nameLockedNote": "Name is locked. Please complete email verification to edit."
     },
     "step4": {
       "title": "Study Level",

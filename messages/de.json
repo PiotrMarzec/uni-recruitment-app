@@ -181,7 +181,8 @@
       "emailConsentLabel": "Ich stimme dem Erhalt von E-Mails zu dieser Rekrutierung zu",
       "privacyLabel": "Ich habe die Datenschutzrichtlinie gelesen und stimme zu",
       "privacyLink": "Datenschutzrichtlinie",
-      "sendCode": "Bestätigungscode senden"
+      "sendCode": "Bestätigungscode senden",
+      "emailLockedNote": "Die E-Mail-Adresse ist gesperrt. Verifizieren Sie Ihre Identität mit dem an diese Adresse gesendeten Code, um die Bearbeitung fortzusetzen."
     },
     "step2": {
       "title": "E-Mail-Verifizierung",
@@ -198,7 +199,8 @@
       "namePlaceholder": "Ihr vollständiger Name",
       "enrollmentLabel": "Matrikelnummer",
       "enrollmentPlaceholder": "6-stellige Nummer (z.B. 123456)",
-      "enrollmentHelp": "6-stellige Zahl, darf nicht mit 0 beginnen"
+      "enrollmentHelp": "6-stellige Zahl, darf nicht mit 0 beginnen",
+      "nameLockedNote": "Name ist gesperrt. Bitte schließen Sie die E-Mail-Verifizierung ab, um zu bearbeiten."
     },
     "step4": {
       "title": "Studienstufe",

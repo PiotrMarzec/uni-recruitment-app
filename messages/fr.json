@@ -181,7 +181,8 @@
       "emailConsentLabel": "Je consens à recevoir des e-mails concernant ce recrutement",
       "privacyLabel": "J'ai lu et j'accepte la Politique de confidentialité",
       "privacyLink": "Politique de confidentialité",
-      "sendCode": "Envoyer le code de vérification"
+      "sendCode": "Envoyer le code de vérification",
+      "emailLockedNote": "L'adresse e-mail est verrouillée. Vérifiez votre identité avec le code envoyé à cet e-mail pour continuer à modifier."
     },
     "step2": {
       "title": "Vérification de l'e-mail",
@@ -198,7 +199,8 @@
       "namePlaceholder": "Votre nom complet",
       "enrollmentLabel": "Numéro d'étudiant",
       "enrollmentPlaceholder": "Numéro à 6 chiffres (ex: 123456)",
-      "enrollmentHelp": "Nombre à 6 chiffres, ne doit pas commencer par 0"
+      "enrollmentHelp": "Nombre à 6 chiffres, ne doit pas commencer par 0",
+      "nameLockedNote": "Le nom est verrouillé. Veuillez compléter la vérification par e-mail pour modifier."
     },
     "step4": {
       "title": "Niveau d'études",
