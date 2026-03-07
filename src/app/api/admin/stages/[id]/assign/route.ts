@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stages, stageEnrollments, registrations, slots } from "@/db/schema";
+import { stages, stageEnrollments, registrations, slots, destinations, assignmentResults } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { runAssignmentAlgorithm } from "@/lib/algorithm/assignment";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { broadcastApplicationAssignmentsUpdate } from "@/lib/websocket/events";
 import { eq, and } from "drizzle-orm";
 
 export async function POST(
@@ -74,6 +75,35 @@ export async function POST(
     recruitmentId: stage.recruitmentId,
     details: { assigned: result.assigned, unassigned: result.unassigned },
     ipAddress: getIpAddress(req),
+  });
+
+  // Broadcast updated assignment results so clients can refresh the Assigned column in-place
+  const [newAssignments, allDestinations] = await Promise.all([
+    db
+      .select({
+        registrationId: assignmentResults.registrationId,
+        destinationId: assignmentResults.destinationId,
+      })
+      .from(assignmentResults)
+      .where(eq(assignmentResults.stageId, id)),
+    db
+      .select({ id: destinations.id, name: destinations.name })
+      .from(destinations)
+      .where(eq(destinations.recruitmentId, stage.recruitmentId)),
+  ]);
+  const destMap = Object.fromEntries(allDestinations.map((d) => [d.id, d.name]));
+
+  broadcastApplicationAssignmentsUpdate({
+    type: "application_assignments_update",
+    stageId: id,
+    assignments: newAssignments.map((a) => ({
+      registrationId: a.registrationId,
+      assignedDestinationId: a.destinationId ?? null,
+      assignedDestinationName: a.destinationId ? (destMap[a.destinationId] ?? null) : null,
+    })),
+    assigned: result.assigned,
+    unassigned: result.unassigned,
+    hasAssignments: newAssignments.length > 0,
   });
 
   return NextResponse.json({

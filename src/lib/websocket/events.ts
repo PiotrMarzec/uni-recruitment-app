@@ -69,3 +69,54 @@ export function broadcastStageCompleted(stageId: string): void {
     stageId,
   });
 }
+
+// Sent when a single registration row is edited by an admin.
+// The full updated application data is included so clients can patch the row
+// in-place without reloading the entire grid.
+export interface ApplicationRowUpdateEvent {
+  type: "application_row_update";
+  stageId: string;
+  application: {
+    registrationId: string;
+    slotNumber: number;
+    studentName: string;
+    enrollmentId: string | null;
+    level: "bachelor" | "master" | null;
+    spokenLanguages: string[];
+    destinationPreferences: string[];
+    destinationNames: string[];
+    averageResult: number | null;
+    additionalActivities: number | null;
+    recommendationLetters: number | null;
+    score: number;
+    assignedDestinationId: string | null;
+    assignedDestinationName: string | null;
+    registrationCompleted: boolean;
+  };
+}
+
+export function broadcastApplicationRowUpdate(event: ApplicationRowUpdateEvent): void {
+  broadcastToStage(event.stageId, event);
+}
+
+// Sent when the assignment algorithm is run.
+// Contains the updated assignment for every registration so the Assigned column
+// can be refreshed without touching any other field.
+export interface ApplicationAssignmentsUpdateEvent {
+  type: "application_assignments_update";
+  stageId: string;
+  assignments: Array<{
+    registrationId: string;
+    assignedDestinationId: string | null;
+    assignedDestinationName: string | null;
+  }>;
+  assigned: number;
+  unassigned: number;
+  hasAssignments: boolean;
+}
+
+export function broadcastApplicationAssignmentsUpdate(
+  event: ApplicationAssignmentsUpdateEvent
+): void {
+  broadcastToStage(event.stageId, event);
+}

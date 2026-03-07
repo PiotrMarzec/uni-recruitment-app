@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { registrations, users, slots } from "@/db/schema";
+import { registrations, users, slots, stages, destinations, assignmentResults } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { broadcastApplicationRowUpdate } from "@/lib/websocket/events";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 const updateSchema = z.object({
   fullName: z.string().min(1).max(255).optional(),
@@ -122,6 +123,92 @@ export async function PATCH(
     details: { before, after },
     ipAddress: getIpAddress(req),
   });
+
+  // Broadcast the full updated row to all admin clients watching this stage's applications grid
+  if (slot?.recruitmentId) {
+    // Resolve final field values (merge updates onto existing data)
+    const [updatedUser] = await db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, existingReg.studentId!))
+      .limit(1);
+
+    const finalAvgResult =
+      data.averageResult !== undefined
+        ? data.averageResult
+        : existingReg.averageResult !== null
+        ? parseFloat(existingReg.averageResult)
+        : null;
+    const finalActivities =
+      data.additionalActivities !== undefined
+        ? data.additionalActivities
+        : existingReg.additionalActivities;
+    const finalLetters =
+      data.recommendationLetters !== undefined
+        ? data.recommendationLetters
+        : existingReg.recommendationLetters;
+    const finalPrefs: string[] =
+      data.destinationPreferences ?? JSON.parse(existingReg.destinationPreferences || "[]");
+    const finalLangs: string[] =
+      data.spokenLanguages ?? JSON.parse(existingReg.spokenLanguages || "[]");
+    const score = (finalAvgResult ?? 0) * 3 + (finalActivities ?? 0) + (finalLetters ?? 0);
+
+    // Build destination name map for the recruitment
+    const allDestinations = await db
+      .select({ id: destinations.id, name: destinations.name })
+      .from(destinations)
+      .where(eq(destinations.recruitmentId, slot.recruitmentId));
+    const destMap = Object.fromEntries(allDestinations.map((d) => [d.id, d.name]));
+
+    // Find active admin stages and broadcast the updated row to each
+    const activeAdminStages = await db
+      .select({ id: stages.id })
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, slot.recruitmentId),
+          eq(stages.type, "admin"),
+          eq(stages.status, "active")
+        )
+      );
+
+    for (const stage of activeAdminStages) {
+      const [assignment] = await db
+        .select({ destinationId: assignmentResults.destinationId })
+        .from(assignmentResults)
+        .where(
+          and(
+            eq(assignmentResults.stageId, stage.id),
+            eq(assignmentResults.registrationId, id)
+          )
+        )
+        .limit(1);
+
+      const assignedDestId = assignment?.destinationId ?? null;
+
+      broadcastApplicationRowUpdate({
+        type: "application_row_update",
+        stageId: stage.id,
+        application: {
+          registrationId: id,
+          slotNumber: slot.number,
+          studentName: updatedUser?.fullName ?? "",
+          enrollmentId: (data.enrollmentId ?? existingReg.enrollmentId) || null,
+          level: (data.level ?? existingReg.level) as "bachelor" | "master" | null,
+          spokenLanguages: finalLangs,
+          destinationPreferences: finalPrefs,
+          destinationNames: finalPrefs.map((pid) => destMap[pid] ?? pid),
+          averageResult: finalAvgResult,
+          additionalActivities: finalActivities,
+          recommendationLetters: finalLetters,
+          score,
+          assignedDestinationId: assignedDestId,
+          assignedDestinationName: assignedDestId ? (destMap[assignedDestId] ?? null) : null,
+          registrationCompleted: existingReg.registrationCompleted,
+        },
+      });
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

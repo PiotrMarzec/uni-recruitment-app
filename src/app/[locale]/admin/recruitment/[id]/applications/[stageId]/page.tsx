@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
@@ -59,14 +59,103 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("completed");
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
+  // Ref kept in sync so the WS message handler always reads current editing state
+  // without closing over a stale value.
+  const editingRowsRef = useRef<Map<string, EditState>>(new Map());
+  editingRowsRef.current = editingRows;
   const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
   const [assigning, setAssigning] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [lastAssignResult, setLastAssignResult] = useState<{ assigned: number; unassigned: number } | null>(null);
+  const [connected, setConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const mountedRef = useRef(true);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchApplications();
+    connectWebSocket();
+
+    return () => {
+      mountedRef.current = false;
+      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      wsRef.current?.close();
+    };
   }, [stageId]);
+
+  function connectWebSocket() {
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws`);
+
+    ws.onopen = () => {
+      setConnected(true);
+      ws.send(JSON.stringify({ type: "subscribe", stageId }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+
+        // ── A single registration row was edited by another admin ────────────
+        if (msg.type === "application_row_update" && msg.stageId === stageId) {
+          const updated: Application = msg.application;
+
+          // Skip if the local admin is currently editing this row
+          if (editingRowsRef.current.has(updated.registrationId)) return;
+
+          const patchList = (list: Application[]): Application[] => {
+            const idx = list.findIndex((a) => a.registrationId === updated.registrationId);
+            if (idx < 0) return list;
+            const next = [...list];
+            next[idx] = updated;
+            return next;
+          };
+
+          setApplications((prev) => patchList(prev));
+          setIncompleteApplications((prev) => patchList(prev));
+        }
+
+        // ── Assignment algorithm was run by another admin ────────────────────
+        if (msg.type === "application_assignments_update" && msg.stageId === stageId) {
+          const assignmentMap = new Map<string, { assignedDestinationId: string | null; assignedDestinationName: string | null }>(
+            msg.assignments.map((a: { registrationId: string; assignedDestinationId: string | null; assignedDestinationName: string | null }) => [
+              a.registrationId,
+              { assignedDestinationId: a.assignedDestinationId, assignedDestinationName: a.assignedDestinationName },
+            ])
+          );
+
+          // Only update the Assigned column — never touches fields being edited
+          const applyAssignments = (list: Application[]): Application[] =>
+            list.map((app) => {
+              const asgn = assignmentMap.get(app.registrationId);
+              if (!asgn) return { ...app, assignedDestinationId: null, assignedDestinationName: null };
+              return { ...app, assignedDestinationId: asgn.assignedDestinationId, assignedDestinationName: asgn.assignedDestinationName };
+            });
+
+          setApplications((prev) => applyAssignments(prev));
+          setIncompleteApplications((prev) => applyAssignments(prev));
+          setHasAssignments(msg.hasAssignments);
+          setLastAssignResult({ assigned: msg.assigned, unassigned: msg.unassigned });
+        }
+      } catch {
+        // Ignore malformed messages
+      }
+    };
+
+    ws.onclose = () => {
+      setConnected(false);
+      if (mountedRef.current) {
+        reconnectTimerRef.current = setTimeout(connectWebSocket, 3000);
+      }
+    };
+
+    ws.onerror = () => {
+      ws.close();
+    };
+
+    wsRef.current = ws;
+  }
 
   async function fetchApplications() {
     setLoading(true);
@@ -558,7 +647,7 @@ export default function ApplicationsPage() {
 
       {/* Tabs */}
       <div className="border-b mb-6">
-        <nav className="flex gap-4">
+        <nav className="flex items-center gap-4">
           <button
             onClick={() => setActiveTab("completed")}
             className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
@@ -585,6 +674,12 @@ export default function ApplicationsPage() {
               {incompleteApplications.length}
             </span>
           </button>
+          <div className="ml-auto pb-3 flex items-center gap-2">
+            <div className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`} />
+            <span className="text-sm text-muted-foreground">
+              {connected ? "Live" : "Reconnecting..."}
+            </span>
+          </div>
         </nav>
       </div>
 
