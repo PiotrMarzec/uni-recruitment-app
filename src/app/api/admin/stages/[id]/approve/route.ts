@@ -78,13 +78,21 @@ export async function POST(
     .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
     .where(eq(assignmentResults.stageId, id));
 
-  // Find registrations that already had an approved assignment from a previous stage
+  // Find registrations that already had an approved assignment from a previous stage,
+  // but exclude students who re-registered after that previous stage ended — they
+  // changed their preferences and deserve a fresh notification.
   const registrationIds = results.map((r) => r.registrationId);
   const previouslyAssigned = new Set<string>();
   if (registrationIds.length > 0) {
     const previousAssignments = await db
-      .select({ registrationId: assignmentResults.registrationId })
+      .select({
+        registrationId: assignmentResults.registrationId,
+        registrationCompletedAt: registrations.registrationCompletedAt,
+        stageEndDate: stages.endDate,
+      })
       .from(assignmentResults)
+      .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
+      .innerJoin(stages, eq(assignmentResults.stageId, stages.id))
       .where(
         and(
           inArray(assignmentResults.registrationId, registrationIds),
@@ -94,6 +102,11 @@ export async function POST(
         )
       );
     for (const row of previousAssignments) {
+      // If the student re-registered after the previous stage closed, treat them
+      // as new: their assignment changed and they need a fresh email.
+      if (row.registrationCompletedAt && row.stageEndDate && row.registrationCompletedAt > row.stageEndDate) {
+        continue;
+      }
       previouslyAssigned.add(row.registrationId);
     }
   }
