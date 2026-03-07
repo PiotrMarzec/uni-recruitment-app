@@ -2,12 +2,47 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import { useRouter, usePathname } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+const LOCALE_LABELS: Record<string, string> = {
+  en: "EN",
+  pl: "PL",
+  de: "DE",
+  fr: "FR",
+  es: "ES",
+  it: "IT",
+};
+
+function LanguageSwitcher() {
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  return (
+    <div className="flex gap-1">
+      {routing.locales.map((loc) => (
+        <button
+          key={loc}
+          onClick={() => router.replace(pathname, { locale: loc })}
+          className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
+            loc === locale
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          }`}
+        >
+          {LOCALE_LABELS[loc]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const SUPPORTED_LANGUAGES = ["English", "Spanish", "German", "French", "Polish", "Portuguese"] as const;
 
@@ -717,6 +752,10 @@ export default function RegisterPage() {
             )}
           </CardContent>
         </Card>
+        {/* Language switcher */}
+        <div className="mt-6 flex justify-center">
+          <LanguageSwitcher />
+        </div>
       </div>
     </div>
   );
