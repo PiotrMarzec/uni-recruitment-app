@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { slots, recruitments } from "@/db/schema";
+import { slots, recruitments, stages } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { renderToBuffer, DocumentProps } from "@react-pdf/renderer";
 import QRCode from "qrcode";
@@ -36,6 +36,13 @@ export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
     .where(eq(slots.recruitmentId, recruitmentId))
     .orderBy(asc(slots.number));
 
+  // Fetch all stages ordered by order
+  const allStages = await db
+    .select()
+    .from(stages)
+    .where(eq(stages.recruitmentId, recruitmentId))
+    .orderBy(asc(stages.order));
+
   if (allSlots.length === 0) {
     throw new Error("No slots found for this recruitment");
   }
@@ -55,6 +62,12 @@ export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
         slotId: slot.id,
         slotNumber: slot.number,
         recruitmentName: recruitment.name,
+        recruitmentDescription: recruitment.description,
+        stages: allStages.map((s) => ({
+          name: s.name,
+          startDate: s.startDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          endDate: s.endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+        })),
         registrationLink,
         teacherLink,
         registrationQrBase64,
