@@ -89,6 +89,19 @@ export default function RecruitmentDetailPage() {
   });
   const [savingDest, setSavingDest] = useState(false);
 
+  // Edit destination form
+  const [editDestDialogOpen, setEditDestDialogOpen] = useState(false);
+  const [editingDestId, setEditingDestId] = useState<string | null>(null);
+  const [editDestForm, setEditDestForm] = useState({
+    name: "",
+    description: "",
+    slotsBachelor: 0,
+    slotsMaster: 0,
+    slotsAny: 0,
+    requiredLanguages: [] as string[],
+  });
+  const [savingEditDest, setSavingEditDest] = useState(false);
+
   // Add stage form
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [stageForm, setStageForm] = useState({
@@ -167,6 +180,39 @@ export default function RecruitmentDetailPage() {
     if (!confirm("Remove this destination?")) return;
     await fetch(`/api/admin/recruitments/${id}/destinations/${destId}`, { method: "DELETE" });
     await fetchRecruitment();
+  }
+
+  function openEditDestination(dest: Destination) {
+    setEditingDestId(dest.id);
+    setEditDestForm({
+      name: dest.name,
+      description: dest.description,
+      slotsBachelor: dest.slotsBachelor,
+      slotsMaster: dest.slotsMaster,
+      slotsAny: dest.slotsAny,
+      requiredLanguages: [...dest.requiredLanguages],
+    });
+    setEditDestDialogOpen(true);
+  }
+
+  async function saveEditDestination(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingDestId) return;
+    setSavingEditDest(true);
+    try {
+      const res = await fetch(`/api/admin/recruitments/${id}/destinations/${editingDestId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editDestForm),
+      });
+      if (res.ok) {
+        setEditDestDialogOpen(false);
+        setEditingDestId(null);
+        await fetchRecruitment();
+      }
+    } finally {
+      setSavingEditDest(false);
+    }
   }
 
   async function addStage(e: React.FormEvent) {
@@ -630,14 +676,24 @@ export default function RecruitmentDetailPage() {
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-base">{dest.name}</CardTitle>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deleteDestination(dest.id)}
-                        className="text-destructive hover:text-destructive h-auto py-1"
-                      >
-                        Remove
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openEditDestination(dest)}
+                          className="h-auto py-1"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteDestination(dest.id)}
+                          className="text-destructive hover:text-destructive h-auto py-1"
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </div>
                     <p className="text-sm text-muted-foreground">{dest.description}</p>
                   </CardHeader>
@@ -659,6 +715,65 @@ export default function RecruitmentDetailPage() {
           )}
         </div>
       )}
+
+      {/* Edit destination dialog */}
+      <Dialog open={editDestDialogOpen} onOpenChange={setEditDestDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Destination</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={saveEditDestination} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={editDestForm.name} onChange={(e) => setEditDestForm(f => ({ ...f, name: e.target.value }))} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea value={editDestForm.description} onChange={(e) => setEditDestForm(f => ({ ...f, description: e.target.value }))} />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Bachelor Slots</Label>
+                <Input type="number" min={0} value={editDestForm.slotsBachelor} onChange={(e) => setEditDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Master Slots</Label>
+                <Input type="number" min={0} value={editDestForm.slotsMaster} onChange={(e) => setEditDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Open Slots</Label>
+                <Input type="number" min={0} value={editDestForm.slotsAny} onChange={(e) => setEditDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Required Languages</Label>
+              <div className="flex flex-wrap gap-2">
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <label key={lang} className="flex items-center gap-1 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editDestForm.requiredLanguages.includes(lang)}
+                      onChange={(e) =>
+                        setEditDestForm(f => ({
+                          ...f,
+                          requiredLanguages: e.target.checked
+                            ? [...f.requiredLanguages, lang]
+                            : f.requiredLanguages.filter(l => l !== lang),
+                        }))
+                      }
+                    />
+                    {lang}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditDestDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={savingEditDest}>Save</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
