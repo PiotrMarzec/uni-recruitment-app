@@ -92,11 +92,9 @@ export default function RecruitmentDetailPage() {
   // Add stage form
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [stageForm, setStageForm] = useState({
-    name: "",
     description: "",
-    startDate: "",
-    endDate: "",
-    type: "admin" as "initial" | "admin" | "supplementary",
+    supplementaryStage: { name: "", startDate: "", endDate: "" },
+    adminStage: { name: "", startDate: "", endDate: "" },
   });
   const [savingStage, setSavingStage] = useState(false);
 
@@ -179,14 +177,26 @@ export default function RecruitmentDetailPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...stageForm,
-          startDate: new Date(stageForm.startDate).toISOString(),
-          endDate: new Date(stageForm.endDate).toISOString(),
+          description: stageForm.description,
+          supplementaryStage: {
+            name: stageForm.supplementaryStage.name,
+            startDate: new Date(stageForm.supplementaryStage.startDate).toISOString(),
+            endDate: new Date(stageForm.supplementaryStage.endDate).toISOString(),
+          },
+          adminStage: {
+            name: stageForm.adminStage.name,
+            startDate: new Date(stageForm.adminStage.startDate).toISOString(),
+            endDate: new Date(stageForm.adminStage.endDate).toISOString(),
+          },
         }),
       });
       if (res.ok) {
         setStageDialogOpen(false);
-        setStageForm({ name: "", description: "", startDate: "", endDate: "", type: "admin" });
+        setStageForm({
+          description: "",
+          supplementaryStage: { name: "", startDate: "", endDate: "" },
+          adminStage: { name: "", startDate: "", endDate: "" },
+        });
         await fetchRecruitment();
       }
     } finally {
@@ -330,36 +340,75 @@ export default function RecruitmentDetailPage() {
                 <DialogHeader>
                   <DialogTitle>{t("stages.addStage")}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={addStage} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
-                    <Input value={stageForm.name} onChange={(e) => setStageForm(f => ({ ...f, name: e.target.value }))} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Type</Label>
-                    <select
-                      className="w-full border rounded-md px-3 py-2 text-sm"
-                      value={stageForm.type}
-                      onChange={(e) => setStageForm(f => ({ ...f, type: e.target.value as "initial" | "admin" | "supplementary" }))}
-                    >
-                      {recruitment.stages.length === 0 && <option value="initial">Initial</option>}
-                      <option value="admin">Admin</option>
-                      <option value="supplementary">Supplementary</option>
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={addStage} className="space-y-5">
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold">Supplementary Stage</p>
                     <div className="space-y-2">
-                      <Label>Start Date</Label>
-                      <Input type="datetime-local" value={stageForm.startDate} onChange={(e) => setStageForm(f => ({ ...f, startDate: e.target.value }))} required />
+                      <Label>Name</Label>
+                      <Input
+                        value={stageForm.supplementaryStage.name}
+                        onChange={(e) => setStageForm(f => ({ ...f, supplementaryStage: { ...f.supplementaryStage, name: e.target.value } }))}
+                        required
+                      />
                     </div>
-                    <div className="space-y-2">
-                      <Label>End Date</Label>
-                      <Input type="datetime-local" value={stageForm.endDate} onChange={(e) => setStageForm(f => ({ ...f, endDate: e.target.value }))} required />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.supplementaryStage.startDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, supplementaryStage: { ...f.supplementaryStage, startDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.supplementaryStage.endDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, supplementaryStage: { ...f.supplementaryStage, endDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
                     </div>
                   </div>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-sm font-semibold">Admin Stage</p>
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input
+                        value={stageForm.adminStage.name}
+                        onChange={(e) => setStageForm(f => ({ ...f, adminStage: { ...f.adminStage, name: e.target.value } }))}
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.adminStage.startDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, adminStage: { ...f.adminStage, startDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.adminStage.endDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, adminStage: { ...f.adminStage, endDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">The recruitment end date will be updated to match this stage&apos;s end date.</p>
+                  </div>
+
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setStageDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={savingStage}>Add Stage</Button>
+                    <Button type="submit" disabled={savingStage}>Add Stages</Button>
                   </div>
                 </form>
               </DialogContent>

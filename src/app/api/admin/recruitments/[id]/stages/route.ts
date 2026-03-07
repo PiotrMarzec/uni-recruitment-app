@@ -4,14 +4,18 @@ import { stages, recruitments } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { z } from "zod";
-import { eq, asc, max } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 
-const createSchema = z.object({
+const stageInputSchema = z.object({
   name: z.string().min(1).max(255),
-  description: z.string().default(""),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
-  type: z.enum(["initial", "admin", "supplementary"]),
+});
+
+const createSchema = z.object({
+  supplementaryStage: stageInputSchema,
+  adminStage: stageInputSchema,
+  description: z.string().default(""),
 });
 
 export async function GET(
@@ -62,46 +66,58 @@ export async function POST(
     );
   }
 
-  // Validate stage ordering rules
+  // Validate that last existing stage is an admin stage (supplementary must follow admin)
   const existingStages = await db
     .select()
     .from(stages)
     .where(eq(stages.recruitmentId, id))
     .orderBy(asc(stages.order));
 
-  const validationError = validateStageAddition(existingStages, parsed.data.type);
+  const validationError = validateSupplementaryAddition(existingStages);
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
-  // Calculate next order
   const nextOrder = existingStages.length;
+  const { supplementaryStage, adminStage, description } = parsed.data;
 
-  // Determine initial status
-  // Initial stage: starts pending (transitions when recruitment starts)
-  // For now, all new stages are pending
-  const [stage] = await db
-    .insert(stages)
-    .values({
-      recruitmentId: id,
-      name: parsed.data.name,
-      description: parsed.data.description,
-      startDate: new Date(parsed.data.startDate),
-      endDate: new Date(parsed.data.endDate),
-      order: nextOrder,
-      type: parsed.data.type,
-      status: "pending",
-    })
-    .returning();
+  const [suppStage, admStage] = await db.transaction(async (tx) => {
+    const [supp] = await tx
+      .insert(stages)
+      .values({
+        recruitmentId: id,
+        name: supplementaryStage.name,
+        description,
+        startDate: new Date(supplementaryStage.startDate),
+        endDate: new Date(supplementaryStage.endDate),
+        order: nextOrder,
+        type: "supplementary",
+        status: "pending",
+      })
+      .returning();
 
-  // If this is the first stage (initial) and start_date is in the past, auto-activate
-  if (stage.type === "initial" && stage.startDate <= new Date()) {
-    await db
-      .update(stages)
-      .set({ status: "active" })
-      .where(eq(stages.id, stage.id));
-    stage.status = "active";
-  }
+    const [adm] = await tx
+      .insert(stages)
+      .values({
+        recruitmentId: id,
+        name: adminStage.name,
+        description: "",
+        startDate: new Date(adminStage.startDate),
+        endDate: new Date(adminStage.endDate),
+        order: nextOrder + 1,
+        type: "admin",
+        status: "pending",
+      })
+      .returning();
+
+    // Update recruitment endDate to match admin stage endDate
+    await tx
+      .update(recruitments)
+      .set({ endDate: new Date(adminStage.endDate) })
+      .where(eq(recruitments.id, id));
+
+    return [supp, adm];
+  });
 
   await logAuditEvent({
     actorType: "admin",
@@ -109,50 +125,25 @@ export async function POST(
     actorLabel: admin.email,
     action: ACTIONS.STAGE_CREATED,
     resourceType: "stage",
-    resourceId: stage.id,
+    resourceId: suppStage.id,
     recruitmentId: id,
-    details: { type: stage.type, order: stage.order },
+    details: { type: "supplementary", order: suppStage.order, pairedAdminStageId: admStage.id },
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json(stage, { status: 201 });
+  return NextResponse.json({ supplementaryStage: suppStage, adminStage: admStage }, { status: 201 });
 }
 
-function validateStageAddition(
-  existingStages: typeof stages.$inferSelect[],
-  newType: string
+function validateSupplementaryAddition(
+  existingStages: typeof stages.$inferSelect[]
 ): string | null {
   if (existingStages.length === 0) {
-    // First stage must be initial
-    if (newType !== "initial") {
-      return "The first stage must be of type 'initial'";
-    }
-    return null;
+    return "Cannot add a supplementary stage before the initial and admin stages exist";
   }
 
-  // Already has initial stage
-  const hasInitial = existingStages.some((s) => s.type === "initial");
-  if (newType === "initial") {
-    return "A recruitment can only have one initial stage";
-  }
-
-  // Get last stage type
   const lastStage = existingStages[existingStages.length - 1];
-
-  if (newType === "admin") {
-    // Admin can follow initial or supplementary
-    if (lastStage.type !== "initial" && lastStage.type !== "supplementary") {
-      return "An admin stage must follow the initial stage or a supplementary stage";
-    }
-    return null;
-  }
-
-  if (newType === "supplementary") {
-    // Supplementary must follow admin
-    if (lastStage.type !== "admin") {
-      return "A supplementary stage must follow an admin stage";
-    }
-    return null;
+  if (lastStage.type !== "admin") {
+    return "A supplementary stage must follow an admin stage";
   }
 
   return null;
