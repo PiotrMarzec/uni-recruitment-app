@@ -678,7 +678,7 @@ export default function RecruitmentDetailPage() {
             <h2 className="text-lg font-semibold">{t("destinations.title")}</h2>
             <Dialog open={destDialogOpen} onOpenChange={setDestDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">{t("destinations.addDestination")}</Button>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white"><Plus className="w-4 h-4 mr-1" />{t("destinations.addDestination")}</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -842,39 +842,38 @@ export default function RecruitmentDetailPage() {
                 </table>
               </div>
 
-              {eligibleLevelsDirty && (
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEligibleLevelsDraft([...eligibleLevelsData.eligibleLevels]);
-                      setEligibleLevelsDirty(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    disabled={savingEligibleLevels}
-                    onClick={async () => {
-                      // Check if any removed level has completed registrations
-                      const removed = eligibleLevelsData.eligibleLevels.filter(
-                        (l) => !eligibleLevelsDraft.includes(l)
-                      );
-                      const levelsWithRegs = removed.filter(
-                        (l) => (eligibleLevelsData.levelStats[l]?.completedRegistrations ?? 0) > 0
-                      );
-                      if (levelsWithRegs.length > 0) {
-                        setRemovedLevelsWithRegs(levelsWithRegs);
-                        setShowRemoveWarning(true);
-                        return;
-                      }
-                      await doSaveEligibleLevels();
-                    }}
-                  >
-                    {savingEligibleLevels ? "Saving..." : "Save"}
-                  </Button>
-                </div>
-              )}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  disabled={!eligibleLevelsDirty}
+                  onClick={() => {
+                    setEligibleLevelsDraft([...eligibleLevelsData.eligibleLevels]);
+                    setEligibleLevelsDirty(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  disabled={!eligibleLevelsDirty || savingEligibleLevels}
+                  onClick={async () => {
+                    // Check if any removed level has completed registrations
+                    const removed = eligibleLevelsData.eligibleLevels.filter(
+                      (l) => !eligibleLevelsDraft.includes(l)
+                    );
+                    const levelsWithRegs = removed.filter(
+                      (l) => (eligibleLevelsData.levelStats[l]?.completedRegistrations ?? 0) > 0
+                    );
+                    if (levelsWithRegs.length > 0) {
+                      setRemovedLevelsWithRegs(levelsWithRegs);
+                      setShowRemoveWarning(true);
+                      return;
+                    }
+                    await doSaveEligibleLevels();
+                  }}
+                >
+                  {savingEligibleLevels ? "Saving..." : "Save"}
+                </Button>
+              </div>
             </>
           )}
         </div>
