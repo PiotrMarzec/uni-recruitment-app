@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Square, Play, Circle, ClipboardList } from "lucide-react";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
@@ -441,7 +442,9 @@ export default function RecruitmentDetailPage() {
             <h2 className="text-lg font-semibold">{t("stages.title")}</h2>
             <Dialog open={stageDialogOpen} onOpenChange={setStageDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm">{t("stages.addStage")}</Button>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                  <Plus className="w-3.5 h-3.5 mr-1" />{t("stages.addStage")}
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -534,11 +537,12 @@ export default function RecruitmentDetailPage() {
                     <CardContent className="pt-4 flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium">{stage.name}</span>
+                          <span className="font-medium">
+                            <span className="font-bold capitalize">{stage.type}:</span> {stage.name}
+                          </span>
                           <Badge variant={stageStatusColors[stage.status] || "default"}>
                             {stage.status}
                           </Badge>
-                          <Badge variant="outline">{stage.type}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
@@ -546,27 +550,31 @@ export default function RecruitmentDetailPage() {
                       </div>
                       <div className="flex gap-2">
                         {stage.id === firstPendingId && (
-                          <Button size="sm" onClick={() => activateStageNow(stage)}>
-                            Activate Now
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => activateStageNow(stage)}>
+                            <Play className="w-3.5 h-3.5 mr-1" />Activate Now
                           </Button>
                         )}
                         {(stage.type === "initial" || stage.type === "supplementary") && stage.status === "active" && (
                           <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
-                            <Button size="sm" variant="outline">Live Dashboard</Button>
+                            <Button size="sm" className="bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-200">
+                              <Circle className="w-2.5 h-2.5 mr-1.5 fill-green-500 text-green-500" />Live Dashboard
+                            </Button>
                           </Link>
                         )}
                         {(stage.type === "initial" || stage.type === "supplementary") && stage.status === "active" && (
-                          <Button size="sm" variant="outline" onClick={() => endStage(stage.id)}>
-                            End Stage
+                          <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => endStage(stage.id)}>
+                            <Square className="w-3.5 h-3.5 mr-1" />End Stage
                           </Button>
                         )}
                         {stage.type === "admin" && stage.status === "active" && (
                           <>
                             <Link href={`/admin/recruitment/${id}/applications/${stage.id}`}>
-                              <Button size="sm">Review Applications</Button>
+                              <Button size="sm">
+                                <ClipboardList className="w-3.5 h-3.5 mr-1" />Review Applications
+                              </Button>
                             </Link>
-                            <Button size="sm" variant="destructive" onClick={() => completeStage(stage.id)}>
-                              Complete Stage
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => completeStage(stage.id)}>
+                              <Square className="w-3.5 h-3.5 mr-1" />End Stage
                             </Button>
                           </>
                         )}

@@ -7,6 +7,7 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { UserCheck } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
@@ -632,7 +633,7 @@ export default function ApplicationsPage() {
             disabled={assigning || completing || editingRows.size > 0}
             title={editingRows.size > 0 ? "Save or cancel pending edits first" : undefined}
           >
-            {assigning ? "Assigning..." : "Assign Students"}
+            <UserCheck className="w-4 h-4 mr-1.5" />{assigning ? "Assigning..." : "Assign Students"}
           </Button>
           {hasAssignments && (
             <Button
