@@ -311,16 +311,16 @@ export default function ApplicationsPage() {
           <thead className="bg-muted/50 border-b">
             <tr>
               <th className="text-left p-3 font-medium whitespace-nowrap">Slot</th>
-              <th className="text-left p-3 font-medium">Name</th>
+              <th className="text-left p-3 font-medium min-w-[120px]">Name</th>
               <th className="text-left p-3 font-medium whitespace-nowrap">Enrollment ID</th>
-              <th className="text-left p-3 font-medium">Level</th>
-              <th className="text-left p-3 font-medium">Languages</th>
-              <th className="text-left p-3 font-medium min-w-[160px]">Destinations</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">Level</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">Languages</th>
+              <th className="text-left p-3 font-medium min-w-[140px]">Destinations</th>
               <th className="text-left p-3 font-medium whitespace-nowrap">Avg Result</th>
-              <th className="text-left p-3 font-medium">Activities</th>
-              <th className="text-left p-3 font-medium">Letters</th>
-              <th className="text-left p-3 font-medium">Score</th>
-              <th className="text-left p-3 font-medium">Assigned</th>
+              <th className="text-left p-3 font-medium min-w-[80px]">Activities</th>
+              <th className="text-left p-3 font-medium min-w-[70px]">Letters</th>
+              <th className="text-left p-3 font-medium min-w-[60px]">Score</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">Assigned</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -348,7 +348,7 @@ export default function ApplicationsPage() {
                         onChange={(e) =>
                           updateEdit(app.registrationId, { fullName: e.target.value })
                         }
-                        className="h-7 min-w-[140px]"
+                        className="h-7 w-full"
                       />
                     </td>
                     <td className="p-3 align-top">
@@ -408,7 +408,7 @@ export default function ApplicationsPage() {
                             onChange={(e) =>
                               updateDestPref(app.registrationId, i, e.target.value)
                             }
-                            className="border rounded px-2 py-1 text-xs bg-background min-w-[130px]"
+                            className="border rounded px-2 py-1 text-xs bg-background w-full"
                           >
                             <option value="">— {i + 1}. choice —</option>
                             {destinations.map((d) => (
@@ -430,7 +430,7 @@ export default function ApplicationsPage() {
                         onChange={(e) =>
                           updateEdit(app.registrationId, { averageResult: e.target.value })
                         }
-                        className="h-7 w-20"
+                        className="h-7 w-full"
                         placeholder="0.0"
                       />
                     </td>
@@ -446,7 +446,7 @@ export default function ApplicationsPage() {
                             additionalActivities: e.target.value,
                           })
                         }
-                        className="h-7 w-16"
+                        className="h-7 w-full"
                         placeholder="0"
                       />
                     </td>
@@ -462,7 +462,7 @@ export default function ApplicationsPage() {
                             recommendationLetters: e.target.value,
                           })
                         }
-                        className="h-7 w-16"
+                        className="h-7 w-full"
                         placeholder="0"
                       />
                     </td>
