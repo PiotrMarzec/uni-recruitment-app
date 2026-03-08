@@ -232,8 +232,7 @@ export async function sendSupplementaryStageEmail(params: {
   fullName: string;
   recruitmentName: string;
   currentDestination: string | null;
-  cancellationLink: string;
-  preferencesLink: string;
+  registrationLink: string;
   stageEndDate: Date;
 }): Promise<EmailResult> {
   const endDateStr = params.stageEndDate.toLocaleDateString("en-GB", {
@@ -244,6 +243,19 @@ export async function sendSupplementaryStageEmail(params: {
     minute: "2-digit",
   });
 
+  const assignedSection = params.currentDestination
+    ? `
+      <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px 24px; margin: 24px 0; border-radius: 4px;">
+        <p style="margin: 0 0 4px 0; font-weight: bold;">Your current assignment: ${params.currentDestination}</p>
+        <p style="margin: 0; color: #374151;">Your place is guaranteed — you do not need to take any action.</p>
+      </div>
+      <p>If you would like to change your destination preferences, you can re-apply using your registration link below.</p>
+      <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+        <p style="margin: 0; color: #991b1b; font-weight: bold;">Warning: Re-applying will immediately cancel your current assignment to ${params.currentDestination}. There is no guarantee you will be assigned to your new preferences.</p>
+      </div>
+    `
+    : `<p>You were not assigned to a destination in the previous round. You can use this supplementary stage to apply again.</p>`;
+
   try {
     await sendEmail({
       from: EMAIL_FROM,
@@ -253,22 +265,13 @@ export async function sendSupplementaryStageEmail(params: {
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>Supplementary Stage Now Open</h2>
           <p>Dear ${params.fullName},</p>
-          <p>A supplementary assignment stage has opened for <strong>${params.recruitmentName}</strong>.</p>
-          ${
-            params.currentDestination
-              ? `<p>Your current assignment: <strong>${params.currentDestination}</strong></p>`
-              : "<p>You were not assigned to a destination in the previous round.</p>"
-          }
+          <p>A supplementary registration stage has opened for <strong>${params.recruitmentName}</strong>.</p>
+          ${assignedSection}
           <div style="margin: 24px 0;">
-            ${
-              params.currentDestination
-                ? `<p><a href="${params.cancellationLink}" style="background: #ef4444; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block; margin-bottom: 12px;">Cancel My Assignment</a></p>`
-                : ""
-            }
-            <p><a href="${params.preferencesLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Update Destination Preferences</a></p>
+            <a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Open My Registration</a>
+            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">Or copy this link: <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p>
           </div>
           <p style="color: #71717a; font-size: 14px;">This stage closes on <strong>${endDateStr}</strong>. After that, assignments will be finalized.</p>
-          <p style="color: #71717a; font-size: 14px;">If you are satisfied with your current assignment, no action is required.</p>
         </div>
       `,
     });

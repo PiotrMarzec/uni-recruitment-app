@@ -131,16 +131,14 @@ export async function POST(req: NextRequest) {
     });
 
     const appUrl = process.env.APP_URL || "http://localhost:3000";
-    const cancellationLink = `${appUrl}/en/supplementary/${token}`;
-    const preferencesLink = `${appUrl}/en/supplementary/${token}`;
+    const registrationLink = `${appUrl}/en/supplementary/${token}`;
 
     await sendSupplementaryStageEmail({
       email: student.email,
       fullName: student.fullName,
-      recruitmentName: "Recruitment", // TODO: fetch name
+      recruitmentName: suppStage?.name || "Recruitment",
       currentDestination: currentDestinationName,
-      cancellationLink,
-      preferencesLink,
+      registrationLink,
       stageEndDate: expiresAt,
     });
 

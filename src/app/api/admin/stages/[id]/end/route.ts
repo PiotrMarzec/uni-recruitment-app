@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stages, stageEnrollments, registrations, slots, users } from "@/db/schema";
+import { stages, stageEnrollments, registrations, slots, users, assignmentResults, destinations } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
-import { eq, and } from "drizzle-orm";
-import { sendInitialStageClosedEmail } from "@/lib/email/send";
+import { eq, and, desc } from "drizzle-orm";
+import { sendInitialStageClosedEmail, sendSupplementaryStageEmail } from "@/lib/email/send";
+import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 
 export async function POST(
   req: NextRequest,
@@ -98,6 +99,67 @@ export async function POST(
           adminStageEndDate: nextStage.endDate,
         });
       }
+    }
+  }
+
+  // When an admin stage ends and the next activated stage is supplementary, email all students
+  if (stage.type === "admin" && nextStage && nextStage.type === "supplementary" && nextStage.order > stage.order) {
+    const [prevAdminStage] = await db
+      .select()
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, stage.recruitmentId),
+          eq(stages.type, "admin"),
+          eq(stages.status, "completed")
+        )
+      )
+      .orderBy(desc(stages.order))
+      .limit(1);
+
+    const completedRegistrations = await db
+      .select({
+        id: registrations.id,
+        slotId: registrations.slotId,
+        studentEmail: users.email,
+        studentName: users.fullName,
+      })
+      .from(registrations)
+      .innerJoin(slots, eq(registrations.slotId, slots.id))
+      .innerJoin(users, eq(registrations.studentId, users.id))
+      .where(
+        and(
+          eq(slots.recruitmentId, stage.recruitmentId),
+          eq(registrations.registrationCompleted, true)
+        )
+      );
+
+    for (const reg of completedRegistrations) {
+      let currentDestinationName: string | null = null;
+      if (prevAdminStage) {
+        const [result] = await db
+          .select({ destinationName: destinations.name })
+          .from(assignmentResults)
+          .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
+          .where(
+            and(
+              eq(assignmentResults.stageId, prevAdminStage.id),
+              eq(assignmentResults.registrationId, reg.id),
+              eq(assignmentResults.approved, true)
+            )
+          )
+          .limit(1);
+        currentDestinationName = result?.destinationName ?? null;
+      }
+
+      await sendSupplementaryStageEmail({
+        email: reg.studentEmail,
+        fullName: reg.studentName,
+        recruitmentName: nextStage.name || "Recruitment",
+        currentDestination: currentDestinationName,
+        registrationLink: getStudentRegistrationLink(reg.slotId),
+        stageEndDate: nextStage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
     }
   }
 
