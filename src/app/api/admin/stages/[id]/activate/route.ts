@@ -4,6 +4,7 @@ import { stages, registrations, slots, users, assignmentResults, destinations } 
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendSupplementaryStageEmail } from "@/lib/email/send";
+import { getStageName } from "@/lib/stage-name";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -104,7 +105,7 @@ export async function POST(
       await sendSupplementaryStageEmail({
         email: reg.studentEmail,
         fullName: reg.studentName,
-        recruitmentName: stage.name || "Recruitment",
+        recruitmentName: getStageName(stage),
         currentDestination: currentDestinationName,
         registrationLink: getStudentRegistrationLink(reg.slotId),
         stageEndDate: stage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

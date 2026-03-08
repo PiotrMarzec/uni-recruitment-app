@@ -15,6 +15,7 @@ import {
   sendAssignmentApprovedEmail,
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
+import { getStageName } from "@/lib/stage-name";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
@@ -154,7 +155,7 @@ export async function POST(
       await sendAssignmentApprovedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: stage.name,
+        recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
       });
@@ -162,7 +163,7 @@ export async function POST(
       await sendAssignmentUnassignedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: stage.name,
+        recruitmentName: getStageName(stage),
         supplementaryStage: supplementaryStage ?? undefined,
         registrationLink: result.slotId ? getStudentRegistrationLink(result.slotId) : undefined,
       });

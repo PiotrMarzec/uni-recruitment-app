@@ -9,13 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { formatDate, formatRelativeDate } from "@/lib/utils";
+import { getStageName } from "@/lib/stage-name";
 
 interface DashboardData {
   stage: {
     id: string;
-    name: string;
     status: string;
     type: string;
+    order: number;
     endDate: string;
   };
   stats: {
@@ -163,7 +164,7 @@ export default function StageDashboardPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">{t("liveDashboard")}</h1>
-          <p className="text-muted-foreground">{data.stage.name}</p>
+          <p className="text-muted-foreground">{getStageName(data.stage)}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`} />

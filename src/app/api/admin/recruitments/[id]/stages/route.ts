@@ -3,11 +3,11 @@ import { db } from "@/db";
 import { stages, recruitments } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { getStageName } from "@/lib/stage-name";
 import { z } from "zod";
 import { eq, asc } from "drizzle-orm";
 
 const stageInputSchema = z.object({
-  name: z.string().min(1).max(255),
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
 });
@@ -86,7 +86,7 @@ export async function POST(
       .insert(stages)
       .values({
         recruitmentId: id,
-        name: supplementaryStage.name,
+        name: getStageName({ type: "supplementary", order: nextOrder }),
         description,
         startDate: new Date(supplementaryStage.startDate),
         endDate: new Date(supplementaryStage.endDate),
@@ -100,7 +100,7 @@ export async function POST(
       .insert(stages)
       .values({
         recruitmentId: id,
-        name: adminStage.name,
+        name: getStageName({ type: "admin", order: nextOrder + 1 }),
         description: "",
         startDate: new Date(adminStage.startDate),
         endDate: new Date(adminStage.endDate),

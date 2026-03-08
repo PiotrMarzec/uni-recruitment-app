@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
+import { getStageName } from "@/lib/stage-name";
 
 interface Application {
   registrationId: string;
@@ -59,7 +60,7 @@ export default function AssignmentResultsPage() {
       ]);
       if (appsRes.ok) {
         const data = await appsRes.json();
-        setStageName(data.stage?.name ?? "");
+        setStageName(data.stage ? getStageName(data.stage) : "");
         setApplications(data.applications ?? []);
       }
       if (resultsRes.ok) {

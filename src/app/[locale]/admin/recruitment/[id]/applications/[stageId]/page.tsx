@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { UserCheck } from "lucide-react";
+import { getStageName } from "@/lib/stage-name";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
@@ -165,7 +166,7 @@ export default function ApplicationsPage() {
       const res = await fetch(`/api/admin/stages/${stageId}/applications`);
       if (res.ok) {
         const data = await res.json();
-        setStageName(data.stage.name);
+        setStageName(getStageName(data.stage));
         setApplications(data.applications);
         setIncompleteApplications(data.incompleteApplications);
         setDestinations(data.destinations);

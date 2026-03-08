@@ -5,6 +5,7 @@ import { renderToBuffer, DocumentProps } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import { SlotPdfDocument } from "./slot-pdf";
 import { signTeacherLink, getStudentRegistrationLink, getTeacherLink } from "@/lib/auth/hmac";
+import { getStageName } from "@/lib/stage-name";
 import React from "react";
 
 async function generateQrBase64(url: string): Promise<string> {
@@ -64,7 +65,7 @@ export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
         recruitmentName: recruitment.name,
         recruitmentDescription: recruitment.description,
         stages: allStages.map((s) => ({
-          name: s.name,
+          name: getStageName(s),
           startDate: s.startDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
           endDate: s.endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
         })),

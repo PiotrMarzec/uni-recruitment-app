@@ -11,6 +11,7 @@ import { logAuditEvent, ACTIONS } from "@/lib/audit";
 import {
   sendInitialStageClosedEmail,
 } from "@/lib/email/send";
+import { getStageName } from "@/lib/stage-name";
 
 export async function processStageTransitions(): Promise<void> {
   const now = new Date();
@@ -148,7 +149,7 @@ async function transitionInitialToAdmin(stage: typeof stages.$inferSelect): Prom
       await sendInitialStageClosedEmail({
         email: student.email,
         fullName: student.fullName,
-        recruitmentName: stage.name || "Recruitment",
+        recruitmentName: getStageName(stage),
         adminStageEndDate: nextStage.endDate,
       });
     }

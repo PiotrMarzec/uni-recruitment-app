@@ -44,8 +44,8 @@ export default function AdminDashboardPage() {
     description: "",
     maxDestinationChoices: 3,
     eligibleLevels: [...STUDENT_LEVELS] as StudentLevel[],
-    initialStage: { name: "", startDate: "", endDate: "" },
-    adminStage: { name: "", startDate: "", endDate: "" },
+    initialStage: { startDate: "", endDate: "" },
+    adminStage: { startDate: "", endDate: "" },
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -81,12 +81,10 @@ export default function AdminDashboardPage() {
           maxDestinationChoices: form.maxDestinationChoices,
           eligibleLevels: form.eligibleLevels,
           initialStage: {
-            name: form.initialStage.name,
             startDate: new Date(form.initialStage.startDate).toISOString(),
             endDate: new Date(form.initialStage.endDate).toISOString(),
           },
           adminStage: {
-            name: form.adminStage.name,
             startDate: new Date(form.adminStage.startDate).toISOString(),
             endDate: new Date(form.adminStage.endDate).toISOString(),
           },
@@ -100,7 +98,7 @@ export default function AdminDashboardPage() {
       }
 
       setCreateOpen(false);
-      setForm({ name: "", description: "", maxDestinationChoices: 3, eligibleLevels: [...STUDENT_LEVELS], initialStage: { name: "", startDate: "", endDate: "" }, adminStage: { name: "", startDate: "", endDate: "" } });
+      setForm({ name: "", description: "", maxDestinationChoices: 3, eligibleLevels: [...STUDENT_LEVELS], initialStage: { startDate: "", endDate: "" }, adminStage: { startDate: "", endDate: "" } });
       await fetchRecruitments();
     } finally {
       setSaving(false);
@@ -175,16 +173,6 @@ export default function AdminDashboardPage() {
 
               <div className="space-y-3 rounded-lg border p-4">
                 <p className="text-sm font-medium">Initial Stage</p>
-                <div className="space-y-2">
-                  <Label>Stage Name</Label>
-                  <Input
-                    value={form.initialStage.name}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, initialStage: { ...f.initialStage, name: e.target.value } }))
-                    }
-                    required
-                  />
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Start Date</Label>
@@ -213,16 +201,6 @@ export default function AdminDashboardPage() {
 
               <div className="space-y-3 rounded-lg border p-4">
                 <p className="text-sm font-medium">Admin Stage</p>
-                <div className="space-y-2">
-                  <Label>Stage Name</Label>
-                  <Input
-                    value={form.adminStage.name}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, adminStage: { ...f.adminStage, name: e.target.value } }))
-                    }
-                    required
-                  />
-                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label>Start Date</Label>

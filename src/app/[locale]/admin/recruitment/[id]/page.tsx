@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Square, Play, Circle, ClipboardList } from "lucide-react";
 import { formatDate, formatDateShort } from "@/lib/utils";
+import { getStageName } from "@/lib/stage-name";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
@@ -131,8 +132,8 @@ export default function RecruitmentDetailPage() {
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [stageForm, setStageForm] = useState({
     description: "",
-    supplementaryStage: { name: "", startDate: "", endDate: "" },
-    adminStage: { name: "", startDate: "", endDate: "" },
+    supplementaryStage: { startDate: "", endDate: "" },
+    adminStage: { startDate: "", endDate: "" },
   });
   const [savingStage, setSavingStage] = useState(false);
 
@@ -272,12 +273,10 @@ export default function RecruitmentDetailPage() {
         body: JSON.stringify({
           description: stageForm.description,
           supplementaryStage: {
-            name: stageForm.supplementaryStage.name,
             startDate: new Date(stageForm.supplementaryStage.startDate).toISOString(),
             endDate: new Date(stageForm.supplementaryStage.endDate).toISOString(),
           },
           adminStage: {
-            name: stageForm.adminStage.name,
             startDate: new Date(stageForm.adminStage.startDate).toISOString(),
             endDate: new Date(stageForm.adminStage.endDate).toISOString(),
           },
@@ -287,8 +286,8 @@ export default function RecruitmentDetailPage() {
         setStageDialogOpen(false);
         setStageForm({
           description: "",
-          supplementaryStage: { name: "", startDate: "", endDate: "" },
-          adminStage: { name: "", startDate: "", endDate: "" },
+          supplementaryStage: { startDate: "", endDate: "" },
+          adminStage: { startDate: "", endDate: "" },
         });
         await fetchRecruitment();
       }
@@ -349,7 +348,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function activateStageNow(stage: Stage) {
-    if (!confirm(`Activate "${stage.name}" now? Its start date will be set to now.`)) return;
+    if (!confirm(`Activate "${getStageName(stage)}" now? Its start date will be set to now.`)) return;
     const sortedStages = [...(recruitment?.stages ?? [])].sort((a, b) => a.order - b.order);
     const prevStage = sortedStages.findLast((s) => s.order < stage.order);
     if (prevStage && prevStage.status === "active") {
@@ -472,14 +471,6 @@ export default function RecruitmentDetailPage() {
                 <form onSubmit={addStage} className="space-y-5">
                   <div className="space-y-3">
                     <p className="text-sm font-semibold">Supplementary Stage</p>
-                    <div className="space-y-2">
-                      <Label>Name</Label>
-                      <Input
-                        value={stageForm.supplementaryStage.name}
-                        onChange={(e) => setStageForm(f => ({ ...f, supplementaryStage: { ...f.supplementaryStage, name: e.target.value } }))}
-                        required
-                      />
-                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Start Date</Label>
@@ -504,14 +495,6 @@ export default function RecruitmentDetailPage() {
 
                   <div className="border-t pt-4 space-y-3">
                     <p className="text-sm font-semibold">Admin Stage</p>
-                    <div className="space-y-2">
-                      <Label>Name</Label>
-                      <Input
-                        value={stageForm.adminStage.name}
-                        onChange={(e) => setStageForm(f => ({ ...f, adminStage: { ...f.adminStage, name: e.target.value } }))}
-                        required
-                      />
-                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Start Date</Label>
@@ -557,7 +540,7 @@ export default function RecruitmentDetailPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">
-                            <span className="font-bold capitalize">{stage.type}:</span> {stage.name}
+                            {getStageName(stage)}
                           </span>
                           <Badge variant={stageStatusColors[stage.status] || "default"}>
                             {stage.status}
