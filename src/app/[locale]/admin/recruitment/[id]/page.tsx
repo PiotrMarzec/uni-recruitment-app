@@ -612,8 +612,8 @@ export default function RecruitmentDetailPage() {
                 onChange={(e) => setAddSlotsCount(parseInt(e.target.value) || 1)}
                 className="w-20 h-9"
               />
-              <Button size="sm" onClick={addSlots} disabled={addingSlots}>
-                {addingSlots ? "Adding..." : t("slots.addSlots")}
+              <Button size="sm" onClick={addSlots} disabled={addingSlots} className="bg-green-600 hover:bg-green-700 text-white">
+                <Plus className="w-4 h-4 mr-1" />{addingSlots ? "Adding..." : t("slots.addSlots")}
               </Button>
             </div>
           </div>
