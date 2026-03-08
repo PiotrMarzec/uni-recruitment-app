@@ -113,7 +113,7 @@ export async function GET(
 
   const recentRegistrations = recentRegistrationsRaw.map(({ registrationId, ...r }) => ({
     ...r,
-    assignedDestination: assignmentMap.get(registrationId) ?? null,
+    assignedDestination: registrationId ? (assignmentMap.get(registrationId) ?? null) : null,
     teacherManagementLink: getTeacherPath(r.slotId),
   }));
 
