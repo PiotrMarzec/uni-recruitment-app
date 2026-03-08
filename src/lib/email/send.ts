@@ -153,7 +153,28 @@ export async function sendAssignmentUnassignedEmail(params: {
   email: string;
   fullName: string;
   recruitmentName: string;
+  supplementaryStage?: { startDate: Date; endDate: Date };
+  registrationLink?: string;
 }): Promise<EmailResult> {
+  const supplementarySection = params.supplementaryStage
+    ? (() => {
+        const startStr = params.supplementaryStage.startDate.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        const endStr = params.supplementaryStage.endDate.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        return `
+          <p>A <strong>supplementary stage</strong> has been scheduled for <strong>${params.recruitmentName}</strong>, running from <strong>${startStr}</strong> to <strong>${endStr}</strong>. You will have another opportunity to apply and be assigned to a destination during this period.</p>
+          ${params.registrationLink ? `<div style="margin: 24px 0;"><a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Apply in Supplementary Stage</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">Or copy this link: <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p></div>` : ""}
+        `;
+      })()
+    : `<p style="color: #71717a; font-size: 14px;">We will notify you if a supplementary stage becomes available.</p>`;
+
   try {
     await sendEmail({
       from: EMAIL_FROM,
@@ -163,9 +184,8 @@ export async function sendAssignmentUnassignedEmail(params: {
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>Assignment Result</h2>
           <p>Dear ${params.fullName},</p>
-          <p>Unfortunately, we were unable to assign you to any of your selected destinations for <strong>${params.recruitmentName}</strong> in this round.</p>
-          <p>This may be due to high competition for your preferred destinations. If a supplementary stage is initiated, you will have another opportunity to be assigned.</p>
-          <p style="color: #71717a; font-size: 14px;">We will notify you if a supplementary stage becomes available.</p>
+          <p>Unfortunately, we were unable to assign you to any of your selected destinations for <strong>${params.recruitmentName}</strong> in this round. This may be due to high competition for your preferred destinations.</p>
+          ${supplementarySection}
         </div>
       `,
     });

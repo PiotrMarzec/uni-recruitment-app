@@ -15,6 +15,7 @@ import {
   sendAssignmentApprovedEmail,
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
+import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
@@ -93,12 +94,28 @@ export async function POST(
       studentEmail: users.email,
       destinationName: destinations.name,
       destinationDescription: destinations.description,
+      slotId: slots.id,
     })
     .from(assignmentResults)
     .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
     .innerJoin(users, eq(registrations.studentId, users.id))
+    .innerJoin(slots, eq(registrations.slotId, slots.id))
     .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
     .where(eq(assignmentResults.stageId, id));
+
+  // Find the next supplementary stage (if any) to include in unassigned emails
+  const [supplementaryStage] = await db
+    .select({ startDate: stages.startDate, endDate: stages.endDate })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.type, "supplementary"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
 
   // Determine students previously assigned in an earlier stage (skip re-sending email)
   const registrationIds = results.map((r) => r.registrationId);
@@ -146,6 +163,8 @@ export async function POST(
         email: result.studentEmail,
         fullName: result.studentName,
         recruitmentName: stage.name,
+        supplementaryStage: supplementaryStage ?? undefined,
+        registrationLink: result.slotId ? getStudentRegistrationLink(result.slotId) : undefined,
       });
     }
     emailsSent++;
