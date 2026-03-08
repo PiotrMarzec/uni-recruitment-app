@@ -253,7 +253,7 @@ describe("Bug 2 – Step route broadcasts registrationCompleted: true during re-
   it("should broadcast registrationCompleted: false while the student is still editing", async () => {
     queueStep4ReEdit();
 
-    const req = makeStepRequest(SLOT_ID, { step: 4, level: "master" });
+    const req = makeStepRequest(SLOT_ID, { step: 4, level: "master_1" });
     await stepPOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
 
     // ✗ CURRENTLY FAILS:

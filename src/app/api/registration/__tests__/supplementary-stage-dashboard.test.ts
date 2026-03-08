@@ -350,7 +350,7 @@ describe("Bug B – step route does not broadcast registration_step_update to su
   it("should broadcast registration_step_update using the supplementary stageId so the recentRegistrations list updates", async () => {
     queueStep4Supplementary();
 
-    const req = makeStepRequest(SLOT_ID, { step: 4, level: "master" });
+    const req = makeStepRequest(SLOT_ID, { step: 4, level: "master_1" });
     await stepPOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
 
     // ✗ CURRENTLY FAILS:
