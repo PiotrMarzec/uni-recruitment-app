@@ -14,7 +14,7 @@ import { broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
 import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNotNull, desc } from "drizzle-orm";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
 
 const step1Schema = z.object({
@@ -237,7 +237,22 @@ export async function POST(
     }
 
     // Set student session
-    const res = NextResponse.json({ success: true, userId: user.id });
+    // For the enrollment ID, use the current slot's registration if available,
+    // otherwise fall back to the most recent registration the student has completed on any slot.
+    const enrollmentId = existingReg?.enrollmentId ?? await db
+      .select({ enrollmentId: registrations.enrollmentId })
+      .from(registrations)
+      .where(and(eq(registrations.studentId, user.id), isNotNull(registrations.enrollmentId)))
+      .orderBy(desc(registrations.updatedAt))
+      .limit(1)
+      .then((r) => r[0]?.enrollmentId ?? null);
+
+    const res = NextResponse.json({
+      success: true,
+      userId: user.id,
+      fullName: user.fullName,
+      enrollmentId,
+    });
     const finalSession = await getRegistrationSessionFromRequest(req, res);
     finalSession.userId = user.id;
     finalSession.email = user.email;

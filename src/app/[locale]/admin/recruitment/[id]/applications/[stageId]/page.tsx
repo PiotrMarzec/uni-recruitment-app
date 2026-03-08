@@ -7,7 +7,7 @@ import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { UserCheck } from "lucide-react";
+import { UserCheck, Square } from "lucide-react";
 import { getStageName } from "@/lib/stage-name";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
@@ -59,6 +59,8 @@ export default function ApplicationsPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [maxDestChoices, setMaxDestChoices] = useState(3);
   const [hasAssignments, setHasAssignments] = useState(false);
+  const [hasNextSupplementary, setHasNextSupplementary] = useState(true);
+  const [showNoSupplementaryWarning, setShowNoSupplementaryWarning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("completed");
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
@@ -172,6 +174,7 @@ export default function ApplicationsPage() {
         setDestinations(data.destinations);
         setMaxDestChoices(data.maxDestinationChoices ?? 3);
         setHasAssignments(data.hasAssignments ?? false);
+        setHasNextSupplementary(data.hasNextSupplementary ?? false);
       }
     } finally {
       setLoading(false);
@@ -292,12 +295,18 @@ export default function ApplicationsPage() {
   }
 
   async function completeStage() {
-    if (!confirm("Complete this stage? The current assignments will be finalized.")) return;
+    if (!hasNextSupplementary) {
+      setShowNoSupplementaryWarning(true);
+      return;
+    }
+    await doCompleteStage();
+  }
+
+  async function doCompleteStage() {
     setCompleting(true);
     try {
       const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
       if (res.ok) {
-        alert("Stage completed!");
         router.push(`/admin/recruitment/${recruitmentId}`);
       }
     } finally {
@@ -642,7 +651,7 @@ export default function ApplicationsPage() {
               onClick={completeStage}
               disabled={completing || assigning || editingRows.size > 0}
             >
-              {completing ? "Completing..." : "Complete Stage"}
+              <Square className="w-4 h-4 mr-1.5" />{completing ? "Ending..." : "End Stage"}
             </Button>
           )}
         </div>
@@ -690,6 +699,44 @@ export default function ApplicationsPage() {
         renderGrid(applications, "No completed registrations yet")}
       {activeTab === "incomplete" &&
         renderGrid(incompleteApplications, "No incomplete registrations")}
+
+      {showNoSupplementaryWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background border rounded-lg p-6 max-w-lg w-full mx-4 shadow-lg">
+            <h3 className="font-semibold text-base mb-2">No further supplementary stages planned</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.
+            </p>
+            <div className="flex gap-2 justify-between">
+              <Button
+                variant="outline"
+                onClick={() => setShowNoSupplementaryWarning(false)}
+              >
+                Cancel
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    setShowNoSupplementaryWarning(false);
+                    router.push(`/admin/recruitment/${recruitmentId}?addStage=1`);
+                  }}
+                >
+                  Add Supplementary Stage
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    setShowNoSupplementaryWarning(false);
+                    await doCompleteStage();
+                  }}
+                >
+                  <Square className="w-4 h-4 mr-1.5" />End Stage Anyway
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

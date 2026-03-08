@@ -178,7 +178,7 @@ function makeStepRequest(slotId: string, body: object): NextRequest {
  */
 function queueGetRegisteredSlot() {
   dbQueue.push(
-    [{ id: SLOT_ID, number: 1, status: "registered", studentId: USER_EMMA_ID, recruitmentId: RECRUITMENT_ID }],
+    [{ id: SLOT_ID, number: 1, status: "registered", studentId: USER_EMMA_ID, recruitmentId: RECRUITMENT_ID, createdAt: new Date("2026-03-01") }],
     [{ id: RECRUITMENT_ID, name: "Winter Erasmus 2026", description: "", maxDestinationChoices: 5 }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID, endDate: new Date("2026-03-11") }],
     [],  // supplementary stage → not active

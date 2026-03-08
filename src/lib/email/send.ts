@@ -44,15 +44,26 @@ export async function sendOtpEmail(
   }
 }
 
+const LEVEL_LABELS: Record<string, string> = {
+  bachelor_1: "Bachelor (1st year)",
+  bachelor_2: "Bachelor (2nd year)",
+  bachelor_3: "Bachelor (3rd year)",
+  master_1: "Master (1st year)",
+  master_2: "Master (2nd year)",
+  master_3: "Master (3rd year)",
+};
+
 export async function sendRegistrationCompletedEmail(params: {
   email: string;
   fullName: string;
   recruitmentName: string;
-  level: string;
+  level: string | null;
   spokenLanguages: string[];
   destinationPreferences: string[];
   enrollmentId: string;
+  registrationLink: string;
 }): Promise<EmailResult> {
+  const levelLabel = (params.level && LEVEL_LABELS[params.level]) || params.level || "—";
   try {
     await sendEmail({
       from: EMAIL_FROM,
@@ -66,10 +77,14 @@ export async function sendRegistrationCompletedEmail(params: {
           <h3>Your Registration Summary</h3>
           <table style="width: 100%; border-collapse: collapse;">
             <tr><td style="padding: 8px 0; color: #71717a;">Enrollment ID</td><td>${params.enrollmentId}</td></tr>
-            <tr><td style="padding: 8px 0; color: #71717a;">Study Level</td><td>${params.level}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">Study Level</td><td>${levelLabel}</td></tr>
             <tr><td style="padding: 8px 0; color: #71717a;">Spoken Languages</td><td>${params.spokenLanguages.join(", ")}</td></tr>
             <tr><td style="padding: 8px 0; color: #71717a;">Destination Preferences</td><td>${params.destinationPreferences.map((d, i) => `${i + 1}. ${d}`).join("<br>")}</td></tr>
           </table>
+          <div style="margin: 32px 0;">
+            <a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Update My Registration</a>
+            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">Or copy this link: <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p>
+          </div>
           <p style="color: #71717a; font-size: 14px; margin-top: 32px;">You can update your information until the initial registration stage closes.</p>
         </div>
       `,

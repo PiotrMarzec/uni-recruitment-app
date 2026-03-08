@@ -7,12 +7,13 @@ import {
   stages,
   destinations,
   stageEnrollments,
+  recruitments,
 } from "@/db/schema";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendRegistrationCompletedEmail } from "@/lib/email/send";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
 import { broadcastRegistrationUpdate, broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
-import { getTeacherPath } from "@/lib/auth/hmac";
+import { getTeacherPath, getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, count, desc, isNotNull } from "drizzle-orm";
 
 export async function POST(
@@ -138,21 +139,17 @@ export async function POST(
     }
   }
 
-  // Get student info for email
-  const [student] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-
-  // Get destination names for email
-  const destNames = await db
-    .select({ id: destinations.id, name: destinations.name })
-    .from(destinations)
-    .where(eq(destinations.recruitmentId, slot.recruitmentId));
+  // Get student info, recruitment name, and destination names for email
+  const [[student], [recruitment], destNames] = await Promise.all([
+    db.select().from(users).where(eq(users.id, userId)).limit(1),
+    db.select({ name: recruitments.name }).from(recruitments).where(eq(recruitments.id, slot.recruitmentId)).limit(1),
+    db.select({ id: destinations.id, name: destinations.name }).from(destinations).where(eq(destinations.recruitmentId, slot.recruitmentId)),
+  ]);
 
   const destNameMap = Object.fromEntries(destNames.map((d) => [d.id, d.name]));
   const prefNames = prefs.map((id) => destNameMap[id] || id);
+
+  const registrationLink = getStudentRegistrationLink(slotId);
 
   // Send confirmation email
   if (student) {
@@ -160,11 +157,12 @@ export async function POST(
     await sendRegistrationCompletedEmail({
       email: student.email,
       fullName: student.fullName,
-      recruitmentName: "Recruitment", // We'd ideally fetch the name
+      recruitmentName: recruitment?.name ?? "Recruitment",
       level: registration.level,
       spokenLanguages: langs,
       destinationPreferences: prefNames,
       enrollmentId: registration.enrollmentId || "",
+      registrationLink,
     });
   }
 

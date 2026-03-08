@@ -52,6 +52,13 @@ export interface SlotStatusUpdateEvent {
   stageId: string;
   openSlotsCount: number;
   startedSlotsCount: number;
+  /** Present when a slot just transitioned to registration_started */
+  startedSlot?: {
+    slotId: string;
+    slotNumber: number;
+    createdAt: string;
+    teacherManagementLink: string;
+  };
 }
 
 export function broadcastSlotStatusUpdate(event: SlotStatusUpdateEvent): void {

@@ -211,10 +211,10 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setStepError(result.error || "An error occurred");
-        return false;
+        return null;
       }
 
-      return true;
+      return result as Record<string, unknown>;
     } finally {
       setSubmitting(false);
     }
@@ -236,9 +236,14 @@ export default function RegisterPage() {
 
   async function handleStep2(e: React.FormEvent) {
     e.preventDefault();
-    const ok = await submitStep(2, { email, code: otpCode });
-    if (ok) {
+    const result = await submitStep(2, { email, code: otpCode });
+    if (result) {
       setEmailVerifiedThisSession(true);
+      // Pre-fill name and enrollment ID from the student's existing profile.
+      // For new students this shows the email-derived name; for returning students
+      // it restores their previously saved values.
+      if (result.fullName) setFullName(result.fullName as string);
+      if (result.enrollmentId) setEnrollmentId(result.enrollmentId as string);
       setCurrentStep(3);
     }
   }

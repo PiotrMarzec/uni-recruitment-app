@@ -10,6 +10,7 @@ import {
   stageEnrollments,
 } from "@/db/schema";
 import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
+import { getTeacherPath } from "@/lib/auth/hmac";
 import { eq, and, count, desc } from "drizzle-orm";
 
 export async function GET(
@@ -26,6 +27,7 @@ export async function GET(
       status: slots.status,
       studentId: slots.studentId,
       recruitmentId: slots.recruitmentId,
+      createdAt: slots.createdAt,
     })
     .from(slots)
     .where(eq(slots.id, slotId))
@@ -102,6 +104,12 @@ export async function GET(
         stageId: broadcastStageId,
         openSlotsCount: byStatus["open"] ?? 0,
         startedSlotsCount: byStatus["registration_started"] ?? 0,
+        startedSlot: {
+          slotId: slot.id,
+          slotNumber: slot.number,
+          createdAt: slot.createdAt.toISOString(),
+          teacherManagementLink: getTeacherPath(slot.id),
+        },
       });
     }
   }

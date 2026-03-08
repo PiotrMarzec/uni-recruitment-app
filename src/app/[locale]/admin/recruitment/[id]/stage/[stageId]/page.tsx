@@ -28,12 +28,12 @@ interface DashboardData {
   recentRegistrations: Array<{
     slotId: string;
     slotNumber: number;
-    studentName: string;
-    studentEmail: string;
+    studentName: string | null;
+    studentEmail: string | null;
     completedAt: string | null;
     createdAt: string;
     updatedAt: string;
-    registrationCompleted: boolean;
+    registrationCompleted: boolean | null;
     teacherManagementLink: string;
     assignedDestination?: string | null;
   }>;
@@ -90,6 +90,26 @@ export default function StageDashboardPage() {
         if (message.type === "slot_status_update" && message.stageId === stageId) {
           setData((prev) => {
             if (!prev) return prev;
+            let recentRegistrations = prev.recentRegistrations;
+            if (message.startedSlot) {
+              const { slotId, slotNumber, createdAt, teacherManagementLink } = message.startedSlot;
+              const exists = recentRegistrations.some((r) => r.slotId === slotId);
+              if (!exists) {
+                const newEntry = {
+                  slotId,
+                  slotNumber,
+                  studentName: null,
+                  studentEmail: null,
+                  completedAt: null,
+                  createdAt,
+                  updatedAt: createdAt,
+                  registrationCompleted: null,
+                  teacherManagementLink,
+                  assignedDestination: null,
+                };
+                recentRegistrations = [newEntry, ...recentRegistrations].slice(0, 50);
+              }
+            }
             return {
               ...prev,
               stats: {
@@ -97,6 +117,7 @@ export default function StageDashboardPage() {
                 openSlots: message.openSlotsCount,
                 startedSlots: message.startedSlotsCount,
               },
+              recentRegistrations,
             };
           });
         }
@@ -122,8 +143,9 @@ export default function StageDashboardPage() {
             const incoming = message.registration;
             const idx = prev.recentRegistrations.findIndex((r) => r.slotId === incoming.slotId);
             const updated = idx >= 0
-              ? prev.recentRegistrations.map((r, i) => (i === idx ? incoming : r))
-              : [incoming, ...prev.recentRegistrations];
+              // Merge to preserve createdAt from the existing entry (incoming lacks it)
+              ? prev.recentRegistrations.map((r, i) => (i === idx ? { ...r, ...incoming } : r))
+              : [{ ...incoming, createdAt: incoming.updatedAt }, ...prev.recentRegistrations];
             const sorted = [...updated].sort(
               (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
             );
@@ -234,7 +256,7 @@ export default function StageDashboardPage() {
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`h-2 w-2 rounded-full flex-shrink-0 ${reg.registrationCompleted ? "bg-green-500" : "bg-yellow-400"}`} />
                     <div className="min-w-0 truncate">
-                      <span className="font-medium">{reg.studentName}</span>
+                      <span className="font-medium">{reg.studentName ?? <span className="text-muted-foreground italic">Unknown</span>}</span>
                       <span className="text-muted-foreground text-sm ml-2">
                         — Slot #{reg.slotNumber}
                       </span>
@@ -261,7 +283,7 @@ export default function StageDashboardPage() {
                   </span>
                   {/* Actions */}
                   <div>
-                    {reg.registrationCompleted && (
+                    {reg.registrationCompleted === true && (
                       <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs gap-1">
                         <a
                           href={reg.teacherManagementLink}

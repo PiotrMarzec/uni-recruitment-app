@@ -51,11 +51,8 @@ export async function POST(req: NextRequest) {
   await db.insert(admins).values({ userId: user.id });
 
   // Build admin panel URL
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    req.headers.get("origin") ||
-    `https://${req.headers.get("host")}`;
-  const adminUrl = `${origin}/admin/login`;
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const adminUrl = `${appUrl}/admin/login`;
 
   // Send invite email
   await sendAdminInviteEmail({

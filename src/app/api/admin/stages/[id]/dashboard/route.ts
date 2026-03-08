@@ -10,7 +10,7 @@ import {
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { getTeacherPath } from "@/lib/auth/hmac";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, ne, sql } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -56,7 +56,9 @@ export async function GET(
     .orderBy(desc(stages.order))
     .limit(1);
 
-  // Get recent registrations (all active, newest update first).
+  // Get recent registrations (all non-open slots, newest update/creation first).
+  // Uses LEFT JOINs so slots in "registration_started" state appear even before
+  // a registration row is created (i.e. teacher opened the link but hasn't completed OTP).
   const recentRegistrationsRaw = await db
     .select({
       registrationId: registrations.id,
@@ -65,22 +67,29 @@ export async function GET(
       studentName: users.fullName,
       studentEmail: users.email,
       completedAt: registrations.registrationCompletedAt,
-      createdAt: registrations.createdAt,
-      updatedAt: registrations.updatedAt,
+      createdAt: sql<string>`COALESCE(${registrations.createdAt}, ${slots.createdAt})`.as("created_at"),
+      updatedAt: sql<string>`COALESCE(${registrations.updatedAt}, ${slots.createdAt})`.as("updated_at"),
       registrationCompleted: registrations.registrationCompleted,
     })
-    .from(registrations)
-    .innerJoin(users, eq(registrations.studentId, users.id))
-    .innerJoin(slots, eq(registrations.slotId, slots.id))
-    .where(eq(slots.recruitmentId, stage.recruitmentId))
-    .orderBy(desc(registrations.updatedAt))
+    .from(slots)
+    .leftJoin(registrations, eq(registrations.slotId, slots.id))
+    .leftJoin(users, eq(registrations.studentId, users.id))
+    .where(
+      and(
+        eq(slots.recruitmentId, stage.recruitmentId),
+        ne(slots.status, "open")
+      )
+    )
+    .orderBy(desc(sql`COALESCE(${registrations.updatedAt}, ${slots.createdAt})`))
     .limit(50);
 
   // Build a map of registrationId → assigned destination name from the most recently
   // completed admin stage. Fetched separately to avoid row duplication from joins.
   const assignmentMap = new Map<string, string | null>();
   if (adminStage && recentRegistrationsRaw.length > 0) {
-    const regIds = recentRegistrationsRaw.map((r) => r.registrationId);
+    const regIds = recentRegistrationsRaw
+      .filter((r) => r.registrationId !== null)
+      .map((r) => r.registrationId as string);
     const enrollments = await db
       .select({
         registrationId: stageEnrollments.registrationId,

@@ -10,7 +10,7 @@ import {
   assignmentResults,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, gt } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -128,6 +128,20 @@ export async function GET(
     };
   }
 
+  // Check whether a supplementary stage is planned after this admin stage
+  const [nextSupplementary] = await db
+    .select({ id: stages.id })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.type, "supplementary"),
+        eq(stages.status, "pending"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .limit(1);
+
   return NextResponse.json({
     stage,
     applications: completedRows.map(mapRow),
@@ -135,5 +149,6 @@ export async function GET(
     destinations: allDestinations,
     maxDestinationChoices: recruitment?.maxDestinationChoices ?? 3,
     hasAssignments: existingAssignments.length > 0,
+    hasNextSupplementary: !!nextSupplementary,
   });
 }

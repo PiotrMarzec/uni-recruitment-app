@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
@@ -78,6 +78,7 @@ const stageStatusColors: Record<string, "default" | "success" | "warning" | "sec
 
 export default function RecruitmentDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const t = useTranslations("admin.recruitment");
   const tc = useTranslations("common");
@@ -140,6 +141,9 @@ export default function RecruitmentDetailPage() {
   useEffect(() => {
     fetchRecruitment();
     fetchEligibleLevels();
+    if (searchParams.get("addStage") === "1") {
+      setStageDialogOpen(true);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -882,14 +886,23 @@ export default function RecruitmentDetailPage() {
       {/* Warning dialog: no subsequent supplementary stages */}
       {showNoSupplementaryWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+          <div className="bg-background border rounded-lg p-6 max-w-lg w-full mx-4 shadow-lg">
             <h3 className="font-semibold text-base mb-2">No further supplementary stages planned</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.
             </p>
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-between">
               <Button
                 variant="outline"
+                onClick={() => {
+                  setShowNoSupplementaryWarning(false);
+                  setPendingCompleteStageId(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <div className="flex gap-2">
+              <Button
                 onClick={() => {
                   setShowNoSupplementaryWarning(false);
                   setPendingCompleteStageId(null);
@@ -908,8 +921,9 @@ export default function RecruitmentDetailPage() {
                   setPendingCompleteStageId(null);
                 }}
               >
-                End Stage Anyway
+                <Square className="w-4 h-4 mr-1.5" />End Stage Anyway
               </Button>
+              </div>
             </div>
           </div>
         </div>

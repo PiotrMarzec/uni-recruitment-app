@@ -187,7 +187,7 @@ function makeCompleteRequest(slotId: string): NextRequest {
 function queueGetSupplementaryRegisteredSlot() {
   dbQueue.push(
     // 1. slot
-    [{ id: SLOT_ID, number: 1, status: "registered", studentId: USER_EMMA_ID, recruitmentId: RECRUITMENT_ID }],
+    [{ id: SLOT_ID, number: 1, status: "registered", studentId: USER_EMMA_ID, recruitmentId: RECRUITMENT_ID, createdAt: new Date("2026-03-01") }],
     // 2. recruitment
     [{ id: RECRUITMENT_ID, name: "Winter Erasmus 2026", description: "", maxDestinationChoices: 5 }],
     // 3. initial stage → not active
