@@ -65,6 +65,7 @@ export async function GET(
       studentName: users.fullName,
       studentEmail: users.email,
       completedAt: registrations.registrationCompletedAt,
+      createdAt: registrations.createdAt,
       updatedAt: registrations.updatedAt,
       registrationCompleted: registrations.registrationCompleted,
     })

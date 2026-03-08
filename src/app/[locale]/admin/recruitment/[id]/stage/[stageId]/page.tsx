@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
+import { formatDate, formatRelativeDate } from "@/lib/utils";
 
 interface DashboardData {
   stage: {
@@ -28,6 +30,7 @@ interface DashboardData {
     studentName: string;
     studentEmail: string;
     completedAt: string | null;
+    createdAt: string;
     updatedAt: string;
     registrationCompleted: boolean;
     teacherManagementLink: string;
@@ -43,6 +46,7 @@ export default function StageDashboardPage() {
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [connected, setConnected] = useState(false);
+  const [, setTick] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const mountedRef = useRef(true);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,11 +55,13 @@ export default function StageDashboardPage() {
     mountedRef.current = true;
     fetchDashboard();
     connectWebSocket();
+    const ticker = setInterval(() => setTick((t) => t + 1), 30000);
 
     return () => {
       mountedRef.current = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
+      clearInterval(ticker);
     };
   }, [stageId]);
 
@@ -210,15 +216,23 @@ export default function StageDashboardPage() {
           {data.recentRegistrations.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t("noRegistrations")}</p>
           ) : (
-            <div className="space-y-2">
+            <div>
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_120px_120px_80px] gap-4 px-1 pb-2 border-b text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
+                <span>Student</span>
+                <span>Created</span>
+                <span>Updated</span>
+                <span></span>
+              </div>
               {data.recentRegistrations.map((reg) => (
                 <div
                   key={reg.slotId}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
+                  className="grid grid-cols-[1fr_120px_120px_80px] gap-4 items-center px-1 py-2 border-b last:border-0"
                 >
-                  <div className="flex items-center gap-2">
+                  {/* Student info */}
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className={`h-2 w-2 rounded-full flex-shrink-0 ${reg.registrationCompleted ? "bg-green-500" : "bg-yellow-400"}`} />
-                    <div>
+                    <div className="min-w-0 truncate">
                       <span className="font-medium">{reg.studentName}</span>
                       <span className="text-muted-foreground text-sm ml-2">
                         — Slot #{reg.slotNumber}
@@ -230,22 +244,33 @@ export default function StageDashboardPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <div className="text-right space-y-0.5">
-                      <div>Updated: {formatDate(reg.updatedAt)}</div>
-                      {reg.completedAt && (
-                        <div>Completed: {formatDate(reg.completedAt)}</div>
-                      )}
-                    </div>
+                  {/* Created */}
+                  <span
+                    className="text-xs text-muted-foreground cursor-default underline decoration-dotted decoration-muted-foreground/40 whitespace-nowrap"
+                    title={formatDate(reg.createdAt)}
+                  >
+                    {formatRelativeDate(reg.createdAt)}
+                  </span>
+                  {/* Updated */}
+                  <span
+                    className="text-xs text-muted-foreground cursor-default underline decoration-dotted decoration-muted-foreground/40 whitespace-nowrap"
+                    title={formatDate(reg.updatedAt)}
+                  >
+                    {formatRelativeDate(reg.updatedAt)}
+                  </span>
+                  {/* Actions */}
+                  <div>
                     {reg.registrationCompleted && (
-                      <a
-                        href={reg.teacherManagementLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline whitespace-nowrap"
-                      >
-                        Manage
-                      </a>
+                      <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs gap-1">
+                        <a
+                          href={reg.teacherManagementLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Manage
+                        </a>
+                      </Button>
                     )}
                   </div>
                 </div>
