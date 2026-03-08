@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -14,16 +13,23 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
-interface AssignmentResult {
-  id: string;
+interface Application {
   registrationId: string;
-  destinationId: string | null;
-  score: string;
-  approved: boolean;
+  slotNumber: number;
   studentName: string;
-  studentEmail: string;
-  destinationName: string | null;
+  enrollmentId: string | null;
+  level: string | null;
+  spokenLanguages: string[];
+  destinationPreferences: string[];
+  destinationNames: string[];
+  averageResult: number | null;
+  additionalActivities: number | null;
+  recommendationLetters: number | null;
+  score: number;
+  assignedDestinationId: string | null;
+  assignedDestinationName: string | null;
 }
 
 export default function AssignmentResultsPage() {
@@ -32,7 +38,8 @@ export default function AssignmentResultsPage() {
   const stageId = params.stageId as string;
   const t = useTranslations("admin.results");
 
-  const [results, setResults] = useState<AssignmentResult[]>([]);
+  const [stageName, setStageName] = useState("");
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
   const [approved, setApproved] = useState(false);
@@ -40,17 +47,24 @@ export default function AssignmentResultsPage() {
   const [activating, setActivating] = useState(false);
 
   useEffect(() => {
-    fetchResults();
+    fetchData();
   }, [stageId]);
 
-  async function fetchResults() {
+  async function fetchData() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/stages/${stageId}/results`);
-      if (res.ok) {
-        const data = await res.json();
-        setResults(data);
-        setApproved(data.every((r: AssignmentResult) => r.approved));
+      const [appsRes, resultsRes] = await Promise.all([
+        fetch(`/api/admin/stages/${stageId}/applications`),
+        fetch(`/api/admin/stages/${stageId}/results`),
+      ]);
+      if (appsRes.ok) {
+        const data = await appsRes.json();
+        setStageName(data.stage?.name ?? "");
+        setApplications(data.applications ?? []);
+      }
+      if (resultsRes.ok) {
+        const results = await resultsRes.json();
+        setApproved(results.length > 0 && results.every((r: { approved: boolean }) => r.approved));
       }
     } finally {
       setLoading(false);
@@ -69,7 +83,7 @@ export default function AssignmentResultsPage() {
         if (data.nextStage) {
           setNextStage(data.nextStage);
         }
-        await fetchResults();
+        await fetchData();
       }
     } finally {
       setApproving(false);
@@ -89,8 +103,8 @@ export default function AssignmentResultsPage() {
     }
   }
 
-  const assignedCount = results.filter((r) => r.destinationId).length;
-  const unassignedCount = results.filter((r) => !r.destinationId).length;
+  const assignedCount = applications.filter((a) => a.assignedDestinationId).length;
+  const unassignedCount = applications.filter((a) => !a.assignedDestinationId).length;
 
   return (
     <AdminLayout
@@ -103,53 +117,123 @@ export default function AssignmentResultsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground">{stageName}</p>
           <p className="text-sm text-muted-foreground mt-1">
             {assignedCount} assigned, {unassignedCount} unassigned
           </p>
         </div>
-        {!approved && (
-          <Button onClick={approveAll} disabled={approving}>
-            {approving ? "Approving..." : t("approve")}
-          </Button>
-        )}
-        {approved && (
-          <Badge variant="success">{t("approved")}</Badge>
-        )}
+        <div className="flex items-center gap-3">
+          {!approved && (
+            <Button onClick={approveAll} disabled={approving}>
+              {approving ? "Approving..." : t("approve")}
+            </Button>
+          )}
+          {approved && (
+            <Badge variant="success">{t("approved")}</Badge>
+          )}
+        </div>
       </div>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="border-b bg-muted/50">
+            <thead className="bg-muted/50 border-b">
               <tr>
-                <th className="text-left p-3 font-medium">{t("student")}</th>
-                <th className="text-left p-3 font-medium">{t("destination")}</th>
-                <th className="text-left p-3 font-medium">{t("score")}</th>
-                <th className="text-left p-3 font-medium">Status</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">Slot</th>
+                <th className="text-left p-3 font-medium min-w-[120px]">Name</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">Enrollment ID</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">Level</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">Languages</th>
+                <th className="text-left p-3 font-medium min-w-[140px]">Destinations</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">Avg Result</th>
+                <th className="text-left p-3 font-medium min-w-[80px]">Activities</th>
+                <th className="text-left p-3 font-medium min-w-[70px]">Letters</th>
+                <th className="text-left p-3 font-medium min-w-[60px]">Score</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">Assigned</th>
               </tr>
             </thead>
             <tbody>
-              {results.map((result) => (
-                <tr key={result.id} className="border-b last:border-0 hover:bg-muted/20">
-                  <td className="p-3">
-                    <div>{result.studentName}</div>
-                    <div className="text-muted-foreground text-xs">{result.studentEmail}</div>
+              {applications.length === 0 && (
+                <tr>
+                  <td colSpan={11} className="p-8 text-center text-muted-foreground">
+                    No results found
+                  </td>
+                </tr>
+              )}
+              {applications.map((app) => (
+                <tr key={app.registrationId} className="border-b hover:bg-muted/20">
+                  <td className="p-3 font-mono text-muted-foreground">#{app.slotNumber}</td>
+                  <td className="p-3 font-medium">{app.studentName}</td>
+                  <td className="p-3 font-mono">
+                    {app.enrollmentId ?? <span className="text-muted-foreground">—</span>}
                   </td>
                   <td className="p-3">
-                    {result.destinationName ? (
-                      <span className="font-medium">{result.destinationName}</span>
+                    {app.level ? (
+                      <Badge variant="secondary">
+                        {STUDENT_LEVEL_LABELS[app.level as StudentLevel] ?? app.level}
+                      </Badge>
                     ) : (
-                      <span className="text-muted-foreground">{t("unassigned")}</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="p-3 font-mono">{parseFloat(result.score).toFixed(1)}</td>
                   <td className="p-3">
-                    {result.approved ? (
-                      <Badge variant="success">Approved</Badge>
+                    <div className="flex flex-wrap gap-1">
+                      {app.spokenLanguages.length > 0 ? (
+                        app.spokenLanguages.map((l) => (
+                          <Badge key={l} variant="outline" className="text-xs">
+                            {l}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    {app.destinationNames.length > 0 ? (
+                      <ol className="list-none space-y-0.5">
+                        {app.destinationNames.map((name, i) => (
+                          <li key={i} className="text-xs">
+                            <span className="text-muted-foreground mr-1">{i + 1}.</span>
+                            {name}
+                          </li>
+                        ))}
+                      </ol>
                     ) : (
-                      <Badge variant="secondary">Pending</Badge>
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {app.averageResult !== null ? (
+                      app.averageResult.toFixed(1)
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {app.additionalActivities !== null ? (
+                      app.additionalActivities
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {app.recommendationLetters !== null ? (
+                      app.recommendationLetters
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="p-3 font-mono">{app.score.toFixed(1)}</td>
+                  <td className="p-3">
+                    {app.assignedDestinationName ? (
+                      <Badge variant="success" className="whitespace-nowrap">
+                        {app.assignedDestinationName}
+                      </Badge>
+                    ) : (
+                      <span className="text-amber-500 font-medium text-sm">Unassigned</span>
                     )}
                   </td>
                 </tr>
