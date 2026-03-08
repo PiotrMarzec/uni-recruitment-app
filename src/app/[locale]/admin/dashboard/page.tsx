@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
+import { Plus, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDateShort } from "@/lib/utils";
@@ -113,7 +114,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
-            <Button>{t("createRecruitment")}</Button>
+            <Button className="bg-green-600 hover:bg-green-700 text-white"><Plus className="mr-1 h-4 w-4" />{t("createRecruitment")}</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -282,8 +283,8 @@ export default function AdminDashboardPage() {
                     </CardDescription>
                   </div>
                   <Link href={`/admin/recruitment/${rec.id}`}>
-                    <Button variant="outline" size="sm">
-                      View →
+                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                      <Eye className="mr-1 h-4 w-4" />View
                     </Button>
                   </Link>
                 </div>
