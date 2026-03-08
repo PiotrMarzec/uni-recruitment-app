@@ -4,13 +4,22 @@
 
 A web application that supports university recruitment for students wanting to participate in international trips. Admins create recruitments with slots, destinations, and staged workflows. Students register via unique links (distributed physically at the university office), complete a multi-step form, and get assigned to travel destinations based on scores and preferences.
 
+**Tech stack (implemented):**
+- Next.js 15 (App Router), TypeScript
+- PostgreSQL + Drizzle ORM
+- iron-session (OTP-based, passwordless auth)
+- Tailwind CSS + shadcn/ui
+- Resend (production) / SMTP (development) for email
+- next-intl for internationalization (`[locale]` route segment)
+- Custom WebSocket server for real-time dashboard updates
+
 ---
 
 ## 2. User Roles
 
 ### 2.1 Admin
-- Created via CLI (first admin; subsequent admins can be created from the admin panel or CLI)
-- Has access to the admin panel after login
+- First admin created via CLI; subsequent admins invited from the admin panel (or CLI)
+- Has access to the admin panel after OTP login
 - Manages recruitments, stages, slots, and destinations
 - Approves assignment results
 - Can trigger supplementary stages
@@ -21,15 +30,20 @@ A web application that supports university recruitment for students wanting to p
 - Completes a multi-step registration flow
 - Can update data until the initial stage ends
 
-### 2.3 Common User Properties
+### 2.3 Teacher
+- Accesses a secure management link (HMAC-signed, no login required)
+- Views student registration data and enters academic scores
+
+### 2.4 Common User Properties
 - ID (UUID)
 - Full name (single UTF-8 text field)
 - Email address
 
-### 2.4 Authentication
+### 2.5 Authentication
 - Passwordless, no social logins
-- Login via one-time code (6 alphanumeric characters) sent to email
-- Code is used for both admin login and student registration verification
+- Login via one-time code (6 alphanumeric characters, ambiguous characters excluded) sent to email
+- Code expires after 10 minutes; single use only
+- Used for both admin login and student registration verification
 
 ---
 
@@ -43,7 +57,8 @@ A web application that supports university recruitment for students wanting to p
 | description | text | |
 | start_date | datetime | |
 | end_date | datetime | |
-| max_destination_choices | integer | Max destinations a student can select (≥1) |
+| max_destination_choices | integer | Max destinations a student can rank (≥1) |
+| eligible_levels | array of enum | Subset of all student levels allowed to register |
 
 ### 3.2 Stage
 | Field | Type | Notes |
@@ -70,10 +85,15 @@ A web application that supports university recruitment for students wanting to p
 | id | UUID | Primary key, used in links |
 | recruitment_id | UUID | FK → Recruitment |
 | number | integer | Auto-increment from 0, per recruitment |
-| status | enum | `open`, `registered` |
+| status | enum | `open`, `registration_started`, `registered` |
 | student_id | UUID, nullable | FK → User (student) |
 | student_registration_link | string | Derived from slot ID |
 | teacher_management_link | string | Derived from slot ID + HMAC signature |
+
+**Slot status meaning:**
+- `open` — no student has started
+- `registration_started` — student began the form but hasn't completed it yet
+- `registered` — student completed all steps
 
 **Teacher management link security:** The link is generated using slot ID + an HMAC signature computed with a predefined server secret. This prevents guessing/forging teacher links while keeping them usable without login.
 
@@ -97,14 +117,16 @@ A web application that supports university recruitment for students wanting to p
 | student_id | UUID | FK → User |
 | email_consent | boolean | Consent to email communication for this recruitment |
 | privacy_consent | boolean | Consent to privacy policy |
-| level | enum | `bachelor`, `master` |
-| spoken_languages | array of enum | Same enum as destinations |
+| level | enum | `bachelor_1`, `bachelor_2`, `bachelor_3`, `master_1`, `master_2`, `master_3` |
+| spoken_languages | array of enum | Same language enum as destinations |
 | destination_preferences | ordered array of UUID | Ordered list of destination IDs (1st choice first) |
 | average_result | float, nullable | 0.0–6.0, one decimal place (entered by teacher) |
 | additional_activities | integer, nullable | 0–4 (entered by teacher) |
 | recommendation_letters | integer, nullable | 0–10 (entered by teacher) |
 | registration_completed | boolean | Whether the student finished all steps |
 | registration_completed_at | datetime, nullable | Timestamp of completion (used as tiebreaker) |
+
+**Note on student level:** The level enum is granular (year of study). For assignment and slot matching, `bachelor_*` maps to the bachelor slot pool and `master_*` to the master slot pool.
 
 ### 3.6 Stage Enrollment
 | Field | Type | Notes |
@@ -121,9 +143,18 @@ A web application that supports university recruitment for students wanting to p
 | id | UUID | Primary key |
 | stage_id | UUID | FK → Stage (the admin stage that produced this) |
 | registration_id | UUID | FK → Student Registration Data |
-| destination_id | UUID | FK → Destination |
+| destination_id | UUID, nullable | FK → Destination (null = unassigned) |
 | score | float | Computed: `3 × average_result + additional_activities + recommendation_letters` |
 | approved | boolean | Admin approval status |
+
+### 3.8 Supplementary Token
+| Field | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| registration_id | UUID | FK → Student Registration Data |
+| stage_id | UUID | FK → Stage (the supplementary stage) |
+| token | string | Unique secure token sent in supplementary email |
+| expires_at | datetime | Token expiry (tied to supplementary stage end date) |
 
 ---
 
@@ -133,6 +164,7 @@ A web application that supports university recruitment for students wanting to p
 A student sees a destination only if:
 1. **Language match (flexible):** The student speaks at least ONE of the destination's required languages
 2. **Slot availability:** The destination has available slots for the student's level (bachelor/master) OR has available "any level" slots
+3. **Recruitment eligibility:** The recruitment's `eligible_levels` includes the student's chosen level
 
 ### 4.2 Slot Pool Logic
 - Bachelor students first fill `slots_bachelor`, then overflow into `slots_any`
@@ -147,23 +179,26 @@ score = 3 × average_result + additional_activities + recommendation_letters
 - If teacher data is missing (null), those fields contribute 0
 
 ### 4.4 Assignment Algorithm
-Run after an admin stage is marked complete:
+Run when an admin manually triggers assignment for an admin stage:
 
-1. Rank all students by score descending
-2. **Tiebreaker:** Earlier `registration_completed_at` wins
-3. For each student (highest score first):
+1. Lock slots for students who already have non-cancelled assignments (supplementary re-run only)
+2. Build list of eligible students (completed registrations only)
+3. Rank all students by score descending
+4. **Tiebreaker:** Earlier `registration_completed_at` wins
+5. For each student (highest score first):
    a. Try to assign their 1st preference destination
    b. Check if slots remain for their level; if not, check "any" pool
    c. If 1st preference full, try 2nd preference, and so on
-   d. If no preference can be satisfied, student is unassigned
-4. Present results to admin for manual review and approval
+   d. If no preference can be satisfied, student is unassigned (destination_id = null)
+6. Present results to admin for manual review and approval
+7. Admin approval sends emails automatically
 
 ### 4.5 Supplementary Round Assignment
-- All students who did NOT cancel retain their existing assignments (locked)
+- All students who did NOT cancel retain their existing assignments (locked, excluded from re-run)
 - Students who cancelled lose their slot (destination slot becomes open again)
-- Students can optionally submit new destination preferences (replaces previous list entirely)
-- Re-run assignment algorithm ONLY for unassigned students competing for freed/remaining slots
-- Students who were previously unassigned also participate
+- Students can optionally submit new destination preferences via supplementary token link
+- Re-run assignment algorithm ONLY for unassigned + cancelled students competing for freed/remaining slots
+- Previously unassigned students also participate
 
 ---
 
@@ -176,25 +211,25 @@ Run after an admin stage is marked complete:
 │  ├─ Students register via slot links                                │
 │  ├─ Students can update their data                                  │
 │  ├─ Teachers can enter data via management links                    │
-│  └─ Auto-closes at end_date                                         │
+│  └─ Closes at end_date (triggers transition to admin stage)         │
 │         │                                                           │
 │         ▼                                                           │
 │  ADMIN STAGE (auto-starts when initial closes)                      │
 │  ├─ Students can no longer edit their data                          │
 │  ├─ Teachers can still enter/update data                            │
-│  ├─ Does NOT auto-complete at end_date                              │
-│  ├─ Admin manually marks as complete from admin panel               │
-│  ├─ Assignment algorithm runs                                       │
-│  ├─ Admin reviews and approves results                              │
-│  └─ Results saved + emails sent to students                         │
+│  ├─ Does NOT auto-complete at end_date (end_date is informational)  │
+│  ├─ Admin manually runs assignment algorithm                        │
+│  ├─ Admin reviews and approves results (emails auto-sent)           │
+│  ├─ Admin manually marks stage as complete                          │
+│  └─ Results saved + assigned/unassigned emails sent to students     │
 │         │                                                           │
 │         ▼  (optional, admin-initiated)                              │
 │  SUPPLEMENTARY STAGE                                                │
-│  ├─ Email sent to all students with cancellation link               │
-│  ├─ Students can cancel assignment (slot freed)                     │
+│  ├─ Email sent to all enrolled students with supplementary link     │
+│  ├─ Students can cancel their assignment (slot freed)               │
 │  ├─ Students can optionally update destination preferences          │
-│  ├─ Closes at end_date                                              │
-│  └─ Subsequent admin stage starts                                   │
+│  ├─ Closes at end_date (triggers transition to next admin stage)    │
+│  └─ Subsequent admin stage auto-activates                           │
 │         │                                                           │
 │         ▼                                                           │
 │  ADMIN STAGE (repeat)                                               │
@@ -206,12 +241,13 @@ Run after an admin stage is marked complete:
 ```
 
 ### Automated transitions
-- Initial → Admin: triggered automatically when initial stage `end_date` passes
-- Supplementary → Admin: triggered automatically when supplementary `end_date` passes
+- Initial → Admin: triggered automatically when initial stage `end_date` passes; completion email sent to students
+- Supplementary → Admin: triggered automatically when supplementary stage `end_date` passes
 
 ### Manual transitions
-- Admin stage completion: admin clicks "Complete Stage" in admin panel
-- Starting a supplementary stage: admin initiates from admin panel
+- Admin stage completion: admin clicks "Complete Stage" in admin panel (sends assigned/unassigned emails)
+- Starting a supplementary stage: admin initiates from admin panel (sends supplementary emails with token links)
+- Admin can also manually activate a `pending` stage before its scheduled start date
 
 ---
 
@@ -219,10 +255,13 @@ Run after an admin stage is marked complete:
 
 | Trigger | Recipient | Content |
 |---|---|---|
-| Registration completed | Student | Summary of all entered data |
-| Initial stage closes | Student | Confirmation that registration is complete; whether they moved to admin stage; admin stage end date |
-| Admin approves assignment | Student | Their personal destination assignment |
-| Supplementary stage started | Student | Notification + cancellation link + option to update preferences |
+| OTP requested | User (admin or student) | 6-character one-time login code |
+| Registration completed | Student | Summary: enrollment ID, level, language preferences, destination choices |
+| Initial stage closes | Student | Confirmation that registration period ended; admin stage end date (informational) |
+| Admin stage completed | Student (assigned) | Their personal destination assignment and description |
+| Admin stage completed | Student (unassigned) | Notification of non-assignment; supplementary stage option if applicable |
+| Supplementary stage started | Student | Current assignment status + secure token link to cancel/update preferences, with warning about losing current assignment if re-applying |
+| Admin invited | New admin | Link to admin panel login |
 
 ---
 
@@ -231,33 +270,47 @@ Run after an admin stage is marked complete:
 ### 7.1 Admin Panel
 
 **Recruitment Management**
-- CRUD for recruitments (create, list, edit — no delete for safety)
-- CRUD for stages within a recruitment (with validation of ordering rules)
-- Add/remove slots (with auto-increment numbering)
-- CRUD for destinations within a recruitment
+- Create recruitment (automatically creates initial + first admin stage)
+- List all recruitments with status indicators
+- Edit recruitment details (name, description, dates, max destination choices, eligible levels)
+- CRUD for stages within a recruitment (with ordering rule validation)
+- Bulk add slots (auto-increment numbering)
+- CRUD for destinations within a recruitment (name, description, slot counts by level, required languages)
+
+**Admin Management**
+- Invite new admins by email from the dashboard
+- Invited admin receives email with admin panel link; logs in via OTP
+- Existing user with admin row = admin (no separate password)
 
 **Bulk PDF Generation**
 - Per recruitment: generate a PDF with 2 pages per slot
-  - Page 1: Student Registration — title "STUDENT REGISTRATION" + recruitment name + slot number, registration link as text + QR code
-  - Page 2: Teacher Management — title "TEACHER MANAGEMENT" + recruitment name + slot number, management link as text + QR code
+  - Page 1: Student Registration — "STUDENT REGISTRATION" + recruitment name + slot number, registration link as text + QR code
+  - Page 2: Teacher Management — "TEACHER MANAGEMENT" + recruitment name + slot number, management link as text + QR code
 - Pages ordered: [slot 0 student, slot 0 teacher, slot 1 student, slot 1 teacher, ...]
-- Based on single-page HTML templates rendered to PDF
 
 **Live Stage Dashboard**
-- Per stage: real-time updating page showing registered students (newest first) and open slot count
-- Could use polling or WebSockets/SSE
+- Per stage: real-time page showing registered students (newest first), open/started/registered slot counts
+- Updates pushed via WebSocket whenever a student advances a step or completes registration
+- Shows: total slots, registered count, registration_started count, open count
+
+**Applications View**
+- Per admin stage: table of all registrations (completed and incomplete)
+- Shows student info, score, assigned destination (if any), completion status
+- Admin can trigger assignment algorithm from this view
+- Real-time updates via WebSocket
 
 **Stage Management**
-- Complete an admin stage (triggers assignment algorithm)
-- Review and approve/reject assignment results
+- Manually activate a pending stage
+- Complete an admin stage (triggers assignment approval emails)
+- Review assignment results; approve or re-run
 - Initiate supplementary stages
-- View historical results
+- View historical assignment results
 
 **Audit Log**
-- View full audit trail with filters (recruitment, actor, action type, date range)
-- Search by email or resource ID
-- Expand entries to see before/after diffs
-- Export to CSV
+- View full audit trail with filters (recruitment, actor type, action type, date range)
+- Searchable by email or resource ID
+- Each entry shows actor, action, resource, IP, timestamp
+- Expandable JSON details (before/after diffs for edits)
 
 ### 7.2 Student Registration Flow (Single Page)
 
@@ -268,37 +321,43 @@ A single-page, multi-step wizard accessible via the unique slot link:
 | 1 | Email, email consent checkbox, privacy policy consent checkbox | Privacy policy is a static external link |
 | 2 | One-time code verification | Code sent to the email from step 1 |
 | 3 | Full name, university enrollment ID (6 digits, no leading 0) | |
-| 4 | Level: bachelor or master (radio) | |
+| 4 | Level: bachelor or master year (radio: bachelor_1/2/3, master_1/2/3) | |
 | 5 | Spoken languages (checkboxes) | |
-| 6 | Destination preferences (ranked 1..N) | Filtered by language + available slots; max N = recruitment's `max_destination_choices` |
+| 6 | Destination preferences (ranked 1..N) | Filtered by language + available slots + eligible levels; max N = recruitment's `max_destination_choices` |
 | 7 (summary) | Read-only summary of all data | Checkbox: "I reviewed all the above data, and it's all correct" + "Complete Registration" button |
 
 **UX requirements:**
 - All previously entered data remains visible as user progresses
 - Back navigation to any previous step with ability to edit
-- If student changes level or languages in earlier steps, destination list in step 6 must reactively update
+- If student changes level or languages in earlier steps, destination list in step 6 updates reactively
 - After completion: "Process completed" confirmation screen
 - Student can revisit the link and update any data until initial stage end date
+- Slot status transitions: `open` → `registration_started` on step 1, `registration_started` → `registered` on completion
 
 ### 7.3 Teacher Management View
 
 Accessed via teacher management link (no login required, secured by HMAC signature).
 
 **Displays:**
-- Slot status (open/registered)
+- Slot status (open / registration started / registered)
 - All student-entered data (even if registration is incomplete)
+- Score fields (average result, additional activities, recommendation letters)
 
 **Teacher can edit:**
 - Any student-entered field
 - Average result (float, 0.0–6.0, one decimal)
 - Additional activities count (integer, 0–4)
 - Recommendation letters count (integer, 0–10)
+- All teacher edits are audited and broadcast to the admin dashboard in real time
 
 ### 7.4 Supplementary Stage — Student View
 
-When a supplementary stage is active, students receive an email with:
-- A link to cancel their current assignment
-- Option to submit new destination preferences (replaces old list entirely)
+When a supplementary stage is active, students receive an email with a secure token link. On visiting the link:
+- Student sees their current assignment (if any)
+- Option to cancel the current assignment (slot freed for re-allocation)
+- Option to update destination preferences (replaces previous list entirely)
+- Warning: submitting new preferences cancels the existing assignment
+- Token is tied to the supplementary stage and expires at the stage end date
 
 ---
 
@@ -306,15 +365,17 @@ When a supplementary stage is active, students receive an email with:
 
 | Route | Access | Description |
 |---|---|---|
-| `/admin/login` | Public | Admin login (email + OTP) |
-| `/admin/dashboard` | Admin | List of recruitments |
+| `/` | Public | Landing page |
+| `/admin/login` | Public | Admin login: email → OTP verification |
+| `/admin/dashboard` | Admin | List of all recruitments; invite admin button |
 | `/admin/recruitment/:id` | Admin | Recruitment detail: stages, slots, destinations |
-| `/admin/recruitment/:id/stage/:stageId` | Admin | Live stage dashboard |
-| `/admin/recruitment/:id/results/:stageId` | Admin | Assignment results review/approval |
-| `/admin/audit` | Admin | Global audit log (filterable by recruitment) |
-| `/register/:slotId` | Public | Student registration wizard |
-| `/manage/:slotId/:signature` | Public | Teacher management view |
-| `/supplementary/:token` | Student | Supplementary stage: cancel assignment / update preferences |
+| `/admin/recruitment/:id/stage/:stageId` | Admin | Live stage dashboard (real-time WebSocket updates) |
+| `/admin/recruitment/:id/applications/:stageId` | Admin | All applications with scores; run assignment |
+| `/admin/recruitment/:id/results/:stageId` | Admin | Assignment results review and approval |
+| `/admin/audit` | Admin | Global audit log with filtering |
+| `/register/:slotId` | Public | Student 6-step registration wizard |
+| `/manage/:slotId/:signature` | Public | Teacher management view (HMAC-protected) |
+| `/supplementary/:token` | Public (token-gated) | Supplementary stage: cancel assignment / update preferences |
 
 ---
 
@@ -322,18 +383,95 @@ When a supplementary stage is active, students receive an email with:
 
 | Task | Trigger | Action |
 |---|---|---|
-| Stage transition: initial → admin | Initial stage `end_date` passes | Move completed registrations to admin stage; send emails |
-| Stage transition: supplementary → admin | Supplementary stage `end_date` passes | Lock changes; start admin stage |
-| OTP cleanup | Periodic (e.g. every 15 min) | Remove expired one-time codes |
+| Stage transition: initial → admin | Initial stage `end_date` passes | Mark initial stage completed; auto-activate next admin stage; send initial-stage-closed emails to enrolled students |
+| Stage transition: supplementary → admin | Supplementary stage `end_date` passes | Mark supplementary stage completed; auto-activate next admin stage |
+| OTP cleanup | Periodic | Remove expired one-time codes |
 
 ---
 
-## 10. Audit Log
+## 10. API Routes Summary
 
-### 10.1 Overview
+### Authentication
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/auth/otp/send` | POST | Issue OTP to email |
+| `/api/auth/otp/verify` | POST | Verify OTP, create session |
+| `/api/auth/logout` | POST | Clear session |
+
+### Student Registration
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/registration/[slotId]` | GET | Slot info, recruitment details, current registration state |
+| `/api/registration/[slotId]/step` | POST | Advance registration step (1–6) |
+| `/api/registration/[slotId]/complete` | POST | Complete registration, send confirmation email, broadcast WebSocket event |
+| `/api/registration/[slotId]/destinations` | GET | Filtered destinations for student's level and languages |
+
+### Teacher Management
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/teacher/[slotId]/[signature]` | GET | Get registration data (HMAC-verified) |
+| `/api/teacher/[slotId]/[signature]` | PATCH | Update student scores; audit + broadcast |
+
+### Admin — Recruitments
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/recruitments` | GET | List all recruitments |
+| `/api/admin/recruitments` | POST | Create recruitment (auto-creates initial + admin stages) |
+| `/api/admin/recruitments/[id]` | GET | Get recruitment with stages, slots, destinations |
+| `/api/admin/recruitments/[id]` | PATCH | Update recruitment details |
+| `/api/admin/recruitments/[id]/stages` | GET/POST | List stages; add supplementary + paired admin stage |
+| `/api/admin/recruitments/[id]/slots` | GET/POST | List slots; bulk add N slots |
+| `/api/admin/recruitments/[id]/destinations/[destId]` | GET/PATCH/DELETE | Manage individual destination |
+| `/api/admin/recruitments/[id]/eligible-levels` | GET/PATCH | Get/update eligible levels |
+| `/api/admin/recruitments/[id]/pdf` | GET | Generate bulk PDF of all slot links |
+
+### Admin — Stages
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/stages/[id]/activate` | POST | Manually activate a pending stage |
+| `/api/admin/stages/[id]/dashboard` | GET | Live dashboard data (counts, recent registrations) |
+| `/api/admin/stages/[id]/applications` | GET | All registrations for this stage with scores/assignments |
+| `/api/admin/stages/[id]/assign` | POST | Run assignment algorithm |
+| `/api/admin/stages/[id]/approve` | POST | Approve results; auto-email assigned/unassigned students |
+| `/api/admin/stages/[id]/complete` | POST | Mark admin stage completed; transition to next stage |
+| `/api/admin/stages/[id]/results` | GET | Get assignment results with counts |
+
+### Admin — Other
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/admins` | POST | Invite new admin; send invite email |
+| `/api/admin/registrations/[id]` | GET | Get registration details |
+| `/api/admin/audit` | GET | Audit log with filtering |
+| `/api/admin/supplementary/start` | POST | Activate supplementary stage; generate tokens; email all students |
+
+### Supplementary
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/supplementary/[token]` | GET | Verify token, return registration for re-editing |
+
+---
+
+## 11. Real-Time WebSocket Events
+
+The live stage dashboard and applications view receive push events via WebSocket. Events are scoped per stage ID.
+
+| Event | When Emitted | Payload |
+|---|---|---|
+| `registration_update` | Student completes registration | Updated slot counts (registered, started, open) |
+| `registration_step_update` | Student advances a step | Individual registration row update |
+| `slot_status_update` | Slot status changes | Updated open/started slot counts |
+| `application_row_update` | Admin or teacher edits application | Full updated application row |
+| `application_assignments_update` | Assignment algorithm runs | All assignments + counts |
+| `stage_completed` | Stage marked complete | Cleanup signal for subscribed dashboards |
+
+---
+
+## 12. Audit Log
+
+### 12.1 Overview
 Every meaningful action in the system is recorded in an append-only audit log. Entries are immutable — they can never be edited or deleted. The log is viewable from the admin panel with filtering and search capabilities.
 
-### 10.2 Audit Log Entry
+### 12.2 Audit Log Entry
 | Field | Type | Notes |
 |---|---|---|
 | id | UUID | Primary key |
@@ -341,81 +479,71 @@ Every meaningful action in the system is recorded in an append-only audit log. E
 | actor_type | enum | `admin`, `student`, `teacher`, `system` |
 | actor_id | UUID, nullable | FK → User (null for `system` and `teacher` actions) |
 | actor_label | string | Human-readable identifier (e.g. email, "System", "Teacher via slot #12") |
-| action | string | Machine-readable action key (see below) |
-| resource_type | string | Entity type affected (e.g. `recruitment`, `stage`, `slot`, `registration`, `assignment`) |
+| action | string | Machine-readable action key |
+| resource_type | string | Entity type affected |
 | resource_id | UUID | ID of the affected entity |
-| recruitment_id | UUID, nullable | FK → Recruitment (for easy filtering by recruitment) |
+| recruitment_id | UUID, nullable | FK → Recruitment (for easy filtering) |
 | details | JSON | Structured payload with before/after values or contextual data |
 | ip_address | string, nullable | Request IP address |
 
-### 10.3 Tracked Actions
+### 12.3 Tracked Actions
 
 **Admin actions:**
 - `recruitment.created`, `recruitment.updated`
-- `stage.created`, `stage.updated`, `stage.completed`
+- `stage.created`, `stage.updated`, `stage.completed`, `stage.transitioned`
 - `slot.added`, `slot.removed`
 - `destination.created`, `destination.updated`, `destination.removed`
-- `assignment.approved`
+- `assignment.computed`, `assignment.approved`
 - `supplementary_stage.started`
 - `bulk_pdf.generated`
+- `admin.invited`
 
 **Student actions:**
-- `registration.step_completed` (with step number in details)
+- `registration.step_completed` (step number in details)
 - `registration.completed`
-- `registration.updated` (with changed fields in details)
+- `registration.updated` (changed fields in details)
 - `assignment.cancelled` (supplementary stage cancellation)
 - `preferences.updated` (supplementary stage preference change)
 
 **Teacher actions:**
-- `registration.teacher_edited` (with changed fields and before/after values)
-- `teacher.scores_entered` (average result, activities, letters)
+- `teacher.scores_entered` (average result, activities, letters with before/after values)
 
 **System actions:**
-- `stage.transitioned` (automatic stage transitions with from/to)
-- `assignment.computed` (algorithm ran, summary of results in details)
-- `email.sent` (recipient, template name, recruitment context)
 - `otp.issued`, `otp.verified`, `otp.expired`
+- `email.sent` (recipient, template, recruitment context)
 
-### 10.4 Admin Panel — Audit Log View
+### 12.4 Admin Panel — Audit Log View
 - Filterable by: recruitment, action type, actor type, date range, resource type
 - Searchable by: actor label (email), resource ID
 - Sorted by timestamp descending (most recent first)
 - Each entry expandable to show full JSON details (before/after diffs for edits)
-- Exportable to CSV
-
-### 10.5 Design Considerations
-- Append-only: no UPDATE or DELETE operations on the audit table
-- The `details` JSON should capture before/after snapshots for any data modifications so changes are fully traceable
-- Teacher actions are logged with the slot ID and signature hash as the actor identifier (since teachers don't authenticate)
-- High-volume actions (like `email.sent` or `otp.issued`) should still be logged but can be filtered out in the default admin view
 
 ---
 
-## 11. Open Design Decisions (for implementation phase)
+## 13. Security Model
 
-These are intentionally left for the coding phase:
-
-1. **Tech stack** — framework, database, ORM, email service
-2. **Real-time updates** — polling vs WebSockets vs SSE for the live stage dashboard
-3. **PDF generation approach** — server-side HTML-to-PDF (e.g. Puppeteer, wkhtmltopdf, weasyprint) or a dedicated library
-4. **QR code library** — e.g. `qrcode` (Node), `qrcode.react`, `python-qrcode`
-5. **Deployment** — hosting, CI/CD, environment management
-6. **Email provider** — transactional email service (SendGrid, Resend, AWS SES, etc.)
-7. **Rate limiting & abuse prevention** — OTP rate limits, registration link brute-force protection
-8. **Internationalization** — Is the UI in English only or should it support Polish/other languages?
-9. **Accessibility** — WCAG compliance level target
+| Mechanism | Coverage |
+|---|---|
+| OTP (6-char, 10 min, single-use) | Admin login; student identity verification |
+| HMAC-signed teacher links | Teacher management access without a login session |
+| iron-session cookies (HttpOnly) | Admin and student sessions stored separately to avoid cross-role collision |
+| Zod input validation | All API routes |
+| Audit trail | All actor-triggered actions with IP address |
+| Email consent capture | Privacy and email marketing opt-in per registration |
 
 ---
 
-## 12. Edge Cases & Validation Rules
+## 14. Edge Cases & Validation Rules
 
 - **Enrollment ID:** exactly 6 digits, first digit 1–9
-- **OTP:** 6 alphanumeric characters, expires after a defined period (e.g. 10 minutes), single use
+- **OTP:** 6 alphanumeric characters (no ambiguous chars: 0, O, I, 1, L), expires after 10 minutes, single use
 - **Stage dates:** each stage's start date must be ≥ previous stage's end date
 - **Slot link reuse:** if a student visits a registration link for an already-registered slot, show the current data (allow edits if within initial stage)
 - **Teacher link with no student data:** teacher sees empty form, can still pre-fill data
 - **Assignment with missing teacher data:** treat null scores as 0 (score = 0 + 0 + 0 = 0)
 - **No valid destinations:** if after filtering a student has zero eligible destinations, they cannot complete step 6 — show an appropriate message
-- **Destination slots exhausted mid-registration:** validate slot availability at the moment of final submission, not at step 6 display time. If a destination becomes full between display and submission, show an error and ask the student to re-pick.
-- **Concurrent registrations:** ensure slot assignment is atomic (DB-level locking or optimistic concurrency) to prevent two students claiming the same slot
-- **Admin stage end date:** informational only — the stage doesn't auto-complete; it's up to the admin
+- **Destination slots exhausted mid-registration:** validate slot availability at the moment of final submission. If a destination becomes full between display and submission, show an error and ask the student to re-pick.
+- **Concurrent registrations:** slot assignment is atomic (DB-level locking or optimistic concurrency) to prevent two students claiming the same slot
+- **Admin stage end date:** informational only — the stage doesn't auto-complete; it is up to the admin
+- **Supplementary token expiry:** token is invalidated when the supplementary stage ends; expired tokens return an appropriate error page
+- **Re-applying in supplementary:** submitting new preferences via supplementary link cancels the existing assignment; student is warned before confirming
