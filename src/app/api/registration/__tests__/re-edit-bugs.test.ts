@@ -69,6 +69,7 @@ vi.mock("@/lib/audit", () => ({
 
 vi.mock("@/lib/auth/hmac", () => ({
   getTeacherPath: (id: string) => `/en/manage/${id}/sig`,
+  getStudentRegistrationLink: (id: string) => `http://localhost:3000/en/register/${id}`,
 }));
 
 vi.mock("@/lib/auth/otp", () => ({
@@ -116,6 +117,7 @@ vi.mock("@/db", () => {
       returning: () => obj,
       innerJoin: () => obj,
       leftJoin: () => obj,
+      orderBy: () => obj,
       then(resolve: (v: any) => any, reject?: (e: any) => any) {
         return Promise.resolve(data).then(resolve, reject);
       },
@@ -285,12 +287,13 @@ describe("Bug 2 – Step route broadcasts registrationCompleted: true during re-
  *   3. select supplementary stage  (returns [] — only initial is active here)
  *   4. select registration
  *   5. update registration   (set registrationCompleted: true)
- *   6. select user            (for email)
- *   7. select destinations    (for email body)
- *   8. update slot            (registration_started → registered)
- *   9. select open count
- *  10. select started count
- *  11. select registered count
+ *   6. select user            (Promise.all[0], for email)
+ *   7. select recruitment     (Promise.all[1], for email subject)
+ *   8. select destinations    (Promise.all[2], for email body)
+ *   9. update slot            (registration_started → registered)
+ *  10. select open count
+ *  11. select started count
+ *  12. select registered count
  */
 function queueCompleteReEdit() {
   dbQueue.push(
@@ -299,8 +302,9 @@ function queueCompleteReEdit() {
     [],  // supplementary stage → not active
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01"), level: "master", destinationPreferences: "[\"dest-uuid\"]", spokenLanguages: "[\"en\"]", enrollmentId: "123456" }],
     [],  // update registration
-    [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
-    [],  // destinations (empty — names not needed for this assertion)
+    [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],  // Promise.all[0]
+    [{ name: "Winter Erasmus 2026" }],  // Promise.all[1] recruitment name
+    [],  // Promise.all[2] destinations (empty — names not needed for this assertion)
     [],  // update slot
     [{ count: 5 }],  // open count
     [{ count: 0 }],  // started count
@@ -345,13 +349,15 @@ describe("Bug 3 – complete route does not fire registration_step_update with r
  *   2. select initial stage   (getActiveInitialStage)
  *   3. select user by email   (existing user found — no insert)
  *   4. select existingReg     (registrationCompleted: true, registrationCompletedAt set)
+ *   5. select enrollment ID fallback (existingReg.enrollmentId is null → fallback query)
  */
 function queueStep2ReEdit() {
   dbQueue.push(
     [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
-    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01T10:00:00.000Z") }],
+    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01T10:00:00.000Z"), enrollmentId: null }],
+    [], // enrollment ID fallback — no prior registrations
   );
 }
 

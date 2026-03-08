@@ -70,6 +70,7 @@ vi.mock("@/lib/audit", () => ({
 
 vi.mock("@/lib/auth/hmac", () => ({
   getTeacherPath: (id: string) => `/en/manage/${id}/sig`,
+  getStudentRegistrationLink: (id: string) => `http://localhost:3000/en/register/${id}`,
 }));
 
 vi.mock("@/lib/auth/otp", () => ({
@@ -293,17 +294,19 @@ function queueCompleteSupplementary() {
     [{ id: ADMIN1_STAGE_ID, type: "admin", status: "completed", order: 2, recruitmentId: RECRUITMENT_ID }],
     // 7. update stageEnrollments → void
     [],
-    // 8. user
+    // 8. user (Promise.all[0])
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
-    // 9. destinations → empty (names not needed for this assertion)
+    // 9. recruitment name (Promise.all[1])
+    [{ name: "Winter Erasmus 2026" }],
+    // 10. destinations → empty (Promise.all[2], names not needed for this assertion)
     [],
-    // 10. update slot → void
+    // 11. update slot → void
     [],
-    // 11. open count
+    // 12. open count
     [{ count: 5 }],
-    // 12. started count
+    // 13. started count
     [{ count: 0 }],
-    // 13. registered count
+    // 14. registered count
     [{ count: 5 }],
   );
 }
