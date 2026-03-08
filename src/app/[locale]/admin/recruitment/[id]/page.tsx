@@ -123,6 +123,10 @@ export default function RecruitmentDetailPage() {
   const [removedLevelsWithRegs, setRemovedLevelsWithRegs] = useState<StudentLevel[]>([]);
   const [showRemoveWarning, setShowRemoveWarning] = useState(false);
 
+  // No supplementary stage warning
+  const [showNoSupplementaryWarning, setShowNoSupplementaryWarning] = useState(false);
+  const [pendingCompleteStageId, setPendingCompleteStageId] = useState<string | null>(null);
+
   // Add stage form
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [stageForm, setStageForm] = useState({
@@ -314,7 +318,22 @@ export default function RecruitmentDetailPage() {
   }
 
   async function completeStage(stageId: string) {
-    if (!confirm("Complete this stage?")) return;
+    // Check if there are any subsequent supplementary stages planned
+    const stage = recruitment?.stages.find((s) => s.id === stageId);
+    if (stage) {
+      const hasNextSupplementary = recruitment!.stages.some(
+        (s) => s.type === "supplementary" && s.order > stage.order && s.status === "pending"
+      );
+      if (!hasNextSupplementary) {
+        setPendingCompleteStageId(stageId);
+        setShowNoSupplementaryWarning(true);
+        return;
+      }
+    }
+    await doCompleteStage(stageId);
+  }
+
+  async function doCompleteStage(stageId: string) {
     const res = await fetch(`/api/admin/stages/${stageId}/complete`, { method: "POST" });
     if (res.ok) {
       await fetchRecruitment();
@@ -875,6 +894,42 @@ export default function RecruitmentDetailPage() {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* Warning dialog: no subsequent supplementary stages */}
+      {showNoSupplementaryWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+            <h3 className="font-semibold text-base mb-2">No further supplementary stages planned</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNoSupplementaryWarning(false);
+                  setPendingCompleteStageId(null);
+                  setStageDialogOpen(true);
+                }}
+              >
+                Add Supplementary Stage
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  setShowNoSupplementaryWarning(false);
+                  if (pendingCompleteStageId) {
+                    await doCompleteStage(pendingCompleteStageId);
+                  }
+                  setPendingCompleteStageId(null);
+                }}
+              >
+                End Stage Anyway
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
