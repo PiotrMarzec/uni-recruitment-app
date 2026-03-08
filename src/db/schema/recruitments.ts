@@ -7,6 +7,8 @@ export const recruitments = pgTable("recruitments", {
   startDate: timestamp("start_date", { withTimezone: true }).notNull(),
   endDate: timestamp("end_date", { withTimezone: true }).notNull(),
   maxDestinationChoices: integer("max_destination_choices").notNull().default(3),
+  // JSON array of StudentLevel values — which levels are eligible for this recruitment
+  eligibleLevels: text("eligible_levels").notNull().default('["bachelor_1","bachelor_2","bachelor_3","master_1","master_2","master_3"]'),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

@@ -16,5 +16,12 @@
       "tag": "0001_ancient_pride",
       "breakpoints": true
     }
+    ,{
+      "idx": 2,
+      "version": "7",
+      "when": 1772969900090,
+      "tag": "0002_student_levels",
+      "breakpoints": true
+    }
   ]
 }

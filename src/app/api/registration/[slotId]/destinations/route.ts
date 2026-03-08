@@ -9,7 +9,9 @@ export async function GET(
 ) {
   const { slotId } = await params;
   const { searchParams } = req.nextUrl;
-  const level = searchParams.get("level") as "bachelor" | "master" | null;
+  const levelParam = searchParams.get("level");
+  const levelCategory = levelParam?.startsWith("master") ? "master" : levelParam ? "bachelor" : null;
+  const level = levelCategory;
   const langsParam = searchParams.get("languages");
   const spokenLanguages: string[] = langsParam ? JSON.parse(langsParam) : [];
 

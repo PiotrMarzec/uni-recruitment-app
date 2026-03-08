@@ -4,13 +4,14 @@ import { registrations, users, slots, stages, destinations, assignmentResults } 
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { broadcastApplicationRowUpdate } from "@/lib/websocket/events";
+import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 
 const updateSchema = z.object({
   fullName: z.string().min(1).max(255).optional(),
   enrollmentId: z.string().regex(/^[1-9]\d{5}$/).optional(),
-  level: z.enum(["bachelor", "master"]).optional(),
+  level: z.enum([...STUDENT_LEVELS] as [StudentLevel, ...StudentLevel[]]).optional(),
   spokenLanguages: z.array(z.string()).optional(),
   destinationPreferences: z.array(z.string().uuid()).optional(),
   averageResult: z.number().min(0).max(6).nullable().optional(),
@@ -194,7 +195,7 @@ export async function PATCH(
           slotNumber: slot.number,
           studentName: updatedUser?.fullName ?? "",
           enrollmentId: (data.enrollmentId ?? existingReg.enrollmentId) || null,
-          level: (data.level ?? existingReg.level) as "bachelor" | "master" | null,
+          level: (data.level ?? existingReg.level) as string | null,
           spokenLanguages: finalLangs,
           destinationPreferences: finalPrefs,
           destinationNames: finalPrefs.map((pid) => destMap[pid] ?? pid),

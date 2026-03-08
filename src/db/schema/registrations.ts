@@ -14,7 +14,33 @@ import { users } from "./users";
 export const studentLevelEnum = pgEnum("student_level", [
   "bachelor",
   "master",
+  "bachelor_1",
+  "bachelor_2",
+  "bachelor_3",
+  "master_1",
+  "master_2",
+  "master_3",
 ]);
+
+export const STUDENT_LEVELS = [
+  "bachelor_1",
+  "bachelor_2",
+  "bachelor_3",
+  "master_1",
+  "master_2",
+  "master_3",
+] as const;
+
+export type StudentLevel = (typeof STUDENT_LEVELS)[number];
+
+export const STUDENT_LEVEL_LABELS: Record<StudentLevel, string> = {
+  bachelor_1: "Bachelor (1st year)",
+  bachelor_2: "Bachelor (2nd year)",
+  bachelor_3: "Bachelor (3rd year)",
+  master_1: "Master (1st year)",
+  master_2: "Master (2nd year)",
+  master_3: "Master (3rd year)",
+};
 
 export const registrations = pgTable("registrations", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -40,6 +66,7 @@ export const registrations = pgTable("registrations", {
   recommendationLetters: integer("recommendation_letters"),
   // Registration state
   registrationCompleted: boolean("registration_completed").notNull().default(false),
+  notEligible: boolean("not_eligible").notNull().default(false),
   registrationCompletedAt: timestamp("registration_completed_at", {
     withTimezone: true,
   }),

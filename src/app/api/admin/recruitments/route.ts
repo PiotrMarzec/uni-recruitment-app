@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { recruitments, stages } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
 
@@ -17,6 +18,7 @@ const createSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().default(""),
   maxDestinationChoices: z.number().int().min(1).default(3),
+  eligibleLevels: z.array(z.enum([...STUDENT_LEVELS] as [StudentLevel, ...StudentLevel[]])).optional(),
   initialStage: stageSchema,
   adminStage: stageSchema,
 });
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
   const endDate = new Date(adminStageData.endDate);
 
   const { recruitment, initialStage, adminStage } = await db.transaction(async (tx) => {
+    const eligibleLevels = parsed.data.eligibleLevels ?? [...STUDENT_LEVELS];
     const [recruitment] = await tx
       .insert(recruitments)
       .values({
@@ -64,6 +67,7 @@ export async function POST(req: NextRequest) {
         startDate,
         endDate,
         maxDestinationChoices: parsed.data.maxDestinationChoices,
+        eligibleLevels: JSON.stringify(eligibleLevels),
       })
       .returning();
 

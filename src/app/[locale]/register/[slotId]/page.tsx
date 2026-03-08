@@ -46,6 +46,26 @@ function LanguageSwitcher() {
 
 const SUPPORTED_LANGUAGES = ["English", "Spanish", "German", "French", "Polish", "Portuguese"] as const;
 
+const STUDENT_LEVELS = [
+  "bachelor_1",
+  "bachelor_2",
+  "bachelor_3",
+  "master_1",
+  "master_2",
+  "master_3",
+] as const;
+
+type StudentLevel = (typeof STUDENT_LEVELS)[number];
+
+const STUDENT_LEVEL_LABELS: Record<StudentLevel, string> = {
+  bachelor_1: "Bachelor (1st year)",
+  bachelor_2: "Bachelor (2nd year)",
+  bachelor_3: "Bachelor (3rd year)",
+  master_1: "Master (1st year)",
+  master_2: "Master (2nd year)",
+  master_3: "Master (3rd year)",
+};
+
 interface SlotInfo {
   slot: { id: string; number: number; status: string };
   recruitment: { id: string; name: string; maxDestinationChoices: number };
@@ -97,7 +117,7 @@ export default function RegisterPage() {
   const [otpCode, setOtpCode] = useState("");
   const [fullName, setFullName] = useState("");
   const [enrollmentId, setEnrollmentId] = useState("");
-  const [level, setLevel] = useState<"bachelor" | "master" | "">("");
+  const [level, setLevel] = useState<StudentLevel | "">("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [destinationPreferences, setDestinationPreferences] = useState<string[]>([]);
   const [availableDestinations, setAvailableDestinations] = useState<Destination[]>([]);
@@ -133,7 +153,7 @@ export default function RegisterPage() {
         setPrivacyConsent(data.registration.privacyConsent);
         setFullName(data.student.fullName);
         setEnrollmentId(data.registration.enrollmentId || "");
-        setLevel((data.registration.level as "bachelor" | "master") || "");
+        setLevel((data.registration.level as StudentLevel) || "");
         setSpokenLanguages(data.registration.spokenLanguages || []);
         setDestinationPreferences(data.registration.destinationPreferences || []);
 
@@ -541,27 +561,24 @@ export default function RegisterPage() {
             {/* Step 4: Level */}
             {currentStep === 4 && (
               <form onSubmit={handleStep4} className="space-y-4">
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/30">
-                    <input
-                      type="radio"
-                      name="level"
-                      value="bachelor"
-                      checked={level === "bachelor"}
-                      onChange={() => setLevel("bachelor")}
-                    />
-                    <span className="font-medium">{t("step4.bachelor")}</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-muted/30">
-                    <input
-                      type="radio"
-                      name="level"
-                      value="master"
-                      checked={level === "master"}
-                      onChange={() => setLevel("master")}
-                    />
-                    <span className="font-medium">{t("step4.master")}</span>
-                  </label>
+                <div className="space-y-2">
+                  {STUDENT_LEVELS.map((lvl) => (
+                    <label
+                      key={lvl}
+                      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        level === lvl ? "bg-primary/10 border-primary" : "hover:bg-muted/30"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="level"
+                        value={lvl}
+                        checked={level === lvl}
+                        onChange={() => setLevel(lvl)}
+                      />
+                      <span className="font-medium text-sm">{STUDENT_LEVEL_LABELS[lvl]}</span>
+                    </label>
+                  ))}
                 </div>
                 {stepError && <p className="text-sm text-destructive">{stepError}</p>}
                 <Button type="submit" className="w-full" disabled={!level || submitting}>
@@ -713,7 +730,7 @@ export default function RegisterPage() {
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                     <p className="font-semibold text-xs uppercase text-muted-foreground">{t("step7.level")}</p>
-                    <p className="capitalize">{level}</p>
+                    <p>{level ? (STUDENT_LEVEL_LABELS[level as StudentLevel] ?? level) : ""}</p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                     <p className="font-semibold text-xs uppercase text-muted-foreground">{t("step7.languages")}</p>

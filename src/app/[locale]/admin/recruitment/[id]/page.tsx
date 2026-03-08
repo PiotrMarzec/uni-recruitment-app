@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
+import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
 interface Stage {
   id: string;
@@ -55,7 +56,17 @@ interface Recruitment {
   destinations: Destination[];
 }
 
-type Tab = "overview" | "stages" | "slots" | "destinations";
+type Tab = "overview" | "stages" | "slots" | "destinations" | "requirements";
+
+interface LevelStat {
+  completedRegistrations: number;
+  totalSlots: number;
+}
+
+interface EligibleLevelsData {
+  eligibleLevels: StudentLevel[];
+  levelStats: Record<StudentLevel, LevelStat>;
+}
 
 const stageStatusColors: Record<string, "default" | "success" | "warning" | "secondary" | "outline"> = {
   pending: "secondary",
@@ -102,6 +113,15 @@ export default function RecruitmentDetailPage() {
   });
   const [savingEditDest, setSavingEditDest] = useState(false);
 
+  // Requirements tab state
+  const [eligibleLevelsData, setEligibleLevelsData] = useState<EligibleLevelsData | null>(null);
+  const [eligibleLevelsDraft, setEligibleLevelsDraft] = useState<StudentLevel[]>([]);
+  const [eligibleLevelsDirty, setEligibleLevelsDirty] = useState(false);
+  const [savingEligibleLevels, setSavingEligibleLevels] = useState(false);
+  const [eligibleLevelsLoading, setEligibleLevelsLoading] = useState(false);
+  const [removedLevelsWithRegs, setRemovedLevelsWithRegs] = useState<StudentLevel[]>([]);
+  const [showRemoveWarning, setShowRemoveWarning] = useState(false);
+
   // Add stage form
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
   const [stageForm, setStageForm] = useState({
@@ -113,7 +133,29 @@ export default function RecruitmentDetailPage() {
 
   useEffect(() => {
     fetchRecruitment();
+    fetchEligibleLevels();
   }, [id]);
+
+  useEffect(() => {
+    if (activeTab === "requirements") {
+      fetchEligibleLevels();
+    }
+  }, [activeTab]);
+
+  async function fetchEligibleLevels() {
+    setEligibleLevelsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/recruitments/${id}/eligible-levels`);
+      if (res.ok) {
+        const data: EligibleLevelsData = await res.json();
+        setEligibleLevelsData(data);
+        setEligibleLevelsDraft([...data.eligibleLevels]);
+        setEligibleLevelsDirty(false);
+      }
+    } finally {
+      setEligibleLevelsLoading(false);
+    }
+  }
 
   async function fetchRecruitment() {
     setLoading(true);
@@ -250,6 +292,22 @@ export default function RecruitmentDetailPage() {
     }
   }
 
+  async function doSaveEligibleLevels() {
+    setSavingEligibleLevels(true);
+    try {
+      const res = await fetch(`/api/admin/recruitments/${id}/eligible-levels`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eligibleLevels: eligibleLevelsDraft }),
+      });
+      if (res.ok) {
+        await fetchEligibleLevels();
+      }
+    } finally {
+      setSavingEligibleLevels(false);
+    }
+  }
+
   async function downloadPdf() {
     window.open(`/api/admin/recruitments/${id}/pdf`, "_blank");
   }
@@ -289,13 +347,16 @@ export default function RecruitmentDetailPage() {
     return <AdminLayout><p>Loading...</p></AdminLayout>;
   }
 
-  const tabs: Tab[] = ["overview", "stages", "slots", "destinations"];
+  const tabs: Tab[] = ["overview", "stages", "slots", "destinations", "requirements"];
 
   const tabLabels: Record<Tab, string> = {
     overview: t("tabs.overview"),
     stages: `${t("tabs.stages")} (${recruitment.stages.length})`,
     slots: `${t("tabs.slots")} (${recruitment.slots.filter((s) => s.status !== "open").length}/${recruitment.slots.length})`,
     destinations: `${t("tabs.destinations")} (${recruitment.destinations.length})`,
+    requirements: eligibleLevelsData
+      ? `Requirements (${eligibleLevelsData.eligibleLevels.length})`
+      : "Requirements",
   };
 
   return (
@@ -713,6 +774,139 @@ export default function RecruitmentDetailPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Requirements tab */}
+      {activeTab === "requirements" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Eligible Student Levels</h2>
+          </div>
+
+          {eligibleLevelsLoading || !eligibleLevelsData ? (
+            <p className="text-muted-foreground">Loading...</p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Select which student levels are eligible to apply for this recruitment.
+              </p>
+
+              <div className="border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/50">
+                    <tr>
+                      <th className="text-left p-3 font-medium">Level</th>
+                      <th className="text-right p-3 font-medium">Completed registrations</th>
+                      <th className="text-right p-3 font-medium">Total destination slots</th>
+                      <th className="text-center p-3 font-medium">Eligible</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {STUDENT_LEVELS.map((level) => {
+                      const stats = eligibleLevelsData.levelStats[level] ?? { completedRegistrations: 0, totalSlots: 0 };
+                      const checked = eligibleLevelsDraft.includes(level);
+                      return (
+                        <tr key={level} className="border-b last:border-0 hover:bg-muted/20">
+                          <td className="p-3 font-medium">{STUDENT_LEVEL_LABELS[level]}</td>
+                          <td className="p-3 text-right">{stats.completedRegistrations}</td>
+                          <td className="p-3 text-right">{stats.totalSlots}</td>
+                          <td className="p-3 text-center">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...eligibleLevelsDraft, level]
+                                  : eligibleLevelsDraft.filter((l) => l !== level);
+                                setEligibleLevelsDraft(next);
+                                setEligibleLevelsDirty(true);
+                              }}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {eligibleLevelsDirty && (
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEligibleLevelsDraft([...eligibleLevelsData.eligibleLevels]);
+                      setEligibleLevelsDirty(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    disabled={savingEligibleLevels}
+                    onClick={async () => {
+                      // Check if any removed level has completed registrations
+                      const removed = eligibleLevelsData.eligibleLevels.filter(
+                        (l) => !eligibleLevelsDraft.includes(l)
+                      );
+                      const levelsWithRegs = removed.filter(
+                        (l) => (eligibleLevelsData.levelStats[l]?.completedRegistrations ?? 0) > 0
+                      );
+                      if (levelsWithRegs.length > 0) {
+                        setRemovedLevelsWithRegs(levelsWithRegs);
+                        setShowRemoveWarning(true);
+                        return;
+                      }
+                      await doSaveEligibleLevels();
+                    }}
+                  >
+                    {savingEligibleLevels ? "Saving..." : "Save"}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Warning dialog for removing levels with registrations */}
+      {showRemoveWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
+            <h3 className="font-semibold text-base mb-2">Warning: Completed Registrations Exist</h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              The following levels you are removing already have completed registrations:
+            </p>
+            <ul className="text-sm font-medium mb-4 space-y-1">
+              {removedLevelsWithRegs.map((l) => (
+                <li key={l} className="flex justify-between">
+                  <span>{STUDENT_LEVEL_LABELS[l]}</span>
+                  <span className="text-muted-foreground">
+                    {eligibleLevelsData?.levelStats[l]?.completedRegistrations} registrations
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-muted-foreground mb-4">
+              Those registrations will remain unchanged, but students with these levels will no longer be eligible to apply.
+              Do you want to continue?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowRemoveWarning(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  setShowRemoveWarning(false);
+                  await doSaveEligibleLevels();
+                }}
+              >
+                Continue anyway
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

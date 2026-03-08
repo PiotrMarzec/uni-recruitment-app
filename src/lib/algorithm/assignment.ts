@@ -17,12 +17,17 @@ interface SlotCounts {
   any: number;
 }
 
+function levelCategory(level: string | null): "bachelor" | "master" {
+  if (!level) return "bachelor";
+  return level.startsWith("master") ? "master" : "bachelor";
+}
+
 interface StudentForAssignment {
   registrationId: string;
   studentId: string;
   email: string;
   fullName: string;
-  level: "bachelor" | "master";
+  level: string | null;
   destinationPreferences: string[]; // ordered destination UUIDs
   averageResult: number;
   additionalActivities: number;
@@ -126,7 +131,7 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
     const counts = lockedDestinationCounts.get(destId);
     if (!counts) continue;
 
-    if (regEntry.level === "bachelor") {
+    if (levelCategory(regEntry.level) === "bachelor") {
       if (counts.bachelor > 0) counts.bachelor--;
       else if (counts.any > 0) counts.any--;
     } else {
@@ -184,14 +189,15 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
       const counts = availableCounts.get(destId);
       if (!counts) continue;
 
+      const cat = levelCategory(student.level);
       const hasSlot =
-        student.level === "bachelor"
+        cat === "bachelor"
           ? counts.bachelor > 0 || counts.any > 0
           : counts.master > 0 || counts.any > 0;
 
       if (hasSlot) {
         // Assign: consume slot
-        if (student.level === "bachelor") {
+        if (cat === "bachelor") {
           if (counts.bachelor > 0) counts.bachelor--;
           else counts.any--;
         } else {

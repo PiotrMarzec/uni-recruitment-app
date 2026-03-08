@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { slots, registrations, users, destinations } from "@/db/schema";
 import { verifyTeacherSignature } from "@/lib/auth/hmac";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 
@@ -68,7 +69,7 @@ export async function GET(
 const updateSchema = z.object({
   fullName: z.string().min(1).max(255).optional(),
   enrollmentId: z.string().regex(/^[1-9]\d{5}$/).optional(),
-  level: z.enum(["bachelor", "master"]).optional(),
+  level: z.enum([...STUDENT_LEVELS] as [StudentLevel, ...StudentLevel[]]).optional(),
   spokenLanguages: z.array(z.string()).optional(),
   destinationPreferences: z.array(z.string().uuid()).optional(),
   averageResult: z.number().min(0).max(6).nullable().optional(),

@@ -81,7 +81,7 @@ export interface ApplicationRowUpdateEvent {
     slotNumber: number;
     studentName: string;
     enrollmentId: string | null;
-    level: "bachelor" | "master" | null;
+    level: string | null;
     spokenLanguages: string[];
     destinationPreferences: string[];
     destinationNames: string[];

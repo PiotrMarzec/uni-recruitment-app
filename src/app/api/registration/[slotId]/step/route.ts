@@ -5,12 +5,14 @@ import {
   registrations,
   users,
   stages,
+  recruitments,
 } from "@/db/schema";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { issueOtp, verifyOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email/send";
 import { broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
+import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
@@ -36,7 +38,7 @@ const step3Schema = z.object({
 
 const step4Schema = z.object({
   step: z.literal(4),
-  level: z.enum(["bachelor", "master"]),
+  level: z.enum([...STUDENT_LEVELS] as [StudentLevel, ...StudentLevel[]]),
 });
 
 const step5Schema = z.object({
@@ -226,6 +228,12 @@ export async function POST(
         .update(slots)
         .set({ status: "registered", studentId: user.id })
         .where(eq(slots.id, slotId));
+    } else {
+      // Reset not_eligible status when student re-verifies OTP
+      await db
+        .update(registrations)
+        .set({ notEligible: false, updatedAt: new Date() })
+        .where(eq(registrations.id, existingReg.id));
     }
 
     // Set student session
@@ -302,7 +310,30 @@ export async function POST(
   }
 
   if (data.step === 4) {
-    updates.level = (data as { level: string }).level;
+    const chosenLevel = (data as { level: StudentLevel }).level;
+    updates.level = chosenLevel;
+
+    // Check eligibility for this recruitment
+    const [rec] = await db
+      .select({ eligibleLevels: recruitments.eligibleLevels })
+      .from(recruitments)
+      .where(eq(recruitments.id, slot.recruitmentId))
+      .limit(1);
+
+    const eligibleLevels: StudentLevel[] = rec?.eligibleLevels
+      ? (JSON.parse(rec.eligibleLevels) as StudentLevel[])
+      : [...STUDENT_LEVELS];
+
+    if (!eligibleLevels.includes(chosenLevel)) {
+      updates.notEligible = true;
+      await db.update(registrations).set(updates).where(eq(registrations.id, existingReg.id));
+      return NextResponse.json(
+        { error: "Your study level is not eligible for this recruitment." },
+        { status: 422 }
+      );
+    } else {
+      updates.notEligible = false;
+    }
   }
 
   if (data.step === 5) {

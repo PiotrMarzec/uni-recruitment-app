@@ -18,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
 
 interface Recruitment {
@@ -41,6 +42,7 @@ export default function AdminDashboardPage() {
     name: "",
     description: "",
     maxDestinationChoices: 3,
+    eligibleLevels: [...STUDENT_LEVELS] as StudentLevel[],
     initialStage: { name: "", startDate: "", endDate: "" },
     adminStage: { name: "", startDate: "", endDate: "" },
   });
@@ -76,6 +78,7 @@ export default function AdminDashboardPage() {
           name: form.name,
           description: form.description,
           maxDestinationChoices: form.maxDestinationChoices,
+          eligibleLevels: form.eligibleLevels,
           initialStage: {
             name: form.initialStage.name,
             startDate: new Date(form.initialStage.startDate).toISOString(),
@@ -96,7 +99,7 @@ export default function AdminDashboardPage() {
       }
 
       setCreateOpen(false);
-      setForm({ name: "", description: "", maxDestinationChoices: 3, initialStage: { name: "", startDate: "", endDate: "" }, adminStage: { name: "", startDate: "", endDate: "" } });
+      setForm({ name: "", description: "", maxDestinationChoices: 3, eligibleLevels: [...STUDENT_LEVELS], initialStage: { name: "", startDate: "", endDate: "" }, adminStage: { name: "", startDate: "", endDate: "" } });
       await fetchRecruitments();
     } finally {
       setSaving(false);
@@ -144,6 +147,28 @@ export default function AdminDashboardPage() {
                     }
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Eligible Student Levels</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STUDENT_LEVELS.map((level) => (
+                      <label key={level} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.eligibleLevels.includes(level)}
+                          onChange={(e) =>
+                            setForm((f) => ({
+                              ...f,
+                              eligibleLevels: e.target.checked
+                                ? [...f.eligibleLevels, level]
+                                : f.eligibleLevels.filter((l) => l !== level),
+                            }))
+                          }
+                        />
+                        {STUDENT_LEVEL_LABELS[level]}
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 

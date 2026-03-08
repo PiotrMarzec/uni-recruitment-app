@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
+import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
 interface Destination {
   id: string;
@@ -19,7 +20,7 @@ interface Application {
   slotNumber: number;
   studentName: string;
   enrollmentId: string | null;
-  level: "bachelor" | "master" | null;
+  level: string | null;
   spokenLanguages: string[];
   destinationPreferences: string[];
   destinationNames: string[];
@@ -182,7 +183,7 @@ export default function ApplicationsPage() {
       new Map(prev).set(app.registrationId, {
         fullName: app.studentName,
         enrollmentId: app.enrollmentId ?? "",
-        level: app.level ?? "bachelor",
+        level: (app.level ?? STUDENT_LEVELS[0]) as StudentLevel,
         spokenLanguages: [...app.spokenLanguages],
         destinationPrefs: destPrefs,
         averageResult: app.averageResult !== null ? String(app.averageResult) : "",
@@ -233,7 +234,7 @@ export default function ApplicationsPage() {
 
     if (edit.fullName !== app.studentName) body.fullName = edit.fullName;
     if (edit.enrollmentId !== (app.enrollmentId ?? "")) body.enrollmentId = edit.enrollmentId;
-    if (edit.level !== (app.level ?? "bachelor")) body.level = edit.level;
+    if (edit.level !== (app.level ?? STUDENT_LEVELS[0])) body.level = edit.level;
 
     if ([...edit.spokenLanguages].sort().join() !== [...app.spokenLanguages].sort().join()) {
       body.spokenLanguages = edit.spokenLanguages;
@@ -365,13 +366,14 @@ export default function ApplicationsPage() {
                         value={edit.level}
                         onChange={(e) =>
                           updateEdit(app.registrationId, {
-                            level: e.target.value as "bachelor" | "master",
+                            level: e.target.value as StudentLevel,
                           })
                         }
                         className="border rounded px-2 py-1 text-sm bg-background"
                       >
-                        <option value="bachelor">Bachelor</option>
-                        <option value="master">Master</option>
+                        {STUDENT_LEVELS.map((lvl) => (
+                          <option key={lvl} value={lvl}>{STUDENT_LEVEL_LABELS[lvl]}</option>
+                        ))}
                       </select>
                     </td>
                     <td className="p-3 align-top">
@@ -518,8 +520,8 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="p-3">
                     {app.level ? (
-                      <Badge variant="secondary" className="capitalize">
-                        {app.level}
+                      <Badge variant="secondary">
+                        {STUDENT_LEVEL_LABELS[app.level as StudentLevel] ?? app.level}
                       </Badge>
                     ) : (
                       <span className="text-muted-foreground">—</span>
