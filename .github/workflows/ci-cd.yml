@@ -197,5 +197,8 @@ jobs:
             docker compose -f docker-compose.prod.yml pull app
             docker compose -f docker-compose.prod.yml up -d
 
+            # Run DB migrations
+            docker compose -f docker-compose.prod.yml exec app npx tsx scripts/migrate.ts
+
             # Remove dangling images to free disk space
             docker image prune -f
