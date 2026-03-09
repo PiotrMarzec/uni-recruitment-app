@@ -263,6 +263,14 @@ export async function POST(
       fullName: user.fullName,
       enrollmentId,
     });
+    // Persist locale preference so the registration link redirects to the
+    // correct locale on the next visit (next-intl reads NEXT_LOCALE cookie).
+    res.cookies.set("NEXT_LOCALE", locale, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
     const finalSession = await getRegistrationSessionFromRequest(req, res);
     finalSession.userId = user.id;
     finalSession.email = user.email;

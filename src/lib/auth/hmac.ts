@@ -36,5 +36,5 @@ export function getTeacherPath(slotId: string): string {
 
 export function getStudentRegistrationLink(slotId: string): string {
   const appUrl = process.env.APP_URL || "http://localhost:3000";
-  return `${appUrl}/en/register/${slotId}`;
+  return `${appUrl}/register/${slotId}`;
 }
