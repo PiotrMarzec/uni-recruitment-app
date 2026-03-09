@@ -17,5 +17,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-# Run migrations then start the server
-CMD ["sh", "-c", "npx tsx scripts/migrate.ts && npx tsx src/server.ts"]
+CMD ["npx", "tsx", "src/server.ts"]

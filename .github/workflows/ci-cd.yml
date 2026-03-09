@@ -193,12 +193,14 @@ jobs:
             # Authenticate with ghcr.io
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
 
-            # Pull the new image and restart
+            # Pull the new image
             docker compose -f docker-compose.prod.yml pull app
-            docker compose -f docker-compose.prod.yml up -d
 
-            # Run DB migrations
-            docker compose -f docker-compose.prod.yml exec app npx tsx scripts/migrate.ts
+            # Run DB migrations before starting the app (waits for DB to be healthy)
+            docker compose -f docker-compose.prod.yml run --rm app npx tsx scripts/migrate.ts
+
+            # Start/restart all services
+            docker compose -f docker-compose.prod.yml up -d
 
             # Remove dangling images to free disk space
             docker image prune -f
