@@ -137,8 +137,7 @@ jobs:
             services:
               app:
                 image: ghcr.io/piotrmarzec/uni-recruitment-app:${IMAGE_TAG:-latest}
-                ports:
-                  - "127.0.0.1:3000:3000"
+                container_name: regie
                 environment:
                   - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/recruitment
                   - SESSION_SECRET=${SESSION_SECRET}
@@ -151,6 +150,9 @@ jobs:
                   db:
                     condition: service_healthy
                 restart: unless-stopped
+                networks:
+                  - proxy
+                  - internal
 
               db:
                 image: postgres:16-alpine
@@ -166,6 +168,15 @@ jobs:
                   timeout: 5s
                   retries: 5
                 restart: unless-stopped
+                networks:
+                  - internal
+
+            networks:
+              proxy:
+                external: true
+                name: proxy
+              internal:
+                internal: true
             COMPOSE
 
             # Write .env from GitHub secrets (values are masked in logs)
