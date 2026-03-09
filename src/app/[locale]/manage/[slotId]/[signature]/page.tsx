@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 
 interface TeacherData {
   slot: { id: string; number: number; status: string };
@@ -38,6 +39,7 @@ export default function TeacherManagePage() {
   const [averageResult, setAverageResult] = useState("");
   const [additionalActivities, setAdditionalActivities] = useState("");
   const [recommendationLetters, setRecommendationLetters] = useState("");
+  const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -56,6 +58,7 @@ export default function TeacherManagePage() {
           setAverageResult(d.registration.averageResult ?? "");
           setAdditionalActivities(d.registration.additionalActivities != null ? String(d.registration.additionalActivities) : "");
           setRecommendationLetters(d.registration.recommendationLetters != null ? String(d.registration.recommendationLetters) : "");
+          setSpokenLanguages(d.registration.spokenLanguages ?? []);
         }
       })
       .finally(() => setLoading(false));
@@ -67,10 +70,11 @@ export default function TeacherManagePage() {
     setSaved(false);
     setSaving(true);
     try {
-      const body: Record<string, number | null> = {};
-      if (averageResult !== "") body.averageResult = parseFloat(averageResult);
+      const body: Record<string, number | null | string[]> = {};
+      if (averageResult !== "") body.averageResult = parseFloat(averageResult as string);
       if (additionalActivities !== "") body.additionalActivities = parseInt(additionalActivities, 10);
       if (recommendationLetters !== "") body.recommendationLetters = parseInt(recommendationLetters, 10);
+      body.spokenLanguages = spokenLanguages;
 
       const res = await fetch(`/api/teacher/${slotId}/${signature}`, {
         method: "PATCH",
@@ -179,6 +183,26 @@ export default function TeacherManagePage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
+              <div className="space-y-2">
+                <Label>{t("languages")}</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {SUPPORTED_LANGUAGES.map((lang) => (
+                    <label key={lang} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 accent-primary"
+                        checked={spokenLanguages.includes(lang)}
+                        onChange={(e) => {
+                          setSpokenLanguages((prev) =>
+                            e.target.checked ? [...prev, lang] : prev.filter((l) => l !== lang)
+                          );
+                        }}
+                      />
+                      {lang}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="space-y-1">
                 <Label>{t("averageResult")}</Label>
                 <Input
