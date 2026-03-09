@@ -65,9 +65,31 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 6,
   },
+  stagesHeaderRow: {
+    flexDirection: "row",
+    paddingBottom: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: "#cccccc",
+    marginBottom: 1,
+  },
+  stagesHeaderName: {
+    fontSize: 8,
+    color: "#aaaaaa",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    flex: 1,
+  },
+  stagesHeaderDate: {
+    fontSize: 8,
+    color: "#aaaaaa",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    width: 130,
+    textAlign: "right",
+  },
   stageRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    alignItems: "flex-start",
     paddingVertical: 3,
     borderBottomWidth: 1,
     borderBottomColor: "#eeeeee",
@@ -77,9 +99,11 @@ const styles = StyleSheet.create({
     color: "#1a1a1a",
     flex: 1,
   },
-  stageDates: {
+  stageDateColumn: {
     fontSize: 10,
     color: "#555555",
+    width: 130,
+    textAlign: "right",
   },
   divider: {
     borderBottomWidth: 1,
@@ -238,12 +262,16 @@ export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
             {slot.stages.length > 0 && (
               <View style={styles.stagesSection}>
                 <Text style={styles.stagesTitle}>Recruitment Stages</Text>
+                <View style={styles.stagesHeaderRow}>
+                  <Text style={styles.stagesHeaderName}>Stage</Text>
+                  <Text style={styles.stagesHeaderDate}>From</Text>
+                  <Text style={styles.stagesHeaderDate}>To</Text>
+                </View>
                 {slot.stages.map((stage, i) => (
                   <View key={i} style={styles.stageRow}>
                     <Text style={styles.stageName}>{stage.name}</Text>
-                    <Text style={styles.stageDates}>
-                      {stage.startDate} – {stage.endDate}
-                    </Text>
+                    <Text style={styles.stageDateColumn}>{stage.startDate}</Text>
+                    <Text style={styles.stageDateColumn}>{stage.endDate}</Text>
                   </View>
                 ))}
               </View>

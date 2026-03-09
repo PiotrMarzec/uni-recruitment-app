@@ -12,11 +12,7 @@ function formatStageDate(date: Date): string {
   const datePart = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const hours = date.getHours().toString().padStart(2, "0");
   const minutes = date.getMinutes().toString().padStart(2, "0");
-  const seconds = date.getSeconds();
-  const timePart = seconds !== 0
-    ? `${hours}:${minutes}:${seconds.toString().padStart(2, "0")}`
-    : `${hours}:${minutes}`;
-  return `${datePart}, ${timePart}`;
+  return `${datePart}, ${hours}:${minutes}`;
 }
 
 async function generateQrBase64(url: string): Promise<string> {
