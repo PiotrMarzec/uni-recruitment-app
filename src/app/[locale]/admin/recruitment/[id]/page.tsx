@@ -755,7 +755,7 @@ export default function RecruitmentDetailPage() {
                       <div className="flex gap-1">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => openEditDestination(dest)}
                           className="h-auto py-1"
                         >
@@ -763,9 +763,9 @@ export default function RecruitmentDetailPage() {
                         </Button>
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => deleteDestination(dest.id)}
-                          className="text-destructive hover:text-destructive h-auto py-1"
+                          className="text-destructive hover:text-destructive border-destructive hover:border-destructive h-auto py-1"
                         >
                           {tc("remove")}
                         </Button>
