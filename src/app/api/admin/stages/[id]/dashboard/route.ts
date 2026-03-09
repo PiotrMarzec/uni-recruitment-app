@@ -10,6 +10,7 @@ import {
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { getTeacherPath } from "@/lib/auth/hmac";
+import { computeSlotStats } from "@/lib/slot-stats";
 import { eq, and, desc, ne, sql } from "drizzle-orm";
 
 export async function GET(
@@ -31,16 +32,17 @@ export async function GET(
     return NextResponse.json({ error: "Stage not found" }, { status: 404 });
   }
 
-  // Count total and open slots for this recruitment
+  // Count total and open slots for this recruitment.
+  // Join with registrations so "registered" reflects completed registrations
+  // (registrationCompleted = true) rather than slot status, which can lag behind
+  // when a student re-opens an already-completed registration link.
   const allSlots = await db
-    .select({ status: slots.status })
+    .select({ status: slots.status, registrationCompleted: registrations.registrationCompleted })
     .from(slots)
+    .leftJoin(registrations, eq(registrations.slotId, slots.id))
     .where(eq(slots.recruitmentId, stage.recruitmentId));
 
-  const totalSlots = allSlots.length;
-  const openSlots = allSlots.filter((s) => s.status === "open").length;
-  const startedSlots = allSlots.filter((s) => s.status === "registration_started").length;
-  const registeredSlots = allSlots.filter((s) => s.status === "registered").length;
+  const { totalSlots, openSlots, registeredSlots, startedSlots } = computeSlotStats(allSlots);
 
   // Find the most recently completed admin stage to look up assignments.
   const [adminStage] = await db

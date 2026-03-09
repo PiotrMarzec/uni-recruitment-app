@@ -20,7 +20,7 @@ const LOCALE_LABELS: Record<string, string> = {
   it: "IT",
 };
 
-function LanguageSwitcher() {
+function LanguageSwitcher({ onBeforeSwitch }: { onBeforeSwitch?: (loc: string) => Promise<void> | void }) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -30,7 +30,10 @@ function LanguageSwitcher() {
       {routing.locales.map((loc) => (
         <button
           key={loc}
-          onClick={() => router.replace(pathname, { locale: loc })}
+          onClick={async () => {
+            if (loc !== locale) await onBeforeSwitch?.(loc);
+            router.replace(pathname, { locale: loc });
+          }}
           className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
             loc === locale
               ? "bg-primary text-primary-foreground"
@@ -104,6 +107,8 @@ export default function RegisterPage() {
   const tc = useTranslations("common");
   const locale = useLocale();
 
+  const sessionKey = `reg_state_${slotId}`;
+
   const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -131,6 +136,58 @@ export default function RegisterPage() {
   // True once the student completes OTP verification in this page session.
   // Prevents changing email/name without re-verifying when a registration already exists.
   const [emailVerifiedThisSession, setEmailVerifiedThisSession] = useState(false);
+
+  // Restore form state saved before a locale switch (runs once on mount, before loadSlotInfo resolves)
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(sessionKey);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (parsed.currentStep) setCurrentStep(parsed.currentStep as Step);
+      if (parsed.email !== undefined) setEmail(parsed.email);
+      if (parsed.emailConsent !== undefined) setEmailConsent(parsed.emailConsent);
+      if (parsed.privacyConsent !== undefined) setPrivacyConsent(parsed.privacyConsent);
+      if (parsed.fullName !== undefined) setFullName(parsed.fullName);
+      if (parsed.enrollmentId !== undefined) setEnrollmentId(parsed.enrollmentId);
+      if (parsed.level !== undefined) setLevel(parsed.level);
+      if (parsed.spokenLanguages !== undefined) setSpokenLanguages(parsed.spokenLanguages);
+      if (parsed.destinationPreferences !== undefined) setDestinationPreferences(parsed.destinationPreferences);
+      if (parsed.emailVerifiedThisSession !== undefined) setEmailVerifiedThisSession(parsed.emailVerifiedThisSession);
+      if (parsed.assignmentLossConfirmed !== undefined) setAssignmentLossConfirmed(parsed.assignmentLossConfirmed);
+      if (parsed.confirmSummary !== undefined) setConfirmSummary(parsed.confirmSummary);
+      sessionStorage.removeItem(sessionKey);
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function saveStateForLocaleSwitch(newLocale: string) {
+    // Save form state so it survives the component remount on locale navigation
+    try {
+      sessionStorage.setItem(sessionKey, JSON.stringify({
+        currentStep,
+        email,
+        emailConsent,
+        privacyConsent,
+        fullName,
+        enrollmentId,
+        level,
+        spokenLanguages,
+        destinationPreferences,
+        emailVerifiedThisSession,
+        assignmentLossConfirmed,
+        confirmSummary,
+      }));
+    } catch {}
+
+    // Update the student's locale in the DB so the server component doesn't
+    // redirect back to the old locale on the next render.
+    try {
+      await fetch(`/api/registration/${slotId}/locale`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ locale: newLocale }),
+      });
+    } catch {}
+  }
 
   useEffect(() => {
     loadSlotInfo();
@@ -777,7 +834,7 @@ export default function RegisterPage() {
         </Card>
         {/* Language switcher */}
         <div className="mt-6 flex justify-center">
-          <LanguageSwitcher />
+          <LanguageSwitcher onBeforeSwitch={saveStateForLocaleSwitch} />
         </div>
       </div>
     </div>

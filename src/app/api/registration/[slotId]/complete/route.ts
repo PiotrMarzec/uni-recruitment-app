@@ -183,15 +183,30 @@ export async function POST(
       .from(slots)
       .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
 
+    // "In Progress" = registration_started slots without a completed registration
     const [startedCount] = await db
       .select({ count: count() })
       .from(slots)
-      .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "registration_started")));
+      .leftJoin(registrations, eq(registrations.slotId, slots.id))
+      .where(
+        and(
+          eq(slots.recruitmentId, slot.recruitmentId),
+          eq(slots.status, "registration_started"),
+          eq(registrations.registrationCompleted, false)
+        )
+      );
 
+    // "Registered" = completed registrations for this recruitment
     const [regCount] = await db
       .select({ count: count() })
       .from(registrations)
-      .where(eq(registrations.registrationCompleted, true));
+      .innerJoin(slots, eq(slots.id, registrations.slotId))
+      .where(
+        and(
+          eq(slots.recruitmentId, slot.recruitmentId),
+          eq(registrations.registrationCompleted, true)
+        )
+      );
 
     broadcastRegistrationUpdate({
       type: "registration_update",

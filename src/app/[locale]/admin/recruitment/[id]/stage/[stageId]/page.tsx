@@ -134,7 +134,7 @@ export default function StageDashboardPage() {
                 ...prev.stats,
                 openSlots: message.openSlotsCount,
                 startedSlots: message.startedSlotsCount,
-                registeredSlots: prev.stats.registeredSlots + 1,
+                registeredSlots: message.registeredCount ?? prev.stats.registeredSlots,
               },
             };
           });
