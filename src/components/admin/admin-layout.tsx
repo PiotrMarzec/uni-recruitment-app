@@ -99,7 +99,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
           </Link>
           <nav className="flex items-center gap-4">
             <LanguageSwitcher />
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild>
               <Link href="/admin/audit"><ClipboardList className="w-4 h-4 mr-2" />Audit Log</Link>
             </Button>
             <Dialog
@@ -114,7 +114,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
               }}
             >
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm"><UserPlus className="w-4 h-4 mr-2" />Invite New Admin</Button>
+                <Button variant="outline" size="sm"><UserPlus className="w-4 h-4 mr-2" />Invite New Admin</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
@@ -159,7 +159,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
                 )}
               </DialogContent>
             </Dialog>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />{t("login.logout")}
             </Button>
           </nav>
