@@ -1,6 +1,7 @@
 import { sendEmail, EMAIL_FROM } from "./client";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 import { getEmailT, getDateLocale } from "./translations";
+import { logger } from "@/lib/logger";
 
 interface EmailResult {
   success: boolean;
@@ -31,6 +32,7 @@ export async function sendOtpEmail(
       `,
     });
 
+    logger.info("email.sent", { template: "otp", recipient: email, otpId });
     await logAuditEvent({
       actorType: "system",
       actorLabel: "System",
@@ -42,6 +44,7 @@ export async function sendOtpEmail(
 
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "otp", recipient: email, error: String(err) });
     console.error("Failed to send OTP email:", err);
     return { success: false, error: String(err) };
   }
@@ -90,8 +93,18 @@ export async function sendRegistrationCompletedEmail(params: {
         </div>
       `,
     });
+    logger.info("email.sent", { template: "registrationCompleted", recipient: params.email, recruitmentName: params.recruitmentName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "registrationCompleted", recipient: params.email, recruitmentName: params.recruitmentName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "registrationCompleted", recipient: params.email, error: String(err) });
     console.error("Failed to send registration completed email:", err);
     return { success: false, error: String(err) };
   }
@@ -131,8 +144,18 @@ export async function sendInitialStageClosedEmail(params: {
         </div>
       `,
     });
+    logger.info("email.sent", { template: "initialStageClosed", recipient: params.email, recruitmentName: params.recruitmentName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "initialStageClosed", recipient: params.email, recruitmentName: params.recruitmentName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "initialStageClosed", recipient: params.email, error: String(err) });
     console.error("Failed to send initial stage closed email:", err);
     return { success: false, error: String(err) };
   }
@@ -166,8 +189,18 @@ export async function sendAssignmentApprovedEmail(params: {
         </div>
       `,
     });
+    logger.info("email.sent", { template: "assignmentApproved", recipient: params.email, recruitmentName: params.recruitmentName, destinationName: params.destinationName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "assignmentApproved", recipient: params.email, recruitmentName: params.recruitmentName, destinationName: params.destinationName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "assignmentApproved", recipient: params.email, error: String(err) });
     console.error("Failed to send assignment approved email:", err);
     return { success: false, error: String(err) };
   }
@@ -218,8 +251,18 @@ export async function sendAssignmentUnassignedEmail(params: {
         </div>
       `,
     });
+    logger.info("email.sent", { template: "assignmentUnassigned", recipient: params.email, recruitmentName: params.recruitmentName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "assignmentUnassigned", recipient: params.email, recruitmentName: params.recruitmentName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "assignmentUnassigned", recipient: params.email, error: String(err) });
     console.error("Failed to send unassigned email:", err);
     return { success: false, error: String(err) };
   }
@@ -248,9 +291,18 @@ export async function sendAdminInviteEmail(params: {
         </div>
       `,
     });
-
+    logger.info("email.sent", { template: "adminInvite", recipient: params.email, invitedByName: params.invitedByName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "adminInvite", recipient: params.email, invitedByName: params.invitedByName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "adminInvite", recipient: params.email, error: String(err) });
     console.error("Failed to send admin invite email:", err);
     return { success: false, error: String(err) };
   }
@@ -309,8 +361,18 @@ export async function sendSupplementaryStageEmail(params: {
         </div>
       `,
     });
+    logger.info("email.sent", { template: "supplementaryStage", recipient: params.email, recruitmentName: params.recruitmentName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "supplementaryStage", recipient: params.email, recruitmentName: params.recruitmentName },
+    });
     return { success: true };
   } catch (err) {
+    logger.error("email.send_failed", { template: "supplementaryStage", recipient: params.email, error: String(err) });
     console.error("Failed to send supplementary stage email:", err);
     return { success: false, error: String(err) };
   }

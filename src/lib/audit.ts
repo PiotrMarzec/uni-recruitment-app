@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { auditLog } from "@/db/schema";
 import { NextRequest } from "next/server";
+import { logger } from "@/lib/logger";
 
 export type ActorType = "admin" | "student" | "teacher" | "system";
 
@@ -17,6 +18,17 @@ export interface AuditEventParams {
 }
 
 export async function logAuditEvent(params: AuditEventParams): Promise<void> {
+  logger.info("audit_event", {
+    action: params.action,
+    actorType: params.actorType,
+    actorId: params.actorId,
+    actorLabel: params.actorLabel,
+    resourceType: params.resourceType,
+    resourceId: params.resourceId,
+    recruitmentId: params.recruitmentId,
+    ipAddress: params.ipAddress,
+    details: params.details,
+  });
   try {
     await db.insert(auditLog).values({
       actorType: params.actorType,
