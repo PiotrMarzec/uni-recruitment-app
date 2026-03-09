@@ -405,5 +405,75 @@
     "preferencesUpdated": "Ihre Präferenzen wurden aktualisiert",
     "expired": "Dieser Link ist abgelaufen",
     "stageNotActive": "Die Ergänzungsphase ist derzeit nicht aktiv"
+  },
+  "email": {
+    "otp": {
+      "subject": "Ihr Anmeldecode",
+      "title": "Ihr Einmal-Anmeldecode",
+      "body": "Verwenden Sie den folgenden Code zur Anmeldung. Er läuft in 10 Minuten ab.",
+      "ignore": "Wenn Sie diesen Code nicht angefordert haben, können Sie diese E-Mail ignorieren."
+    },
+    "registrationCompleted": {
+      "subject": "Registrierung abgeschlossen — {recruitmentName}",
+      "title": "Registrierung abgeschlossen",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Ihre Registrierung für {recruitmentName} wurde erfolgreich abgeschlossen.",
+      "summaryTitle": "Ihre Registrierungsübersicht",
+      "enrollmentId": "Matrikelnummer",
+      "studyLevel": "Studienstufe",
+      "spokenLanguages": "Gesprochene Sprachen",
+      "destinationPreferences": "Zielortpräferenzen",
+      "updateButton": "Registrierung aktualisieren",
+      "copyLink": "Oder kopieren Sie diesen Link:",
+      "updateNote": "Sie können Ihre Angaben bis zum Ende der Registrierungsphase aktualisieren."
+    },
+    "initialStageClosed": {
+      "subject": "Registrierungsphase beendet — {recruitmentName}",
+      "title": "Registrierungsphase beendet",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Die Registrierungsphase für {recruitmentName} ist abgeschlossen. Ihre Registrierung wurde bestätigt und zur Überprüfung weitergeleitet.",
+      "reviewNote": "Die administrative Überprüfungsphase soll bis {date} abgeschlossen sein. Sie erhalten eine E-Mail, wenn Ihre Zuweisung abgeschlossen ist.",
+      "toBeAnnounced": "wird noch bekanntgegeben",
+      "thanks": "Vielen Dank für Ihre Teilnahme am Bewerbungsverfahren."
+    },
+    "assignmentApproved": {
+      "subject": "Zielort zugewiesen — {recruitmentName}",
+      "title": "Ihre Zielortzuweisung",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Wir freuen uns, Ihnen mitteilen zu können, dass Sie für {recruitmentName} dem folgenden Zielort zugewiesen wurden:",
+      "congratulations": "Herzlichen Glückwunsch! Weitere Details zu Ihrer Reise werden Ihnen separat mitgeteilt."
+    },
+    "assignmentUnassigned": {
+      "subject": "Ergebnis der Zuweisung — {recruitmentName}",
+      "title": "Ergebnis der Zuweisung",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Leider konnten wir Ihnen in dieser Runde keinen Ihrer gewählten Zielorte für {recruitmentName} zuweisen. Dies kann auf starken Wettbewerb um Ihre bevorzugten Zielorte zurückzuführen sein.",
+      "supplementaryInfo": "Für {recruitmentName} wurde eine Ergänzungsrunde geplant, die vom {startDate} bis zum {endDate} stattfindet. In diesem Zeitraum haben Sie eine weitere Möglichkeit, sich zu bewerben.",
+      "applyButton": "In der Ergänzungsrunde bewerben",
+      "copyLink": "Oder kopieren Sie diesen Link:",
+      "noSupplementary": "Wir informieren Sie, wenn eine Ergänzungsrunde verfügbar ist."
+    },
+    "supplementaryStage": {
+      "subject": "Ergänzungsrunde geöffnet — {recruitmentName}",
+      "title": "Ergänzungsrunde jetzt geöffnet",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Für {recruitmentName} wurde eine Ergänzungsrunde geöffnet.",
+      "currentAssignment": "Ihre aktuelle Zuweisung: {destination}",
+      "guaranteed": "Ihr Platz ist garantiert — Sie müssen keine Maßnahmen ergreifen.",
+      "changeNote": "Wenn Sie Ihre Zielortpräferenzen ändern möchten, können Sie sich über Ihren Registrierungslink erneut bewerben.",
+      "warning": "Achtung: Eine erneute Bewerbung storniert sofort Ihre aktuelle Zuweisung zu {destination}. Es gibt keine Garantie, dass Sie Ihren neuen Präferenzen zugewiesen werden.",
+      "noAssignment": "Sie wurden in der vorherigen Runde keinem Zielort zugewiesen. Sie können diese Ergänzungsrunde nutzen, um sich erneut zu bewerben.",
+      "openButton": "Meine Registrierung öffnen",
+      "copyLink": "Oder kopieren Sie diesen Link:",
+      "closesNote": "Diese Runde endet am {date}. Danach werden die Zuweisungen finalisiert."
+    },
+    "levelLabels": {
+      "bachelor_1": "Bachelor (1. Jahr)",
+      "bachelor_2": "Bachelor (2. Jahr)",
+      "bachelor_3": "Bachelor (3. Jahr)",
+      "master_1": "Master (1. Jahr)",
+      "master_2": "Master (2. Jahr)",
+      "master_3": "Master (3. Jahr)"
+    }
   }
 }

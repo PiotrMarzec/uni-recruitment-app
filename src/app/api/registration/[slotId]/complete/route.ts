@@ -163,6 +163,7 @@ export async function POST(
       destinationPreferences: prefNames,
       enrollmentId: registration.enrollmentId || "",
       registrationLink,
+      locale: student.locale,
     });
   }
 

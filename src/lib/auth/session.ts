@@ -17,6 +17,7 @@ export interface RegistrationSessionData {
   emailConsent?: boolean;
   privacyConsent?: boolean;
   pendingSlotId?: string;
+  locale?: string;
 }
 
 const sessionOptions = {

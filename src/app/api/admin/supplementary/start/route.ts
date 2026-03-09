@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   for (const reg of completedRegistrations) {
     // Get student info
     const [student] = await db
-      .select({ email: users.email, fullName: users.fullName })
+      .select({ email: users.email, fullName: users.fullName, locale: users.locale })
       .from(users)
       .where(eq(users.id, reg.studentId))
       .limit(1);
@@ -131,7 +131,8 @@ export async function POST(req: NextRequest) {
     });
 
     const appUrl = process.env.APP_URL || "http://localhost:3000";
-    const registrationLink = `${appUrl}/en/supplementary/${token}`;
+    const studentLocale = student.locale || "en";
+    const registrationLink = `${appUrl}/${studentLocale}/supplementary/${token}`;
 
     await sendSupplementaryStageEmail({
       email: student.email,
@@ -140,6 +141,7 @@ export async function POST(req: NextRequest) {
       currentDestination: currentDestinationName,
       registrationLink,
       stageEndDate: expiresAt,
+      locale: studentLocale,
     });
 
     emailsSent++;

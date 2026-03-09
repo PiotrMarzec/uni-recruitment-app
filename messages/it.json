@@ -405,5 +405,75 @@
     "preferencesUpdated": "Le tue preferenze sono state aggiornate",
     "expired": "Questo link è scaduto",
     "stageNotActive": "La fase supplementare non è attualmente attiva"
+  },
+  "email": {
+    "otp": {
+      "subject": "Il tuo codice di accesso",
+      "title": "Il tuo codice di accesso unico",
+      "body": "Usa il codice qui sotto per accedere. Scade tra 10 minuti.",
+      "ignore": "Se non hai richiesto questo codice, puoi ignorare questa email."
+    },
+    "registrationCompleted": {
+      "subject": "Registrazione completata — {recruitmentName}",
+      "title": "Registrazione completata",
+      "greeting": "Caro/a {fullName},",
+      "body": "La tua registrazione per {recruitmentName} è stata completata con successo.",
+      "summaryTitle": "Riepilogo della tua registrazione",
+      "enrollmentId": "Numero di matricola",
+      "studyLevel": "Livello di studi",
+      "spokenLanguages": "Lingue parlate",
+      "destinationPreferences": "Preferenze di destinazione",
+      "updateButton": "Aggiorna la mia registrazione",
+      "copyLink": "Oppure copia questo link:",
+      "updateNote": "Puoi aggiornare le tue informazioni fino alla chiusura della fase di registrazione iniziale."
+    },
+    "initialStageClosed": {
+      "subject": "Periodo di registrazione chiuso — {recruitmentName}",
+      "title": "Periodo di registrazione chiuso",
+      "greeting": "Caro/a {fullName},",
+      "body": "La fase di registrazione iniziale per {recruitmentName} è chiusa. La tua registrazione è confermata ed è stata inoltrata per la revisione.",
+      "reviewNote": "La fase di revisione amministrativa dovrebbe concludersi entro il {date}. Riceverai un'email quando la tua assegnazione sarà finalizzata.",
+      "toBeAnnounced": "da annunciare",
+      "thanks": "Grazie per aver partecipato al processo di selezione."
+    },
+    "assignmentApproved": {
+      "subject": "Assegnazione destinazione — {recruitmentName}",
+      "title": "La tua assegnazione di destinazione",
+      "greeting": "Caro/a {fullName},",
+      "body": "Siamo lieti di informarti che sei stato/a assegnato/a alla seguente destinazione per {recruitmentName}:",
+      "congratulations": "Congratulazioni! Ulteriori dettagli sul tuo viaggio ti saranno comunicati separatamente."
+    },
+    "assignmentUnassigned": {
+      "subject": "Risultato assegnazione — {recruitmentName}",
+      "title": "Risultato assegnazione",
+      "greeting": "Caro/a {fullName},",
+      "body": "Purtroppo non è stato possibile assegnarti a nessuna delle destinazioni selezionate per {recruitmentName} in questo turno. Ciò potrebbe essere dovuto all'alta concorrenza per le tue destinazioni preferite.",
+      "supplementaryInfo": "È stata programmata una fase supplementare per {recruitmentName}, dal {startDate} al {endDate}. Avrai un'altra opportunità per candidarti ed essere assegnato/a a una destinazione.",
+      "applyButton": "Candidati nella fase supplementare",
+      "copyLink": "Oppure copia questo link:",
+      "noSupplementary": "Ti informeremo se sarà disponibile una fase supplementare."
+    },
+    "supplementaryStage": {
+      "subject": "Fase supplementare aperta — {recruitmentName}",
+      "title": "Fase supplementare ora aperta",
+      "greeting": "Caro/a {fullName},",
+      "body": "È stata aperta una fase di registrazione supplementare per {recruitmentName}.",
+      "currentAssignment": "La tua assegnazione attuale: {destination}",
+      "guaranteed": "Il tuo posto è garantito — non devi intraprendere alcuna azione.",
+      "changeNote": "Se desideri modificare le tue preferenze di destinazione, puoi candidarti di nuovo usando il tuo link di registrazione qui sotto.",
+      "warning": "Attenzione: Candidarsi di nuovo cancellerà immediatamente la tua assegnazione attuale a {destination}. Non c'è garanzia che tu venga assegnato/a alle nuove preferenze.",
+      "noAssignment": "Non sei stato/a assegnato/a a nessuna destinazione nel turno precedente. Puoi usare questa fase supplementare per candidarti di nuovo.",
+      "openButton": "Apri la mia registrazione",
+      "copyLink": "Oppure copia questo link:",
+      "closesNote": "Questa fase si chiude il {date}. Dopo di che, le assegnazioni saranno finalizzate."
+    },
+    "levelLabels": {
+      "bachelor_1": "Triennale (1° anno)",
+      "bachelor_2": "Triennale (2° anno)",
+      "bachelor_3": "Triennale (3° anno)",
+      "master_1": "Magistrale (1° anno)",
+      "master_2": "Magistrale (2° anno)",
+      "master_3": "Magistrale (3° anno)"
+    }
   }
 }

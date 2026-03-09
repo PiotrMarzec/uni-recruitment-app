@@ -70,6 +70,7 @@ export async function POST(
       destinationId: assignmentResults.destinationId,
       studentName: users.fullName,
       studentEmail: users.email,
+      studentLocale: users.locale,
       destinationName: destinations.name,
       destinationDescription: destinations.description,
     })
@@ -124,12 +125,14 @@ export async function POST(
         recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
+        locale: result.studentLocale,
       });
     } else {
       await sendAssignmentUnassignedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
         recruitmentName: getStageName(stage),
+        locale: result.studentLocale,
       });
     }
     emailsSent++;

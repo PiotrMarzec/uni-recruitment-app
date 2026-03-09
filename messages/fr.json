@@ -405,5 +405,75 @@
     "preferencesUpdated": "Vos préférences ont été mises à jour",
     "expired": "Ce lien a expiré",
     "stageNotActive": "La phase complémentaire n'est pas active actuellement"
+  },
+  "email": {
+    "otp": {
+      "subject": "Votre code de connexion",
+      "title": "Votre code de connexion unique",
+      "body": "Utilisez le code ci-dessous pour vous connecter. Il expire dans 10 minutes.",
+      "ignore": "Si vous n'avez pas demandé ce code, vous pouvez ignorer cet e-mail."
+    },
+    "registrationCompleted": {
+      "subject": "Inscription terminée — {recruitmentName}",
+      "title": "Inscription terminée",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "Votre inscription pour {recruitmentName} a été complétée avec succès.",
+      "summaryTitle": "Résumé de votre inscription",
+      "enrollmentId": "Numéro d'étudiant",
+      "studyLevel": "Niveau d'études",
+      "spokenLanguages": "Langues parlées",
+      "destinationPreferences": "Préférences de destination",
+      "updateButton": "Mettre à jour mon inscription",
+      "copyLink": "Ou copiez ce lien :",
+      "updateNote": "Vous pouvez mettre à jour vos informations jusqu'à la clôture de la phase d'inscription initiale."
+    },
+    "initialStageClosed": {
+      "subject": "Phase d'inscription terminée — {recruitmentName}",
+      "title": "Phase d'inscription terminée",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "La phase d'inscription initiale pour {recruitmentName} est terminée. Votre inscription est confirmée et a été transmise pour examen.",
+      "reviewNote": "La phase d'examen administratif devrait se terminer le {date}. Vous recevrez un e-mail lorsque votre affectation sera finalisée.",
+      "toBeAnnounced": "à annoncer",
+      "thanks": "Merci de votre participation au processus de recrutement."
+    },
+    "assignmentApproved": {
+      "subject": "Affectation de destination — {recruitmentName}",
+      "title": "Votre affectation de destination",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "Nous avons le plaisir de vous informer que vous avez été affecté(e) à la destination suivante pour {recruitmentName} :",
+      "congratulations": "Félicitations ! Des informations complémentaires sur votre séjour vous seront communiquées séparément."
+    },
+    "assignmentUnassigned": {
+      "subject": "Résultat d'affectation — {recruitmentName}",
+      "title": "Résultat d'affectation",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "Malheureusement, nous n'avons pas pu vous affecter à l'une de vos destinations sélectionnées pour {recruitmentName} lors de cette session. Cela peut être dû à une forte concurrence pour vos destinations préférées.",
+      "supplementaryInfo": "Une session complémentaire a été programmée pour {recruitmentName}, du {startDate} au {endDate}. Vous aurez une autre occasion de postuler et d'être affecté(e) à une destination.",
+      "applyButton": "Postuler lors de la session complémentaire",
+      "copyLink": "Ou copiez ce lien :",
+      "noSupplementary": "Nous vous informerons si une session complémentaire devient disponible."
+    },
+    "supplementaryStage": {
+      "subject": "Session complémentaire ouverte — {recruitmentName}",
+      "title": "Session complémentaire maintenant ouverte",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "Une session d'inscription complémentaire a ouvert pour {recruitmentName}.",
+      "currentAssignment": "Votre affectation actuelle : {destination}",
+      "guaranteed": "Votre place est garantie — vous n'avez aucune action à entreprendre.",
+      "changeNote": "Si vous souhaitez modifier vos préférences de destination, vous pouvez postuler à nouveau via votre lien d'inscription ci-dessous.",
+      "warning": "Attention : Postuler à nouveau annulera immédiatement votre affectation actuelle à {destination}. Il n'y a aucune garantie que vous serez affecté(e) à vos nouvelles préférences.",
+      "noAssignment": "Vous n'avez pas été affecté(e) à une destination lors de la session précédente. Vous pouvez utiliser cette session complémentaire pour postuler à nouveau.",
+      "openButton": "Ouvrir mon inscription",
+      "copyLink": "Ou copiez ce lien :",
+      "closesNote": "Cette session se termine le {date}. Après cela, les affectations seront finalisées."
+    },
+    "levelLabels": {
+      "bachelor_1": "Licence (1re année)",
+      "bachelor_2": "Licence (2e année)",
+      "bachelor_3": "Licence (3e année)",
+      "master_1": "Master (1re année)",
+      "master_2": "Master (2e année)",
+      "master_3": "Master (3e année)"
+    }
   }
 }

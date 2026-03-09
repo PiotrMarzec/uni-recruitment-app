@@ -134,6 +134,7 @@ async function transitionInitialToAdmin(stage: typeof stages.$inferSelect): Prom
       .select({
         email: users.email,
         fullName: users.fullName,
+        locale: users.locale,
       })
       .from(registrations)
       .innerJoin(users, eq(registrations.studentId, users.id))
@@ -151,6 +152,7 @@ async function transitionInitialToAdmin(stage: typeof stages.$inferSelect): Prom
         fullName: student.fullName,
         recruitmentName: getStageName(stage),
         adminStageEndDate: nextStage.endDate,
+        locale: student.locale,
       });
     }
   }

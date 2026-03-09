@@ -81,7 +81,7 @@ export async function POST(
 
     if (stage.type === "initial") {
       const enrolledStudents = await db
-        .select({ email: users.email, fullName: users.fullName })
+        .select({ email: users.email, fullName: users.fullName, locale: users.locale })
         .from(registrations)
         .innerJoin(users, eq(registrations.studentId, users.id))
         .innerJoin(slots, eq(registrations.slotId, slots.id))
@@ -98,6 +98,7 @@ export async function POST(
           fullName: student.fullName,
           recruitmentName: getStageName(stage),
           adminStageEndDate: nextStage.endDate,
+          locale: student.locale,
         });
       }
     }
@@ -124,6 +125,7 @@ export async function POST(
         slotId: registrations.slotId,
         studentEmail: users.email,
         studentName: users.fullName,
+        studentLocale: users.locale,
       })
       .from(registrations)
       .innerJoin(slots, eq(registrations.slotId, slots.id))
@@ -160,6 +162,7 @@ export async function POST(
         currentDestination: currentDestinationName,
         registrationLink: getStudentRegistrationLink(reg.slotId),
         stageEndDate: nextStage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        locale: reg.studentLocale,
       });
     }
   }

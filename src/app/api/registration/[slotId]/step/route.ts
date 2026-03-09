@@ -17,11 +17,14 @@ import { z } from "zod";
 import { eq, and, isNotNull, desc } from "drizzle-orm";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
 
+const SUPPORTED_LOCALES = ["en", "pl", "de", "fr", "es", "it"] as const;
+
 const step1Schema = z.object({
   step: z.literal(1),
   email: z.string().email(),
   emailConsent: z.boolean(),
   privacyConsent: z.boolean(),
+  locale: z.enum(SUPPORTED_LOCALES).optional().default("en"),
 });
 
 const step2Schema = z.object({
@@ -156,15 +159,16 @@ export async function POST(
 
     // Send OTP
     const { code, id: otpId } = await issueOtp(data.email);
-    await sendOtpEmail(data.email, code, otpId);
+    await sendOtpEmail(data.email, code, otpId, data.locale);
 
-    // Store email/consent in session temporarily
+    // Store email/consent/locale in session temporarily
     const res = NextResponse.json({ success: true });
     const session = await getRegistrationSessionFromRequest(req, res);
     session.pendingEmail = data.email;
     session.emailConsent = data.emailConsent;
     session.privacyConsent = data.privacyConsent;
     session.pendingSlotId = slotId;
+    session.locale = data.locale;
     await session.save();
 
     return res;
@@ -176,6 +180,13 @@ export async function POST(
     if (!isValid) {
       return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
     }
+
+    // Get consent and locale from session first (needed for user creation)
+    const tempRes = NextResponse.json({ success: true });
+    const session = await getRegistrationSessionFromRequest(req, tempRes);
+    const emailConsent = session.emailConsent ?? false;
+    const privacyConsent = session.privacyConsent ?? false;
+    const locale = session.locale ?? "en";
 
     // Find or create user
     let user = await db
@@ -191,16 +202,15 @@ export async function POST(
         .values({
           email: data.email.toLowerCase(),
           fullName: data.email.split("@")[0],
+          locale,
         })
         .returning();
       user = created;
+    } else {
+      // Update locale for returning users
+      await db.update(users).set({ locale }).where(eq(users.id, user.id));
+      user = { ...user, locale };
     }
-
-    // Get consent from session
-    const tempRes = NextResponse.json({ success: true });
-    const session = await getRegistrationSessionFromRequest(req, tempRes);
-    const emailConsent = session.emailConsent ?? false;
-    const privacyConsent = session.privacyConsent ?? false;
 
     // Check if slot is already taken by another user
     if (slot.status === "registered" && slot.studentId !== user.id) {

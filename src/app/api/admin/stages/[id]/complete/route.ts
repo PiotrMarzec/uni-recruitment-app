@@ -93,6 +93,7 @@ export async function POST(
       destinationId: assignmentResults.destinationId,
       studentName: users.fullName,
       studentEmail: users.email,
+      studentLocale: users.locale,
       destinationName: destinations.name,
       destinationDescription: destinations.description,
       slotId: slots.id,
@@ -158,6 +159,7 @@ export async function POST(
         recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
+        locale: result.studentLocale,
       });
     } else {
       await sendAssignmentUnassignedEmail({
@@ -166,6 +168,7 @@ export async function POST(
         recruitmentName: getStageName(stage),
         supplementaryStage: supplementaryStage ?? undefined,
         registrationLink: result.slotId ? getStudentRegistrationLink(result.slotId) : undefined,
+        locale: result.studentLocale,
       });
     }
     emailsSent++;

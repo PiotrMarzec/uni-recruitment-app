@@ -73,6 +73,7 @@ export async function POST(
         slotId: registrations.slotId,
         studentEmail: users.email,
         studentName: users.fullName,
+        studentLocale: users.locale,
       })
       .from(registrations)
       .innerJoin(slots, eq(registrations.slotId, slots.id))
@@ -109,6 +110,7 @@ export async function POST(
         currentDestination: currentDestinationName,
         registrationLink: getStudentRegistrationLink(reg.slotId),
         stageEndDate: stage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        locale: reg.studentLocale,
       });
     }
   }

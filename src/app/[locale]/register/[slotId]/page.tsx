@@ -102,6 +102,7 @@ export default function RegisterPage() {
   const slotId = params.slotId as string;
   const t = useTranslations("registration");
   const tc = useTranslations("common");
+  const locale = useLocale();
 
   const [slotInfo, setSlotInfo] = useState<SlotInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -230,7 +231,7 @@ export default function RegisterPage() {
       setStepError(t("errors.assignmentLossConfirmRequired"));
       return;
     }
-    const ok = await submitStep(1, { email, emailConsent, privacyConsent });
+    const ok = await submitStep(1, { email, emailConsent, privacyConsent, locale });
     if (ok) setCurrentStep(2);
   }
 

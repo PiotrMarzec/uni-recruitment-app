@@ -405,5 +405,75 @@
     "preferencesUpdated": "Twoje preferencje zostały zaktualizowane",
     "expired": "Ten link wygasł",
     "stageNotActive": "Etap uzupełniający nie jest aktualnie aktywny"
+  },
+  "email": {
+    "otp": {
+      "subject": "Twój kod logowania",
+      "title": "Twój jednorazowy kod logowania",
+      "body": "Użyj poniższego kodu, aby się zalogować. Wygasa za 10 minut.",
+      "ignore": "Jeśli nie prosiłeś/-aś o ten kod, możesz bezpiecznie zignorować tę wiadomość."
+    },
+    "registrationCompleted": {
+      "subject": "Rejestracja zakończona — {recruitmentName}",
+      "title": "Rejestracja zakończona",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Twoja rejestracja na {recruitmentName} została pomyślnie zakończona.",
+      "summaryTitle": "Podsumowanie rejestracji",
+      "enrollmentId": "Numer albumu",
+      "studyLevel": "Poziom studiów",
+      "spokenLanguages": "Języki obce",
+      "destinationPreferences": "Preferencje miejsc",
+      "updateButton": "Zaktualizuj rejestrację",
+      "copyLink": "Lub skopiuj link:",
+      "updateNote": "Możesz aktualizować swoje dane do momentu zamknięcia etapu rejestracji."
+    },
+    "initialStageClosed": {
+      "subject": "Etap rejestracji zakończony — {recruitmentName}",
+      "title": "Etap rejestracji zakończony",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Etap rejestracji dla {recruitmentName} został zamknięty. Twoja rejestracja została potwierdzona i przekazana do weryfikacji.",
+      "reviewNote": "Etap weryfikacji administracyjnej powinien zakończyć się do {date}. Otrzymasz wiadomość e-mail, gdy Twoje przypisanie do miejsca zostanie sfinalizowane.",
+      "toBeAnnounced": "do ogłoszenia",
+      "thanks": "Dziękujemy za udział w procesie rekrutacji."
+    },
+    "assignmentApproved": {
+      "subject": "Przypisanie miejsca — {recruitmentName}",
+      "title": "Twoje przypisanie miejsca",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Z przyjemnością informujemy, że zostałeś/-aś przypisany/-a do następującego miejsca w ramach {recruitmentName}:",
+      "congratulations": "Gratulacje! Dalsze szczegóły dotyczące wyjazdu zostaną przekazane oddzielnie."
+    },
+    "assignmentUnassigned": {
+      "subject": "Wynik przypisania — {recruitmentName}",
+      "title": "Wynik przypisania",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Niestety nie udało się przypisać Cię do żadnego z wybranych miejsc w ramach {recruitmentName} w tej rundzie. Może to być spowodowane dużą konkurencją na preferowane miejsca.",
+      "supplementaryInfo": "Zaplanowano etap uzupełniający dla {recruitmentName}, który odbędzie się od {startDate} do {endDate}. W tym czasie będziesz mieć kolejną szansę aplikowania.",
+      "applyButton": "Aplikuj w etapie uzupełniającym",
+      "copyLink": "Lub skopiuj link:",
+      "noSupplementary": "Powiadomimy Cię, jeśli etap uzupełniający będzie dostępny."
+    },
+    "supplementaryStage": {
+      "subject": "Etap uzupełniający otwarty — {recruitmentName}",
+      "title": "Etap uzupełniający jest otwarty",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Dla {recruitmentName} otwarto etap uzupełniający.",
+      "currentAssignment": "Twoje obecne przypisanie: {destination}",
+      "guaranteed": "Twoje miejsce jest zagwarantowane — nie musisz podejmować żadnych działań.",
+      "changeNote": "Jeśli chcesz zmienić swoje preferencje, możesz ponownie aplikować używając poniższego linku.",
+      "warning": "Uwaga: Ponowna aplikacja natychmiast anuluje Twoje obecne przypisanie do {destination}. Nie ma gwarancji przypisania do nowych preferencji.",
+      "noAssignment": "Nie zostałeś/-aś przypisany/-a do żadnego miejsca w poprzedniej rundzie. Możesz skorzystać z tego etapu uzupełniającego, aby aplikować ponownie.",
+      "openButton": "Otwórz moją rejestrację",
+      "copyLink": "Lub skopiuj link:",
+      "closesNote": "Ten etap zamyka się {date}. Po tym czasie przypisania zostaną sfinalizowane."
+    },
+    "levelLabels": {
+      "bachelor_1": "Licencjat (1. rok)",
+      "bachelor_2": "Licencjat (2. rok)",
+      "bachelor_3": "Licencjat (3. rok)",
+      "master_1": "Magister (1. rok)",
+      "master_2": "Magister (2. rok)",
+      "master_3": "Magister (3. rok)"
+    }
   }
 }

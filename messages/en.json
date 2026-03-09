@@ -405,5 +405,75 @@
     "preferencesUpdated": "Your preferences have been updated",
     "expired": "This link has expired",
     "stageNotActive": "The supplementary stage is not currently active"
+  },
+  "email": {
+    "otp": {
+      "subject": "Your login code",
+      "title": "Your one-time login code",
+      "body": "Use the code below to log in. It expires in 10 minutes.",
+      "ignore": "If you didn't request this code, you can safely ignore this email."
+    },
+    "registrationCompleted": {
+      "subject": "Registration complete — {recruitmentName}",
+      "title": "Registration Complete",
+      "greeting": "Dear {fullName},",
+      "body": "Your registration for {recruitmentName} has been completed successfully.",
+      "summaryTitle": "Your Registration Summary",
+      "enrollmentId": "Enrollment ID",
+      "studyLevel": "Study Level",
+      "spokenLanguages": "Spoken Languages",
+      "destinationPreferences": "Destination Preferences",
+      "updateButton": "Update My Registration",
+      "copyLink": "Or copy this link:",
+      "updateNote": "You can update your information until the initial registration stage closes."
+    },
+    "initialStageClosed": {
+      "subject": "Registration period closed — {recruitmentName}",
+      "title": "Registration Period Closed",
+      "greeting": "Dear {fullName},",
+      "body": "The initial registration period for {recruitmentName} has closed. Your registration is confirmed and has been forwarded for review.",
+      "reviewNote": "The administrative review stage is expected to conclude by {date}. You will receive an email when your destination assignment is finalized.",
+      "toBeAnnounced": "to be announced",
+      "thanks": "Thank you for participating in the recruitment process."
+    },
+    "assignmentApproved": {
+      "subject": "Destination assignment — {recruitmentName}",
+      "title": "Your Destination Assignment",
+      "greeting": "Dear {fullName},",
+      "body": "We are pleased to inform you that you have been assigned to the following destination for {recruitmentName}:",
+      "congratulations": "Congratulations! Further details about your trip will be communicated separately."
+    },
+    "assignmentUnassigned": {
+      "subject": "Assignment result — {recruitmentName}",
+      "title": "Assignment Result",
+      "greeting": "Dear {fullName},",
+      "body": "Unfortunately, we were unable to assign you to any of your selected destinations for {recruitmentName} in this round. This may be due to high competition for your preferred destinations.",
+      "supplementaryInfo": "A supplementary stage has been scheduled for {recruitmentName}, running from {startDate} to {endDate}. You will have another opportunity to apply and be assigned to a destination during this period.",
+      "applyButton": "Apply in Supplementary Stage",
+      "copyLink": "Or copy this link:",
+      "noSupplementary": "We will notify you if a supplementary stage becomes available."
+    },
+    "supplementaryStage": {
+      "subject": "Supplementary stage open — {recruitmentName}",
+      "title": "Supplementary Stage Now Open",
+      "greeting": "Dear {fullName},",
+      "body": "A supplementary registration stage has opened for {recruitmentName}.",
+      "currentAssignment": "Your current assignment: {destination}",
+      "guaranteed": "Your place is guaranteed — you do not need to take any action.",
+      "changeNote": "If you would like to change your destination preferences, you can re-apply using your registration link below.",
+      "warning": "Warning: Re-applying will immediately cancel your current assignment to {destination}. There is no guarantee you will be assigned to your new preferences.",
+      "noAssignment": "You were not assigned to a destination in the previous round. You can use this supplementary stage to apply again.",
+      "openButton": "Open My Registration",
+      "copyLink": "Or copy this link:",
+      "closesNote": "This stage closes on {date}. After that, assignments will be finalized."
+    },
+    "levelLabels": {
+      "bachelor_1": "Bachelor (1st year)",
+      "bachelor_2": "Bachelor (2nd year)",
+      "bachelor_3": "Bachelor (3rd year)",
+      "master_1": "Master (1st year)",
+      "master_2": "Master (2nd year)",
+      "master_3": "Master (3rd year)"
+    }
   }
 }

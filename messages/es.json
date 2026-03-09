@@ -405,5 +405,75 @@
     "preferencesUpdated": "Tus preferencias han sido actualizadas",
     "expired": "Este enlace ha expirado",
     "stageNotActive": "La fase complementaria no está activa actualmente"
+  },
+  "email": {
+    "otp": {
+      "subject": "Tu código de acceso",
+      "title": "Tu código de acceso único",
+      "body": "Usa el código de abajo para iniciar sesión. Expira en 10 minutos.",
+      "ignore": "Si no solicitaste este código, puedes ignorar este correo electrónico."
+    },
+    "registrationCompleted": {
+      "subject": "Inscripción completada — {recruitmentName}",
+      "title": "Inscripción completada",
+      "greeting": "Estimado/a {fullName},",
+      "body": "Tu inscripción para {recruitmentName} ha sido completada con éxito.",
+      "summaryTitle": "Resumen de tu inscripción",
+      "enrollmentId": "Número de matrícula",
+      "studyLevel": "Nivel de estudios",
+      "spokenLanguages": "Idiomas hablados",
+      "destinationPreferences": "Preferencias de destino",
+      "updateButton": "Actualizar mi inscripción",
+      "copyLink": "O copia este enlace:",
+      "updateNote": "Puedes actualizar tu información hasta que cierre la fase de inscripción inicial."
+    },
+    "initialStageClosed": {
+      "subject": "Período de inscripción cerrado — {recruitmentName}",
+      "title": "Período de inscripción cerrado",
+      "greeting": "Estimado/a {fullName},",
+      "body": "El período de inscripción inicial para {recruitmentName} ha cerrado. Tu inscripción está confirmada y ha sido enviada para revisión.",
+      "reviewNote": "Se espera que la fase de revisión administrativa concluya el {date}. Recibirás un correo cuando tu asignación de destino sea finalizada.",
+      "toBeAnnounced": "por anunciar",
+      "thanks": "Gracias por participar en el proceso de selección."
+    },
+    "assignmentApproved": {
+      "subject": "Asignación de destino — {recruitmentName}",
+      "title": "Tu asignación de destino",
+      "greeting": "Estimado/a {fullName},",
+      "body": "Nos complace informarte que has sido asignado/a al siguiente destino para {recruitmentName}:",
+      "congratulations": "¡Enhorabuena! Se te comunicarán más detalles sobre tu viaje por separado."
+    },
+    "assignmentUnassigned": {
+      "subject": "Resultado de asignación — {recruitmentName}",
+      "title": "Resultado de asignación",
+      "greeting": "Estimado/a {fullName},",
+      "body": "Lamentablemente, no hemos podido asignarte a ninguno de tus destinos seleccionados para {recruitmentName} en esta ronda. Esto puede deberse a la alta competencia por tus destinos preferidos.",
+      "supplementaryInfo": "Se ha programado una fase complementaria para {recruitmentName}, que tendrá lugar del {startDate} al {endDate}. Tendrás otra oportunidad para solicitar y ser asignado/a a un destino.",
+      "applyButton": "Solicitar en la fase complementaria",
+      "copyLink": "O copia este enlace:",
+      "noSupplementary": "Te notificaremos si hay una fase complementaria disponible."
+    },
+    "supplementaryStage": {
+      "subject": "Fase complementaria abierta — {recruitmentName}",
+      "title": "Fase complementaria ahora abierta",
+      "greeting": "Estimado/a {fullName},",
+      "body": "Se ha abierto una fase de inscripción complementaria para {recruitmentName}.",
+      "currentAssignment": "Tu asignación actual: {destination}",
+      "guaranteed": "Tu plaza está garantizada — no necesitas tomar ninguna acción.",
+      "changeNote": "Si deseas cambiar tus preferencias de destino, puedes volver a solicitar usando tu enlace de inscripción a continuación.",
+      "warning": "Advertencia: Volver a solicitar cancelará inmediatamente tu asignación actual a {destination}. No hay garantía de que seas asignado/a a tus nuevas preferencias.",
+      "noAssignment": "No fuiste asignado/a a ningún destino en la ronda anterior. Puedes usar esta fase complementaria para solicitar de nuevo.",
+      "openButton": "Abrir mi inscripción",
+      "copyLink": "O copia este enlace:",
+      "closesNote": "Esta fase cierra el {date}. Después de eso, las asignaciones serán finalizadas."
+    },
+    "levelLabels": {
+      "bachelor_1": "Grado (1.er año)",
+      "bachelor_2": "Grado (2.º año)",
+      "bachelor_3": "Grado (3.er año)",
+      "master_1": "Máster (1.er año)",
+      "master_2": "Máster (2.º año)",
+      "master_3": "Máster (3.er año)"
+    }
   }
 }
