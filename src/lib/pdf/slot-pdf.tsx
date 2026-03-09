@@ -6,6 +6,7 @@ import {
   View,
   StyleSheet,
   Image,
+  Link,
 } from "@react-pdf/renderer";
 
 const styles = StyleSheet.create({
@@ -323,7 +324,7 @@ export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
             <View style={styles.divider} />
 
             <Text style={styles.label}>Management Link</Text>
-            <Text style={styles.value}>{slot.teacherLink}</Text>
+            <Link src={slot.teacherLink} style={styles.value}>{slot.teacherLink}</Link>
 
             {/* QR at the bottom for visual distinction */}
             <View style={styles.teacherQrContainer}>
