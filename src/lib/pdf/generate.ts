@@ -8,6 +8,17 @@ import { signTeacherLink, getStudentRegistrationLink, getTeacherLink } from "@/l
 import { getStageName } from "@/lib/stage-name";
 import React from "react";
 
+function formatStageDate(date: Date): string {
+  const datePart = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds();
+  const timePart = seconds !== 0
+    ? `${hours}:${minutes}:${seconds.toString().padStart(2, "0")}`
+    : `${hours}:${minutes}`;
+  return `${datePart}, ${timePart}`;
+}
+
 async function generateQrBase64(url: string): Promise<string> {
   const dataUrl = await QRCode.toDataURL(url, {
     width: 400,
@@ -66,8 +77,8 @@ export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
         recruitmentDescription: recruitment.description,
         stages: allStages.map((s) => ({
           name: getStageName(s),
-          startDate: s.startDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-          endDate: s.endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
+          startDate: formatStageDate(s.startDate),
+          endDate: formatStageDate(s.endDate),
         })),
         registrationLink,
         teacherLink,
