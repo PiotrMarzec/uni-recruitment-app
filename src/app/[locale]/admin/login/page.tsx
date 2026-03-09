@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
 
       setStep("code");
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(t("errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
 
       router.push("/admin/dashboard");
     } catch {
-      setError("An error occurred. Please try again.");
+      setError(t("errorGeneric"));
     } finally {
       setLoading(false);
     }

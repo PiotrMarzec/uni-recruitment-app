@@ -27,7 +27,10 @@
     "date": "Date",
     "name": "Name",
     "email": "Email",
-    "description": "Description"
+    "description": "Description",
+    "saving": "Saving...",
+    "remove": "Remove",
+    "add": "Add"
   },
   "languages": {
     "English": "English",
@@ -69,20 +72,30 @@
       "invalidEmail": "Please enter a valid email address",
       "notAdmin": "This email is not registered as an admin",
       "invalidCode": "Invalid or expired code",
-      "logout": "Logout"
+      "logout": "Logout",
+      "errorGeneric": "An error occurred. Please try again."
     },
     "dashboard": {
       "title": "Recruitment Dashboard",
+      "breadcrumb": "Dashboard",
       "createRecruitment": "Create Recruitment",
-      "noRecruitments": "No recruitments yet. Create one to get started."
+      "noRecruitments": "No recruitments yet. Create one to get started.",
+      "noDescription": "No description",
+      "view": "View",
+      "maxDestinations": "Max {count} destinations",
+      "eligibleLevels": "Eligible Student Levels",
+      "initialStage": "Initial Stage",
+      "adminStage": "Admin Stage"
     },
     "recruitment": {
       "title": "Recruitment Details",
+      "breadcrumb": "Recruitment",
       "tabs": {
         "overview": "Overview",
         "stages": "Stages",
         "slots": "Slots",
-        "destinations": "Destinations"
+        "destinations": "Destinations",
+        "requirements": "Requirements"
       },
       "fields": {
         "name": "Name",
@@ -98,7 +111,20 @@
         "completeStage": "Complete Stage",
         "startSupplementary": "Start Supplementary Stage",
         "viewResults": "View Results",
-        "liveDashboard": "Live Dashboard"
+        "liveDashboard": "Live Dashboard",
+        "supplementaryStage": "Supplementary Stage",
+        "adminStage": "Admin Stage",
+        "endDateHelper": "The recruitment end date will be updated to match this stage's end date.",
+        "addStages": "Add Stages",
+        "activateNow": "Activate Now",
+        "endStage": "End Stage",
+        "reviewApplications": "Review Applications",
+        "confirmEndStage": "End this stage now? The end date will be set to now and the next stage will become active.",
+        "confirmActivateNow": "Activate \"{name}\" now? Its start date will be set to now.",
+        "noSupplementaryWarningTitle": "No further supplementary stages planned",
+        "noSupplementaryWarningDesc": "Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.",
+        "addSupplementaryStage": "Add Supplementary Stage",
+        "endStageAnyway": "End Stage Anyway"
       },
       "slots": {
         "title": "Slots",
@@ -108,7 +134,9 @@
         "noSlots": "No slots yet",
         "slotNumber": "Slot #{number}",
         "registrationLink": "Registration Link",
-        "teacherLink": "Teacher Link"
+        "teacherLink": "Teacher Link",
+        "slotHeader": "Slot #",
+        "confirmRemoveSlot": "Remove this slot?"
       },
       "destinations": {
         "title": "Destinations",
@@ -117,7 +145,34 @@
         "slotsBachelor": "Bachelor Slots",
         "slotsMaster": "Master Slots",
         "slotsAny": "Open Slots",
-        "requiredLanguages": "Required Languages"
+        "requiredLanguages": "Required Languages",
+        "confirmRemoveDestination": "Remove this destination?",
+        "editDestination": "Edit Destination",
+        "bachelor": "Bachelor:",
+        "master": "Master:",
+        "open": "Open:"
+      },
+      "overview": {
+        "details": "Details",
+        "stats": "Stats",
+        "stages": "Stages",
+        "totalSlots": "Total Slots",
+        "openSlots": "Open Slots",
+        "destinations": "Destinations",
+        "maxDestinations": "Max Destinations"
+      },
+      "requirements": {
+        "title": "Eligible Student Levels",
+        "description": "Select which student levels are eligible to apply for this recruitment.",
+        "level": "Level",
+        "completedRegistrations": "Completed registrations",
+        "totalSlots": "Total destination slots",
+        "eligible": "Eligible",
+        "warningTitle": "Warning: Completed Registrations Exist",
+        "warningDesc": "The following levels you are removing already have completed registrations:",
+        "registrations": "registrations",
+        "warningConfirmation": "Those registrations will remain unchanged, but students with these levels will no longer be eligible to apply. Do you want to continue?",
+        "continueAnyway": "Continue anyway"
       }
     },
     "stage": {
@@ -127,7 +182,15 @@
       "openSlots": "Open Slots",
       "totalSlots": "Total Slots",
       "recentRegistrations": "Recent Registrations",
-      "noRegistrations": "No registrations yet"
+      "noRegistrations": "No registrations yet",
+      "stageClosed": "Stage closes:",
+      "live": "Live",
+      "reconnecting": "Reconnecting...",
+      "unknown": "Unknown",
+      "manage": "Manage",
+      "student": "Student",
+      "created": "Created",
+      "updated": "Updated"
     },
     "results": {
       "title": "Assignment Results",
@@ -137,7 +200,24 @@
       "unassigned": "Unassigned",
       "score": "Score",
       "destination": "Destination",
-      "student": "Student"
+      "student": "Student",
+      "approving": "Approving...",
+      "noResults": "No results found",
+      "assignedCount": "{assigned} assigned, {unassigned} unassigned",
+      "emailsSent": "Approved! {count} emails sent.",
+      "activateNextStageTitle": "Activate Next Stage?",
+      "activateNextStageDesc": "The next stage {name} is pending. Do you want to activate it now? Its start date will be set to the current time.",
+      "notNow": "Not Now",
+      "activating": "Activating...",
+      "activateNextStage": "Activate Next Stage",
+      "slot": "Slot",
+      "enrollmentId": "Enrollment ID",
+      "level": "Level",
+      "languages": "Languages",
+      "destinations": "Destinations",
+      "avgResult": "Avg Result",
+      "activities": "Activities",
+      "letters": "Letters"
     },
     "audit": {
       "title": "Audit Log",
@@ -154,7 +234,36 @@
         "actionType": "Action",
         "dateFrom": "From",
         "dateTo": "To"
+      },
+      "actorTypes": {
+        "all": "All Actors",
+        "admin": "Admin",
+        "student": "Student",
+        "teacher": "Teacher",
+        "system": "System"
       }
+    },
+    "applications": {
+      "title": "Review Applications",
+      "completedTab": "Completed registrations",
+      "incompleteTab": "Not completed registrations",
+      "assignStudents": "Assign Students",
+      "assigning": "Assigning...",
+      "endStage": "End Stage",
+      "ending": "Ending...",
+      "saving": "Saving...",
+      "lastRun": "Last run:",
+      "assigned": "assigned",
+      "unassigned": "unassigned",
+      "editPendingTitle": "Save or cancel pending edits first",
+      "noCompletedRegistrations": "No completed registrations yet",
+      "noIncompleteRegistrations": "No incomplete registrations",
+      "live": "Live",
+      "reconnecting": "Reconnecting...",
+      "noSupplementaryTitle": "No further supplementary stages planned",
+      "noSupplementaryDesc": "Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.",
+      "addSupplementaryStage": "Add Supplementary Stage",
+      "endStageAnyway": "End Stage Anyway"
     }
   },
   "registration": {
@@ -217,7 +326,11 @@
       "noDestinations": "No destinations match your language profile and study level. Please go back and update your languages.",
       "dragToReorder": "Drag to reorder",
       "addDestination": "Add destination",
-      "removeDestination": "Remove"
+      "removeDestination": "Remove",
+      "loadingDestinations": "Loading possible destinations...",
+      "yourPreferences": "Your preferences (drag to reorder):",
+      "availableDestinations": "Available destinations:",
+      "add": "Add"
     },
     "step7": {
       "title": "Summary",
@@ -229,7 +342,9 @@
       "level": "Study Level",
       "languages": "Spoken Languages",
       "preferences": "Destination Preferences",
-      "consent": "Consents"
+      "consent": "Consents",
+      "nameLabel": "Name:",
+      "enrollmentIdLabel": "Enrollment ID:"
     },
     "completed": {
       "title": "Registration Complete!",
@@ -249,7 +364,10 @@
       "privacyRequired": "You must agree to the privacy policy",
       "emailConsentRequired": "You must consent to email communication",
       "invalidEnrollmentId": "Enrollment ID must be a 6-digit number not starting with 0",
-      "assignmentLossConfirmRequired": "You must confirm that you understand editing will cancel your current assignment"
+      "assignmentLossConfirmRequired": "You must confirm that you understand editing will cancel your current assignment",
+      "noLanguagesSelected": "Please select at least one language",
+      "noDestinationSelected": "Please select at least one destination",
+      "confirmRequired": "Please confirm all your information is correct"
     }
   },
   "teacher": {
@@ -263,7 +381,17 @@
     "recommendationLetters": "Recommendation Letters Count (0 – 10)",
     "saveChanges": "Save Changes",
     "savedSuccessfully": "Changes saved successfully",
-    "invalidSignature": "This link is invalid or has been tampered with"
+    "invalidSignature": "This link is invalid or has been tampered with",
+    "failedToLoad": "Failed to load",
+    "failedToSave": "Failed to save",
+    "noRegistration": "No completed registration for this slot.",
+    "slotStatus": "Slot #{number} — status: {status}",
+    "slotSubtitle": "Slot #{number}",
+    "enrollmentId": "Enrollment ID",
+    "level": "Level",
+    "languages": "Languages",
+    "destinationPreferences": "Destination preferences",
+    "saveScores": "Save Scores"
   },
   "supplementary": {
     "title": "Supplementary Stage",

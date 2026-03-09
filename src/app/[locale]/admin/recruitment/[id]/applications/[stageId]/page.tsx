@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,11 @@ type Tab = "completed" | "incomplete";
 export default function ApplicationsPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations("admin.applications");
+  const tc = useTranslations("common");
+  const td = useTranslations("admin.dashboard");
+  const tr = useTranslations("admin.recruitment");
+  const tresults = useTranslations("admin.results");
   const recruitmentId = params.id as string;
   const stageId = params.stageId as string;
 
@@ -320,17 +326,17 @@ export default function ApplicationsPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 border-b">
             <tr>
-              <th className="text-left p-3 font-medium whitespace-nowrap">Slot</th>
-              <th className="text-left p-3 font-medium min-w-[120px]">Name</th>
-              <th className="text-left p-3 font-medium whitespace-nowrap">Enrollment ID</th>
-              <th className="text-left p-3 font-medium min-w-[100px]">Level</th>
-              <th className="text-left p-3 font-medium min-w-[100px]">Languages</th>
-              <th className="text-left p-3 font-medium min-w-[140px]">Destinations</th>
-              <th className="text-left p-3 font-medium whitespace-nowrap">Avg Result</th>
-              <th className="text-left p-3 font-medium min-w-[80px]">Activities</th>
-              <th className="text-left p-3 font-medium min-w-[70px]">Letters</th>
-              <th className="text-left p-3 font-medium min-w-[60px]">Score</th>
-              <th className="text-left p-3 font-medium min-w-[100px]">Assigned</th>
+              <th className="text-left p-3 font-medium whitespace-nowrap">{tresults("slot")}</th>
+              <th className="text-left p-3 font-medium min-w-[120px]">{tc("name")}</th>
+              <th className="text-left p-3 font-medium whitespace-nowrap">{tresults("enrollmentId")}</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">{tresults("level")}</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">{tresults("languages")}</th>
+              <th className="text-left p-3 font-medium min-w-[140px]">{tresults("destinations")}</th>
+              <th className="text-left p-3 font-medium whitespace-nowrap">{tresults("avgResult")}</th>
+              <th className="text-left p-3 font-medium min-w-[80px]">{tresults("activities")}</th>
+              <th className="text-left p-3 font-medium min-w-[70px]">{tresults("letters")}</th>
+              <th className="text-left p-3 font-medium min-w-[60px]">{tresults("score")}</th>
+              <th className="text-left p-3 font-medium min-w-[100px]">{tresults("approved")}</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -485,7 +491,7 @@ export default function ApplicationsPage() {
                           {app.assignedDestinationName}
                         </Badge>
                       ) : app.assignedDestinationId === null && lastAssignResult ? (
-                        <span className="text-amber-500 font-medium">Unassigned</span>
+                        <span className="text-amber-500 font-medium">{tresults("unassigned")}</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -498,7 +504,7 @@ export default function ApplicationsPage() {
                           disabled={saving}
                           className="whitespace-nowrap"
                         >
-                          {saving ? "Saving..." : "Save"}
+                          {saving ? t("saving") : tc("save")}
                         </Button>
                         <Button
                           size="sm"
@@ -506,7 +512,7 @@ export default function ApplicationsPage() {
                           onClick={() => cancelEdit(app.registrationId)}
                           disabled={saving}
                         >
-                          Cancel
+                          {tc("cancel")}
                         </Button>
                       </div>
                     </td>
@@ -600,7 +606,7 @@ export default function ApplicationsPage() {
                   </td>
                   <td className="p-3">
                     <Button size="sm" variant="outline" onClick={() => startEdit(app)}>
-                      Edit
+                      {tc("edit")}
                     </Button>
                   </td>
                 </tr>
@@ -613,37 +619,37 @@ export default function ApplicationsPage() {
   }
 
   if (loading) {
-    return <AdminLayout><p>Loading...</p></AdminLayout>;
+    return <AdminLayout><p>{tc("loading")}</p></AdminLayout>;
   }
 
   return (
     <AdminLayout
       breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
-        { label: "Recruitment", href: `/admin/recruitment/${recruitmentId}` },
-        { label: "Review Applications" },
+        { label: td("breadcrumb"), href: "/admin/dashboard" },
+        { label: tr("breadcrumb"), href: `/admin/recruitment/${recruitmentId}` },
+        { label: t("title") },
       ]}
     >
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Review Applications</h1>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{stageName}</p>
         </div>
         <div className="flex items-center gap-3">
           {lastAssignResult && (
             <p className="text-sm text-muted-foreground">
-              Last run: <span className="text-green-600 font-medium">{lastAssignResult.assigned} assigned</span>
+              {t("lastRun")} <span className="text-green-600 font-medium">{lastAssignResult.assigned} {t("assigned")}</span>
               {lastAssignResult.unassigned > 0 && (
-                <span className="text-amber-600 font-medium">, {lastAssignResult.unassigned} unassigned</span>
+                <span className="text-amber-600 font-medium">, {lastAssignResult.unassigned} {t("unassigned")}</span>
               )}
             </p>
           )}
           <Button
             onClick={assignStudents}
             disabled={assigning || completing || editingRows.size > 0}
-            title={editingRows.size > 0 ? "Save or cancel pending edits first" : undefined}
+            title={editingRows.size > 0 ? t("editPendingTitle") : undefined}
           >
-            <UserCheck className="w-4 h-4 mr-1.5" />{assigning ? "Assigning..." : "Assign Students"}
+            <UserCheck className="w-4 h-4 mr-1.5" />{assigning ? t("assigning") : t("assignStudents")}
           </Button>
           {hasAssignments && (
             <Button
@@ -651,7 +657,7 @@ export default function ApplicationsPage() {
               onClick={completeStage}
               disabled={completing || assigning || editingRows.size > 0}
             >
-              <Square className="w-4 h-4 mr-1.5" />{completing ? "Ending..." : "End Stage"}
+              <Square className="w-4 h-4 mr-1.5" />{completing ? t("ending") : t("endStage")}
             </Button>
           )}
         </div>
@@ -668,7 +674,7 @@ export default function ApplicationsPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Completed registrations
+            {t("completedTab")}
             <span className="text-xs bg-muted rounded-full px-2 py-0.5">
               {applications.length}
             </span>
@@ -681,7 +687,7 @@ export default function ApplicationsPage() {
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Not completed registrations
+            {t("incompleteTab")}
             <span className="text-xs bg-muted rounded-full px-2 py-0.5">
               {incompleteApplications.length}
             </span>
@@ -689,30 +695,30 @@ export default function ApplicationsPage() {
           <div className="ml-auto pb-3 flex items-center gap-2">
             <div className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`} />
             <span className="text-sm text-muted-foreground">
-              {connected ? "Live" : "Reconnecting..."}
+              {connected ? t("live") : t("reconnecting")}
             </span>
           </div>
         </nav>
       </div>
 
       {activeTab === "completed" &&
-        renderGrid(applications, "No completed registrations yet")}
+        renderGrid(applications, t("noCompletedRegistrations"))}
       {activeTab === "incomplete" &&
-        renderGrid(incompleteApplications, "No incomplete registrations")}
+        renderGrid(incompleteApplications, t("noIncompleteRegistrations"))}
 
       {showNoSupplementaryWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background border rounded-lg p-6 max-w-lg w-full mx-4 shadow-lg">
-            <h3 className="font-semibold text-base mb-2">No further supplementary stages planned</h3>
+            <h3 className="font-semibold text-base mb-2">{t("noSupplementaryTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.
+              {t("noSupplementaryDesc")}
             </p>
             <div className="flex gap-2 justify-between">
               <Button
                 variant="outline"
                 onClick={() => setShowNoSupplementaryWarning(false)}
               >
-                Cancel
+                {tc("cancel")}
               </Button>
               <div className="flex gap-2">
                 <Button
@@ -721,7 +727,7 @@ export default function ApplicationsPage() {
                     router.push(`/admin/recruitment/${recruitmentId}?addStage=1`);
                   }}
                 >
-                  Add Supplementary Stage
+                  {t("addSupplementaryStage")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -730,7 +736,7 @@ export default function ApplicationsPage() {
                     await doCompleteStage();
                   }}
                 >
-                  <Square className="w-4 h-4 mr-1.5" />End Stage Anyway
+                  <Square className="w-4 h-4 mr-1.5" />{t("endStageAnyway")}
                 </Button>
               </div>
             </div>

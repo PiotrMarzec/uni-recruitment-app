@@ -27,7 +27,10 @@
     "date": "Data",
     "name": "Nazwa",
     "email": "E-mail",
-    "description": "Opis"
+    "description": "Opis",
+    "saving": "Zapisywanie...",
+    "remove": "Usuń",
+    "add": "Dodaj"
   },
   "languages": {
     "English": "Angielski",
@@ -69,12 +72,20 @@
       "invalidEmail": "Podaj prawidłowy adres e-mail",
       "notAdmin": "Ten e-mail nie jest zarejestrowany jako administrator",
       "invalidCode": "Nieprawidłowy lub wygasły kod",
-      "logout": "Wyloguj"
+      "logout": "Wyloguj",
+      "errorGeneric": "Wystąpił błąd. Spróbuj ponownie."
     },
     "dashboard": {
       "title": "Panel rekrutacji",
       "createRecruitment": "Utwórz rekrutację",
-      "noRecruitments": "Brak rekrutacji. Utwórz pierwszą, aby rozpocząć."
+      "noRecruitments": "Brak rekrutacji. Utwórz pierwszą, aby rozpocząć.",
+      "breadcrumb": "Panel",
+      "noDescription": "Brak opisu",
+      "view": "Wyświetl",
+      "maxDestinations": "Maks. {count} destynacji",
+      "eligibleLevels": "Uprawnione poziomy studiów",
+      "initialStage": "Etap wstępny",
+      "adminStage": "Etap administracyjny"
     },
     "recruitment": {
       "title": "Szczegóły rekrutacji",
@@ -82,7 +93,8 @@
         "overview": "Przegląd",
         "stages": "Etapy",
         "slots": "Sloty",
-        "destinations": "Destynacje"
+        "destinations": "Destynacje",
+        "requirements": "Wymagania"
       },
       "fields": {
         "name": "Nazwa",
@@ -98,7 +110,20 @@
         "completeStage": "Zakończ etap",
         "startSupplementary": "Uruchom etap uzupełniający",
         "viewResults": "Wyniki przydziałów",
-        "liveDashboard": "Panel na żywo"
+        "liveDashboard": "Panel na żywo",
+        "supplementaryStage": "Etap uzupełniający",
+        "adminStage": "Etap administracyjny",
+        "endDateHelper": "Data zakończenia rekrutacji zostanie zaktualizowana do daty zakończenia tego etapu.",
+        "addStages": "Dodaj etapy",
+        "activateNow": "Aktywuj teraz",
+        "endStage": "Zakończ etap",
+        "reviewApplications": "Przejrzyj zgłoszenia",
+        "confirmEndStage": "Zakończyć ten etap teraz? Data zakończenia zostanie ustawiona na teraz i następny etap stanie się aktywny.",
+        "confirmActivateNow": "Aktywować „{name}\" teraz? Data rozpoczęcia zostanie ustawiona na teraz.",
+        "noSupplementaryWarningTitle": "Brak dalszych planowanych etapów uzupełniających",
+        "noSupplementaryWarningDesc": "Zakończenie tego etapu zakończy całą rekrutację. Jeśli planujesz dalsze etapy uzupełniające, dodaj je przed zakończeniem tego etapu administracyjnego.",
+        "addSupplementaryStage": "Dodaj etap uzupełniający",
+        "endStageAnyway": "Zakończ etap mimo to"
       },
       "slots": {
         "title": "Sloty",
@@ -108,7 +133,9 @@
         "noSlots": "Brak slotów",
         "slotNumber": "Slot #{number}",
         "registrationLink": "Link rejestracyjny",
-        "teacherLink": "Link nauczyciela"
+        "teacherLink": "Link nauczyciela",
+        "slotHeader": "Miejsce #",
+        "confirmRemoveSlot": "Usunąć to miejsce?"
       },
       "destinations": {
         "title": "Destynacje",
@@ -117,7 +144,35 @@
         "slotsBachelor": "Miejsca licencjat",
         "slotsMaster": "Miejsca magister",
         "slotsAny": "Miejsca ogólne",
-        "requiredLanguages": "Wymagane języki"
+        "requiredLanguages": "Wymagane języki",
+        "confirmRemoveDestination": "Usunąć to miejsce docelowe?",
+        "editDestination": "Edytuj miejsce docelowe",
+        "bachelor": "Licencjat:",
+        "master": "Magister:",
+        "open": "Otwarte:"
+      },
+      "breadcrumb": "Rekrutacja",
+      "overview": {
+        "details": "Szczegóły",
+        "stats": "Statystyki",
+        "stages": "Etapy",
+        "totalSlots": "Łączna liczba miejsc",
+        "openSlots": "Wolne miejsca",
+        "destinations": "Miejsca docelowe",
+        "maxDestinations": "Maks. cele"
+      },
+      "requirements": {
+        "title": "Uprawnione poziomy studiów",
+        "description": "Wybierz, które poziomy studiów mogą aplikować w tej rekrutacji.",
+        "level": "Poziom",
+        "completedRegistrations": "Ukończone rejestracje",
+        "totalSlots": "Łączna liczba miejsc docelowych",
+        "eligible": "Uprawniony",
+        "warningTitle": "Ostrzeżenie: Istnieją ukończone rejestracje",
+        "warningDesc": "Następujące poziomy, które usuwasz, mają już ukończone rejestracje:",
+        "registrations": "rejestracje",
+        "warningConfirmation": "Te rejestracje pozostaną niezmienione, ale studenci z tych poziomów nie będą już uprawnieni do aplikowania. Czy chcesz kontynuować?",
+        "continueAnyway": "Kontynuuj mimo to"
       }
     },
     "stage": {
@@ -127,7 +182,15 @@
       "openSlots": "Wolnych slotów",
       "totalSlots": "Łącznie slotów",
       "recentRegistrations": "Ostatnie rejestracje",
-      "noRegistrations": "Brak rejestracji"
+      "noRegistrations": "Brak rejestracji",
+      "stageClosed": "Etap kończy się:",
+      "live": "Na żywo",
+      "reconnecting": "Ponowne łączenie...",
+      "unknown": "Nieznany",
+      "manage": "Zarządzaj",
+      "student": "Student",
+      "created": "Utworzono",
+      "updated": "Zaktualizowano"
     },
     "results": {
       "title": "Wyniki przydziałów",
@@ -137,7 +200,24 @@
       "unassigned": "Nieprzydzielony",
       "score": "Wynik",
       "destination": "Destynacja",
-      "student": "Student"
+      "student": "Student",
+      "approving": "Zatwierdzanie...",
+      "noResults": "Brak wyników",
+      "assignedCount": "{assigned} przydzielonych, {unassigned} nieprzydzielonych",
+      "emailsSent": "Zatwierdzono! Wysłano {count} e-maili.",
+      "activateNextStageTitle": "Aktywować następny etap?",
+      "activateNextStageDesc": "Następny etap {name} jest oczekujący. Czy chcesz go teraz aktywować? Data rozpoczęcia zostanie ustawiona na bieżący czas.",
+      "notNow": "Nie teraz",
+      "activating": "Aktywowanie...",
+      "activateNextStage": "Aktywuj następny etap",
+      "slot": "Slot",
+      "enrollmentId": "Numer albumu",
+      "level": "Poziom",
+      "languages": "Języki",
+      "destinations": "Destynacje",
+      "avgResult": "Śr. wynik",
+      "activities": "Aktywności",
+      "letters": "Listy"
     },
     "audit": {
       "title": "Dziennik audytu",
@@ -154,7 +234,36 @@
         "actionType": "Akcja",
         "dateFrom": "Od",
         "dateTo": "Do"
+      },
+      "actorTypes": {
+        "all": "Wszyscy aktorzy",
+        "admin": "Administrator",
+        "student": "Student",
+        "teacher": "Nauczyciel",
+        "system": "System"
       }
+    },
+    "applications": {
+      "title": "Przegląd zgłoszeń",
+      "completedTab": "Ukończone rejestracje",
+      "incompleteTab": "Nieukończone rejestracje",
+      "assignStudents": "Przydziel studentów",
+      "assigning": "Przydzielanie...",
+      "endStage": "Zakończ etap",
+      "ending": "Kończenie...",
+      "saving": "Zapisywanie...",
+      "lastRun": "Ostatnie uruchomienie:",
+      "assigned": "przydzielonych",
+      "unassigned": "nieprzydzielonych",
+      "editPendingTitle": "Zapisz lub anuluj oczekujące edycje",
+      "noCompletedRegistrations": "Brak ukończonych rejestracji",
+      "noIncompleteRegistrations": "Brak nieukończonych rejestracji",
+      "live": "Na żywo",
+      "reconnecting": "Ponowne łączenie...",
+      "noSupplementaryTitle": "Brak zaplanowanych kolejnych etapów uzupełniających",
+      "noSupplementaryDesc": "Zakończenie tego etapu zakończy całą rekrutację. Jeśli planujesz kolejne etapy uzupełniające, dodaj je przed zakończeniem tego etapu administracyjnego.",
+      "addSupplementaryStage": "Dodaj etap uzupełniający",
+      "endStageAnyway": "Zakończ etap mimo to"
     }
   },
   "registration": {
@@ -217,7 +326,11 @@
       "noDestinations": "Brak dostępnych destynacji dla Twojego profilu językowego i poziomu studiów.",
       "dragToReorder": "Przeciągnij, aby zmienić kolejność",
       "addDestination": "Dodaj destynację",
-      "removeDestination": "Usuń"
+      "removeDestination": "Usuń",
+      "loadingDestinations": "Ładowanie możliwych destynacji...",
+      "yourPreferences": "Twoje preferencje (przeciągnij, aby zmienić kolejność):",
+      "availableDestinations": "Dostępne destynacje:",
+      "add": "Dodaj"
     },
     "step7": {
       "title": "Podsumowanie",
@@ -229,7 +342,9 @@
       "level": "Poziom studiów",
       "languages": "Języki",
       "preferences": "Preferencje destynacji",
-      "consent": "Zgody"
+      "consent": "Zgody",
+      "nameLabel": "Imię i nazwisko:",
+      "enrollmentIdLabel": "Numer albumu:"
     },
     "completed": {
       "title": "Rejestracja zakończona!",
@@ -244,7 +359,10 @@
       "privacyRequired": "Musisz zaakceptować politykę prywatności",
       "emailConsentRequired": "Musisz wyrazić zgodę na komunikację e-mailową",
       "invalidEnrollmentId": "Numer albumu musi być 6-cyfrową liczbą, która nie zaczyna się od 0",
-      "assignmentLossConfirmRequired": "Musisz potwierdzić, że rozumiesz, iż edycja spowoduje utratę aktualnego przydziału"
+      "assignmentLossConfirmRequired": "Musisz potwierdzić, że rozumiesz, iż edycja spowoduje utratę aktualnego przydziału",
+      "noLanguagesSelected": "Wybierz co najmniej jeden język",
+      "noDestinationSelected": "Wybierz co najmniej jedną destynację",
+      "confirmRequired": "Potwierdź, że wszystkie Twoje dane są poprawne"
     },
     "supplementaryWarning": {
       "title": "Etap uzupełniający — Twój przydział może zostać zmieniony",
@@ -263,7 +381,17 @@
     "recommendationLetters": "Liczba listów polecających (0 – 10)",
     "saveChanges": "Zapisz zmiany",
     "savedSuccessfully": "Zmiany zapisane pomyślnie",
-    "invalidSignature": "Ten link jest nieprawidłowy lub został zmodyfikowany"
+    "invalidSignature": "Ten link jest nieprawidłowy lub został zmodyfikowany",
+    "failedToLoad": "Nie udało się załadować",
+    "failedToSave": "Nie udało się zapisać",
+    "noRegistration": "Brak ukończonej rejestracji dla tego slotu.",
+    "slotStatus": "Slot #{number} — status: {status}",
+    "slotSubtitle": "Slot #{number}",
+    "enrollmentId": "Numer albumu",
+    "level": "Poziom",
+    "languages": "Języki",
+    "destinationPreferences": "Preferencje destynacji",
+    "saveScores": "Zapisz oceny"
   },
   "supplementary": {
     "title": "Etap uzupełniający",

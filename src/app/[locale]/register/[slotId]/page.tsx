@@ -264,7 +264,7 @@ export default function RegisterPage() {
   async function handleStep5(e: React.FormEvent) {
     e.preventDefault();
     if (spokenLanguages.length === 0) {
-      setStepError("Please select at least one language");
+      setStepError(t("errors.noLanguagesSelected"));
       return;
     }
     const ok = await submitStep(5, { spokenLanguages });
@@ -274,7 +274,7 @@ export default function RegisterPage() {
   async function handleStep6(e: React.FormEvent) {
     e.preventDefault();
     if (destinationPreferences.length === 0) {
-      setStepError("Please select at least one destination");
+      setStepError(t("errors.noDestinationSelected"));
       return;
     }
     const ok = await submitStep(6, { destinationPreferences });
@@ -284,7 +284,7 @@ export default function RegisterPage() {
   async function handleComplete(e: React.FormEvent) {
     e.preventDefault();
     if (!confirmSummary) {
-      setStepError("Please confirm all your information is correct");
+      setStepError(t("errors.confirmRequired"));
       return;
     }
 
@@ -398,7 +398,7 @@ export default function RegisterPage() {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{slotInfo.recruitment.name}</p>
-          <Badge variant="outline" className="mt-2">Slot #{slotInfo.slot.number}</Badge>
+          <Badge variant="outline" className="mt-2">{t("slotNumber", { number: slotInfo.slot.number })}</Badge>
         </div>
 
         {/* Supplementary stage assignment loss warning */}
@@ -635,7 +635,7 @@ export default function RegisterPage() {
 
                 {destinationsLoading ? (
                   <p className="text-muted-foreground text-sm p-3 bg-muted/30 rounded-lg">
-                    {tc("loading")} possible destinations...
+                    {t("step6.loadingDestinations")}
                   </p>
                 ) : availableDestinations.length === 0 ? (
                   <p className="text-amber-600 text-sm p-3 bg-amber-50 rounded-lg">
@@ -646,7 +646,7 @@ export default function RegisterPage() {
                     {/* Selected preferences (ordered) */}
                     {destinationPreferences.length > 0 && (
                       <div className="space-y-2 mb-4">
-                        <p className="text-xs text-muted-foreground font-medium uppercase">Your preferences (drag to reorder):</p>
+                        <p className="text-xs text-muted-foreground font-medium uppercase">{t("step6.yourPreferences")}</p>
                         {destinationPreferences.map((destId, index) => {
                           const dest = destMap[destId];
                           if (!dest) return null;
@@ -681,7 +681,7 @@ export default function RegisterPage() {
                     )}
 
                     {/* Available destinations to add */}
-                    <p className="text-xs text-muted-foreground font-medium uppercase">Available destinations:</p>
+                    <p className="text-xs text-muted-foreground font-medium uppercase">{t("step6.availableDestinations")}</p>
                     {availableDestinations
                       .filter((d) => !destinationPreferences.includes(d.id))
                       .map((dest) => (
@@ -700,7 +700,7 @@ export default function RegisterPage() {
                             disabled={destinationPreferences.length >= slotInfo.recruitment.maxDestinationChoices}
                             onClick={() => toggleDestination(dest.id)}
                           >
-                            + Add
+                            {t("step6.add")}
                           </Button>
                         </div>
                       ))}
@@ -730,8 +730,8 @@ export default function RegisterPage() {
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                     <p className="font-semibold text-xs uppercase text-muted-foreground">{t("step7.personal")}</p>
-                    <p><strong>Name:</strong> {fullName}</p>
-                    <p><strong>Enrollment ID:</strong> {enrollmentId}</p>
+                    <p><strong>{t("step7.nameLabel")}</strong> {fullName}</p>
+                    <p><strong>{t("step7.enrollmentIdLabel")}</strong> {enrollmentId}</p>
                   </div>
                   <div className="p-3 bg-muted/30 rounded-lg space-y-2">
                     <p className="font-semibold text-xs uppercase text-muted-foreground">{t("step7.level")}</p>

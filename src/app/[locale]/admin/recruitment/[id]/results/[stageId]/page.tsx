@@ -38,6 +38,9 @@ export default function AssignmentResultsPage() {
   const id = params.id as string;
   const stageId = params.stageId as string;
   const t = useTranslations("admin.results");
+  const tc = useTranslations("common");
+  const td = useTranslations("admin.dashboard");
+  const tr = useTranslations("admin.recruitment");
 
   const [stageName, setStageName] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
@@ -79,7 +82,7 @@ export default function AssignmentResultsPage() {
       const res = await fetch(`/api/admin/stages/${stageId}/approve`, { method: "POST" });
       if (res.ok) {
         const data = await res.json();
-        alert(`Approved! ${data.emailsSent} emails sent.`);
+        alert(t("emailsSent", { count: data.emailsSent }));
         setApproved(true);
         if (data.nextStage) {
           setNextStage(data.nextStage);
@@ -110,8 +113,8 @@ export default function AssignmentResultsPage() {
   return (
     <AdminLayout
       breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
-        { label: "Recruitment", href: `/admin/recruitment/${id}` },
+        { label: td("breadcrumb"), href: "/admin/dashboard" },
+        { label: tr("breadcrumb"), href: `/admin/recruitment/${id}` },
         { label: t("title") },
       ]}
     >
@@ -120,13 +123,13 @@ export default function AssignmentResultsPage() {
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{stageName}</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {assignedCount} assigned, {unassignedCount} unassigned
+            {t("assignedCount", { assigned: assignedCount, unassigned: unassignedCount })}
           </p>
         </div>
         <div className="flex items-center gap-3">
           {!approved && (
             <Button onClick={approveAll} disabled={approving}>
-              {approving ? "Approving..." : t("approve")}
+              {approving ? t("approving") : t("approve")}
             </Button>
           )}
           {approved && (
@@ -136,30 +139,30 @@ export default function AssignmentResultsPage() {
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <p>{tc("loading")}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 border-b">
               <tr>
-                <th className="text-left p-3 font-medium whitespace-nowrap">Slot</th>
-                <th className="text-left p-3 font-medium min-w-[120px]">Name</th>
-                <th className="text-left p-3 font-medium whitespace-nowrap">Enrollment ID</th>
-                <th className="text-left p-3 font-medium min-w-[100px]">Level</th>
-                <th className="text-left p-3 font-medium min-w-[100px]">Languages</th>
-                <th className="text-left p-3 font-medium min-w-[140px]">Destinations</th>
-                <th className="text-left p-3 font-medium whitespace-nowrap">Avg Result</th>
-                <th className="text-left p-3 font-medium min-w-[80px]">Activities</th>
-                <th className="text-left p-3 font-medium min-w-[70px]">Letters</th>
-                <th className="text-left p-3 font-medium min-w-[60px]">Score</th>
-                <th className="text-left p-3 font-medium min-w-[100px]">Assigned</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">{t("slot")}</th>
+                <th className="text-left p-3 font-medium min-w-[120px]">{tc("name")}</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">{t("enrollmentId")}</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">{t("level")}</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">{t("languages")}</th>
+                <th className="text-left p-3 font-medium min-w-[140px]">{t("destinations")}</th>
+                <th className="text-left p-3 font-medium whitespace-nowrap">{t("avgResult")}</th>
+                <th className="text-left p-3 font-medium min-w-[80px]">{t("activities")}</th>
+                <th className="text-left p-3 font-medium min-w-[70px]">{t("letters")}</th>
+                <th className="text-left p-3 font-medium min-w-[60px]">{t("score")}</th>
+                <th className="text-left p-3 font-medium min-w-[100px]">{t("approved")}</th>
               </tr>
             </thead>
             <tbody>
               {applications.length === 0 && (
                 <tr>
                   <td colSpan={11} className="p-8 text-center text-muted-foreground">
-                    No results found
+                    {t("noResults")}
                   </td>
                 </tr>
               )}
@@ -234,7 +237,7 @@ export default function AssignmentResultsPage() {
                         {app.assignedDestinationName}
                       </Badge>
                     ) : (
-                      <span className="text-amber-500 font-medium text-sm">Unassigned</span>
+                      <span className="text-amber-500 font-medium text-sm">{t("unassigned")}</span>
                     )}
                   </td>
                 </tr>
@@ -247,17 +250,17 @@ export default function AssignmentResultsPage() {
       <Dialog open={!!nextStage} onOpenChange={(open) => { if (!open) setNextStage(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Activate Next Stage?</DialogTitle>
+            <DialogTitle>{t("activateNextStageTitle")}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            The next stage <strong>{nextStage?.name}</strong> is pending. Do you want to activate it now? Its start date will be set to the current time.
+            {t("activateNextStageDesc", { name: nextStage?.name ?? "" })}
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setNextStage(null)}>
-              Not Now
+              {t("notNow")}
             </Button>
             <Button onClick={activateNextStage} disabled={activating}>
-              {activating ? "Activating..." : "Activate Next Stage"}
+              {activating ? t("activating") : t("activateNextStage")}
             </Button>
           </DialogFooter>
         </DialogContent>

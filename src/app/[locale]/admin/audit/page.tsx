@@ -75,10 +75,12 @@ export default function AuditLogPage() {
     window.open(`/api/admin/audit?${params.toString()}`, "_blank");
   }
 
+  const td = useTranslations("admin.dashboard");
+
   return (
     <AdminLayout
       breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
+        { label: td("breadcrumb"), href: "/admin/dashboard" },
         { label: t("title") },
       ]}
     >
@@ -102,11 +104,11 @@ export default function AuditLogPage() {
           value={filters.actorType}
           onChange={(e) => setFilters((f) => ({ ...f, actorType: e.target.value }))}
         >
-          <option value="">All Actors</option>
-          <option value="admin">Admin</option>
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-          <option value="system">System</option>
+          <option value="">{t("actorTypes.all")}</option>
+          <option value="admin">{t("actorTypes.admin")}</option>
+          <option value="student">{t("actorTypes.student")}</option>
+          <option value="teacher">{t("actorTypes.teacher")}</option>
+          <option value="system">{t("actorTypes.system")}</option>
         </select>
         <Input
           type="date"

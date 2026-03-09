@@ -27,7 +27,10 @@
     "date": "Fecha",
     "name": "Nombre",
     "email": "Correo electrónico",
-    "description": "Descripción"
+    "description": "Descripción",
+    "saving": "Guardando...",
+    "remove": "Eliminar",
+    "add": "Agregar"
   },
   "languages": {
     "English": "Inglés",
@@ -69,12 +72,20 @@
       "invalidEmail": "Por favor, introduce una dirección de correo electrónico válida",
       "notAdmin": "Este correo electrónico no está registrado como administrador",
       "invalidCode": "Código inválido o expirado",
-      "logout": "Cerrar sesión"
+      "logout": "Cerrar sesión",
+      "errorGeneric": "Ocurrió un error. Por favor, inténtelo de nuevo."
     },
     "dashboard": {
       "title": "Panel de reclutamiento",
       "createRecruitment": "Crear reclutamiento",
-      "noRecruitments": "No hay reclutamientos. Crea uno para comenzar."
+      "noRecruitments": "No hay reclutamientos. Crea uno para comenzar.",
+      "breadcrumb": "Panel",
+      "noDescription": "Sin descripción",
+      "view": "Ver",
+      "maxDestinations": "Máx. {count} destinos",
+      "eligibleLevels": "Niveles de estudiantes elegibles",
+      "initialStage": "Fase inicial",
+      "adminStage": "Fase administrativa"
     },
     "recruitment": {
       "title": "Detalles del reclutamiento",
@@ -82,7 +93,8 @@
         "overview": "Resumen",
         "stages": "Fases",
         "slots": "Plazas",
-        "destinations": "Destinos"
+        "destinations": "Destinos",
+        "requirements": "Requisitos"
       },
       "fields": {
         "name": "Nombre",
@@ -98,7 +110,20 @@
         "completeStage": "Completar fase",
         "startSupplementary": "Iniciar fase complementaria",
         "viewResults": "Ver resultados",
-        "liveDashboard": "Panel en directo"
+        "liveDashboard": "Panel en directo",
+        "supplementaryStage": "Etapa suplementaria",
+        "adminStage": "Etapa administrativa",
+        "endDateHelper": "La fecha de finalización del reclutamiento se actualizará para coincidir con la fecha de finalización de esta etapa.",
+        "addStages": "Agregar etapas",
+        "activateNow": "Activar ahora",
+        "endStage": "Finalizar etapa",
+        "reviewApplications": "Revisar solicitudes",
+        "confirmEndStage": "¿Finalizar esta etapa ahora? La fecha de finalización se establecerá en ahora y la siguiente etapa se activará.",
+        "confirmActivateNow": "¿Activar \"{name}\" ahora? Su fecha de inicio se establecerá en ahora.",
+        "noSupplementaryWarningTitle": "No hay más etapas suplementarias planificadas",
+        "noSupplementaryWarningDesc": "Finalizar esta etapa finalizará todo el reclutamiento. Si planea más etapas suplementarias, agréguelas antes de completar esta etapa administrativa.",
+        "addSupplementaryStage": "Agregar etapa suplementaria",
+        "endStageAnyway": "Finalizar etapa de todos modos"
       },
       "slots": {
         "title": "Plazas",
@@ -108,7 +133,9 @@
         "noSlots": "No hay plazas",
         "slotNumber": "Plaza #{number}",
         "registrationLink": "Enlace de registro",
-        "teacherLink": "Enlace del profesor"
+        "teacherLink": "Enlace del profesor",
+        "slotHeader": "Plaza #",
+        "confirmRemoveSlot": "¿Eliminar esta plaza?"
       },
       "destinations": {
         "title": "Destinos",
@@ -117,7 +144,35 @@
         "slotsBachelor": "Plazas grado",
         "slotsMaster": "Plazas máster",
         "slotsAny": "Plazas abiertas",
-        "requiredLanguages": "Idiomas requeridos"
+        "requiredLanguages": "Idiomas requeridos",
+        "confirmRemoveDestination": "¿Eliminar este destino?",
+        "editDestination": "Editar destino",
+        "bachelor": "Grado:",
+        "master": "Máster:",
+        "open": "Abierto:"
+      },
+      "breadcrumb": "Reclutamiento",
+      "overview": {
+        "details": "Detalles",
+        "stats": "Estadísticas",
+        "stages": "Etapas",
+        "totalSlots": "Total de plazas",
+        "openSlots": "Plazas disponibles",
+        "destinations": "Destinos",
+        "maxDestinations": "Destinos máximos"
+      },
+      "requirements": {
+        "title": "Niveles de estudiantes elegibles",
+        "description": "Seleccione qué niveles de estudiantes son elegibles para este reclutamiento.",
+        "level": "Nivel",
+        "completedRegistrations": "Inscripciones completadas",
+        "totalSlots": "Total de plazas de destino",
+        "eligible": "Elegible",
+        "warningTitle": "Advertencia: Existen inscripciones completadas",
+        "warningDesc": "Los siguientes niveles que está eliminando ya tienen inscripciones completadas:",
+        "registrations": "inscripciones",
+        "warningConfirmation": "Esas inscripciones no cambiarán, pero los estudiantes de estos niveles ya no serán elegibles. ¿Desea continuar?",
+        "continueAnyway": "Continuar de todos modos"
       }
     },
     "stage": {
@@ -127,7 +182,15 @@
       "openSlots": "Plazas abiertas",
       "totalSlots": "Total plazas",
       "recentRegistrations": "Registros recientes",
-      "noRegistrations": "Sin registros todavía"
+      "noRegistrations": "Sin registros todavía",
+      "stageClosed": "La fase termina:",
+      "live": "En vivo",
+      "reconnecting": "Reconectando...",
+      "unknown": "Desconocido",
+      "manage": "Gestionar",
+      "student": "Estudiante",
+      "created": "Creado",
+      "updated": "Actualizado"
     },
     "results": {
       "title": "Resultados de asignación",
@@ -137,7 +200,24 @@
       "unassigned": "Sin asignar",
       "score": "Puntuación",
       "destination": "Destino",
-      "student": "Estudiante"
+      "student": "Estudiante",
+      "approving": "Aprobando...",
+      "noResults": "No se encontraron resultados",
+      "assignedCount": "{assigned} asignado(s), {unassigned} sin asignar",
+      "emailsSent": "¡Aprobado! {count} correos enviados.",
+      "activateNextStageTitle": "¿Activar la siguiente fase?",
+      "activateNextStageDesc": "La siguiente fase {name} está pendiente. ¿Desea activarla ahora? Su fecha de inicio se establecerá en la hora actual.",
+      "notNow": "Ahora no",
+      "activating": "Activando...",
+      "activateNextStage": "Activar la siguiente fase",
+      "slot": "Plaza",
+      "enrollmentId": "ID de matrícula",
+      "level": "Nivel",
+      "languages": "Idiomas",
+      "destinations": "Destinos",
+      "avgResult": "Result. prom.",
+      "activities": "Actividades",
+      "letters": "Cartas"
     },
     "audit": {
       "title": "Registro de auditoría",
@@ -154,7 +234,36 @@
         "actionType": "Acción",
         "dateFrom": "Desde",
         "dateTo": "Hasta"
+      },
+      "actorTypes": {
+        "all": "Todos los actores",
+        "admin": "Administrador",
+        "student": "Estudiante",
+        "teacher": "Profesor",
+        "system": "Sistema"
       }
+    },
+    "applications": {
+      "title": "Revisar solicitudes",
+      "completedTab": "Inscripciones completadas",
+      "incompleteTab": "Inscripciones incompletas",
+      "assignStudents": "Asignar estudiantes",
+      "assigning": "Asignando...",
+      "endStage": "Finalizar fase",
+      "ending": "Finalizando...",
+      "saving": "Guardando...",
+      "lastRun": "Última ejecución:",
+      "assigned": "asignado(s)",
+      "unassigned": "sin asignar",
+      "editPendingTitle": "Guarde o cancele las ediciones pendientes",
+      "noCompletedRegistrations": "Aún no hay inscripciones completadas",
+      "noIncompleteRegistrations": "No hay inscripciones incompletas",
+      "live": "En vivo",
+      "reconnecting": "Reconectando...",
+      "noSupplementaryTitle": "No hay fases complementarias adicionales planificadas",
+      "noSupplementaryDesc": "Finalizar esta fase pondrá fin a todo el reclutamiento. Si planea fases complementarias adicionales, agréguelas antes de completar esta fase administrativa.",
+      "addSupplementaryStage": "Agregar fase complementaria",
+      "endStageAnyway": "Finalizar fase de todas formas"
     }
   },
   "registration": {
@@ -217,7 +326,11 @@
       "noDestinations": "Ningún destino coincide con tu perfil lingüístico y nivel de estudios.",
       "dragToReorder": "Arrastra para reordenar",
       "addDestination": "Añadir destino",
-      "removeDestination": "Eliminar"
+      "removeDestination": "Eliminar",
+      "loadingDestinations": "Cargando destinos posibles...",
+      "yourPreferences": "Sus preferencias (arrastrar para reordenar):",
+      "availableDestinations": "Destinos disponibles:",
+      "add": "Agregar"
     },
     "step7": {
       "title": "Resumen",
@@ -229,7 +342,9 @@
       "level": "Nivel de estudios",
       "languages": "Idiomas",
       "preferences": "Preferencias de destinos",
-      "consent": "Consentimientos"
+      "consent": "Consentimientos",
+      "nameLabel": "Nombre:",
+      "enrollmentIdLabel": "ID de matrícula:"
     },
     "completed": {
       "title": "¡Registro completado!",
@@ -244,7 +359,10 @@
       "privacyRequired": "Debes aceptar la política de privacidad",
       "emailConsentRequired": "Debes dar tu consentimiento para la comunicación por correo electrónico",
       "invalidEnrollmentId": "El número de matrícula debe ser un número de 6 dígitos que no empiece por 0",
-      "assignmentLossConfirmRequired": "Debes confirmar que entiendes que editar tu solicitud cancelará tu asignación actual"
+      "assignmentLossConfirmRequired": "Debes confirmar que entiendes que editar tu solicitud cancelará tu asignación actual",
+      "noLanguagesSelected": "Por favor, seleccione al menos un idioma",
+      "noDestinationSelected": "Por favor, seleccione al menos un destino",
+      "confirmRequired": "Por favor, confirme que toda su información es correcta"
     },
     "supplementaryWarning": {
       "title": "Fase complementaria — Tu asignación puede verse afectada",
@@ -263,7 +381,17 @@
     "recommendationLetters": "Número de cartas de recomendación (0 – 10)",
     "saveChanges": "Guardar cambios",
     "savedSuccessfully": "Cambios guardados con éxito",
-    "invalidSignature": "Este enlace no es válido o ha sido manipulado"
+    "invalidSignature": "Este enlace no es válido o ha sido manipulado",
+    "failedToLoad": "Error al cargar",
+    "failedToSave": "Error al guardar",
+    "noRegistration": "No hay inscripción completa para esta plaza.",
+    "slotStatus": "Plaza #{number} — estado: {status}",
+    "slotSubtitle": "Plaza #{number}",
+    "enrollmentId": "ID de matrícula",
+    "level": "Nivel",
+    "languages": "Idiomas",
+    "destinationPreferences": "Preferencias de destino",
+    "saveScores": "Guardar puntuaciones"
   },
   "supplementary": {
     "title": "Fase complementaria",

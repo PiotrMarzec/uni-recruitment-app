@@ -27,7 +27,10 @@
     "date": "Datum",
     "name": "Name",
     "email": "E-Mail",
-    "description": "Beschreibung"
+    "description": "Beschreibung",
+    "saving": "Speichern...",
+    "remove": "Entfernen",
+    "add": "Hinzufügen"
   },
   "languages": {
     "English": "Englisch",
@@ -69,12 +72,20 @@
       "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
       "notAdmin": "Diese E-Mail-Adresse ist nicht als Administrator registriert",
       "invalidCode": "Ungültiger oder abgelaufener Code",
-      "logout": "Abmelden"
+      "logout": "Abmelden",
+      "errorGeneric": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
     },
     "dashboard": {
       "title": "Rekrutierungs-Dashboard",
       "createRecruitment": "Rekrutierung erstellen",
-      "noRecruitments": "Keine Rekrutierungen vorhanden. Erstellen Sie eine, um zu beginnen."
+      "noRecruitments": "Keine Rekrutierungen vorhanden. Erstellen Sie eine, um zu beginnen.",
+      "breadcrumb": "Dashboard",
+      "noDescription": "Keine Beschreibung",
+      "view": "Anzeigen",
+      "maxDestinations": "Max. {count} Zielorte",
+      "eligibleLevels": "Berechtigte Studienstufen",
+      "initialStage": "Anfangsphase",
+      "adminStage": "Verwaltungsphase"
     },
     "recruitment": {
       "title": "Rekrutierungsdetails",
@@ -82,7 +93,8 @@
         "overview": "Übersicht",
         "stages": "Phasen",
         "slots": "Slots",
-        "destinations": "Zielorte"
+        "destinations": "Zielorte",
+        "requirements": "Anforderungen"
       },
       "fields": {
         "name": "Name",
@@ -98,7 +110,20 @@
         "completeStage": "Phase abschließen",
         "startSupplementary": "Ergänzungsphase starten",
         "viewResults": "Ergebnisse anzeigen",
-        "liveDashboard": "Live-Dashboard"
+        "liveDashboard": "Live-Dashboard",
+        "supplementaryStage": "Ergänzungsphase",
+        "adminStage": "Verwaltungsphase",
+        "endDateHelper": "Das Enddatum der Rekrutierung wird auf das Enddatum dieser Phase aktualisiert.",
+        "addStages": "Phasen hinzufügen",
+        "activateNow": "Jetzt aktivieren",
+        "endStage": "Phase beenden",
+        "reviewApplications": "Bewerbungen prüfen",
+        "confirmEndStage": "Diese Phase jetzt beenden? Das Enddatum wird auf jetzt gesetzt und die nächste Phase wird aktiv.",
+        "confirmActivateNow": "„{name}\" jetzt aktivieren? Das Startdatum wird auf jetzt gesetzt.",
+        "noSupplementaryWarningTitle": "Keine weiteren Ergänzungsphasen geplant",
+        "noSupplementaryWarningDesc": "Das Beenden dieser Phase beendet die gesamte Rekrutierung. Wenn Sie weitere Ergänzungsphasen planen, fügen Sie diese vor dem Abschließen dieser Verwaltungsphase hinzu.",
+        "addSupplementaryStage": "Ergänzungsphase hinzufügen",
+        "endStageAnyway": "Phase trotzdem beenden"
       },
       "slots": {
         "title": "Slots",
@@ -108,7 +133,9 @@
         "noSlots": "Keine Slots vorhanden",
         "slotNumber": "Slot #{number}",
         "registrationLink": "Registrierungslink",
-        "teacherLink": "Lehrerverwaltungslink"
+        "teacherLink": "Lehrerverwaltungslink",
+        "slotHeader": "Platz #",
+        "confirmRemoveSlot": "Diesen Platz entfernen?"
       },
       "destinations": {
         "title": "Zielorte",
@@ -117,7 +144,35 @@
         "slotsBachelor": "Bachelor-Plätze",
         "slotsMaster": "Master-Plätze",
         "slotsAny": "Offene Plätze",
-        "requiredLanguages": "Erforderliche Sprachen"
+        "requiredLanguages": "Erforderliche Sprachen",
+        "confirmRemoveDestination": "Dieses Ziel entfernen?",
+        "editDestination": "Ziel bearbeiten",
+        "bachelor": "Bachelor:",
+        "master": "Master:",
+        "open": "Offen:"
+      },
+      "breadcrumb": "Rekrutierung",
+      "overview": {
+        "details": "Details",
+        "stats": "Statistiken",
+        "stages": "Phasen",
+        "totalSlots": "Gesamtplätze",
+        "openSlots": "Freie Plätze",
+        "destinations": "Ziele",
+        "maxDestinations": "Max. Ziele"
+      },
+      "requirements": {
+        "title": "Anspruchsberechtigte Studienstufen",
+        "description": "Wählen Sie aus, welche Studienstufen berechtigt sind, sich für diese Rekrutierung zu bewerben.",
+        "level": "Stufe",
+        "completedRegistrations": "Abgeschlossene Anmeldungen",
+        "totalSlots": "Gesamte Zielplätze",
+        "eligible": "Berechtigt",
+        "warningTitle": "Warnung: Abgeschlossene Anmeldungen vorhanden",
+        "warningDesc": "Die folgenden Stufen, die Sie entfernen, haben bereits abgeschlossene Anmeldungen:",
+        "registrations": "Anmeldungen",
+        "warningConfirmation": "Diese Anmeldungen bleiben unverändert, aber Studierende dieser Stufen sind nicht mehr berechtigt, sich zu bewerben. Möchten Sie fortfahren?",
+        "continueAnyway": "Trotzdem fortfahren"
       }
     },
     "stage": {
@@ -127,7 +182,15 @@
       "openSlots": "Offene Slots",
       "totalSlots": "Gesamt Slots",
       "recentRegistrations": "Neueste Registrierungen",
-      "noRegistrations": "Noch keine Registrierungen"
+      "noRegistrations": "Noch keine Registrierungen",
+      "stageClosed": "Phase endet:",
+      "live": "Live",
+      "reconnecting": "Verbinde neu...",
+      "unknown": "Unbekannt",
+      "manage": "Verwalten",
+      "student": "Student",
+      "created": "Erstellt",
+      "updated": "Aktualisiert"
     },
     "results": {
       "title": "Zuweisungsergebnisse",
@@ -137,7 +200,24 @@
       "unassigned": "Nicht zugewiesen",
       "score": "Punkte",
       "destination": "Zielort",
-      "student": "Student"
+      "student": "Student",
+      "approving": "Wird genehmigt...",
+      "noResults": "Keine Ergebnisse gefunden",
+      "assignedCount": "{assigned} zugewiesen, {unassigned} nicht zugewiesen",
+      "emailsSent": "Genehmigt! {count} E-Mails gesendet.",
+      "activateNextStageTitle": "Nächste Phase aktivieren?",
+      "activateNextStageDesc": "Die nächste Phase {name} ist ausstehend. Möchten Sie sie jetzt aktivieren? Das Startdatum wird auf die aktuelle Zeit gesetzt.",
+      "notNow": "Nicht jetzt",
+      "activating": "Wird aktiviert...",
+      "activateNextStage": "Nächste Phase aktivieren",
+      "slot": "Slot",
+      "enrollmentId": "Matrikelnummer",
+      "level": "Stufe",
+      "languages": "Sprachen",
+      "destinations": "Zielorte",
+      "avgResult": "Ø Ergebnis",
+      "activities": "Aktivitäten",
+      "letters": "Briefe"
     },
     "audit": {
       "title": "Prüfprotokoll",
@@ -154,7 +234,36 @@
         "actionType": "Aktion",
         "dateFrom": "Von",
         "dateTo": "Bis"
+      },
+      "actorTypes": {
+        "all": "Alle Akteure",
+        "admin": "Administrator",
+        "student": "Student",
+        "teacher": "Lehrer",
+        "system": "System"
       }
+    },
+    "applications": {
+      "title": "Bewerbungen prüfen",
+      "completedTab": "Abgeschlossene Registrierungen",
+      "incompleteTab": "Nicht abgeschlossene Registrierungen",
+      "assignStudents": "Studenten zuweisen",
+      "assigning": "Wird zugewiesen...",
+      "endStage": "Phase beenden",
+      "ending": "Wird beendet...",
+      "saving": "Speichert...",
+      "lastRun": "Letzter Lauf:",
+      "assigned": "zugewiesen",
+      "unassigned": "nicht zugewiesen",
+      "editPendingTitle": "Ausstehende Bearbeitungen speichern oder abbrechen",
+      "noCompletedRegistrations": "Noch keine abgeschlossenen Registrierungen",
+      "noIncompleteRegistrations": "Keine unvollständigen Registrierungen",
+      "live": "Live",
+      "reconnecting": "Verbinde neu...",
+      "noSupplementaryTitle": "Keine weiteren Ergänzungsphasen geplant",
+      "noSupplementaryDesc": "Das Beenden dieser Phase beendet die gesamte Rekrutierung. Wenn Sie weitere Ergänzungsphasen planen, fügen Sie diese hinzu, bevor Sie diese Verwaltungsphase abschließen.",
+      "addSupplementaryStage": "Ergänzungsphase hinzufügen",
+      "endStageAnyway": "Phase trotzdem beenden"
     }
   },
   "registration": {
@@ -217,7 +326,11 @@
       "noDestinations": "Keine Zielorte entsprechen Ihrem Sprachprofil und Ihrer Studienstufe.",
       "dragToReorder": "Ziehen zum Umsortieren",
       "addDestination": "Zielort hinzufügen",
-      "removeDestination": "Entfernen"
+      "removeDestination": "Entfernen",
+      "loadingDestinations": "Mögliche Zielorte werden geladen...",
+      "yourPreferences": "Ihre Präferenzen (zum Umordnen ziehen):",
+      "availableDestinations": "Verfügbare Zielorte:",
+      "add": "Hinzufügen"
     },
     "step7": {
       "title": "Zusammenfassung",
@@ -229,7 +342,9 @@
       "level": "Studienstufe",
       "languages": "Sprachen",
       "preferences": "Zielortpräferenzen",
-      "consent": "Einwilligungen"
+      "consent": "Einwilligungen",
+      "nameLabel": "Name:",
+      "enrollmentIdLabel": "Matrikelnummer:"
     },
     "completed": {
       "title": "Registrierung abgeschlossen!",
@@ -244,7 +359,10 @@
       "privacyRequired": "Sie müssen der Datenschutzrichtlinie zustimmen",
       "emailConsentRequired": "Sie müssen der E-Mail-Kommunikation zustimmen",
       "invalidEnrollmentId": "Die Matrikelnummer muss eine 6-stellige Zahl sein, die nicht mit 0 beginnt",
-      "assignmentLossConfirmRequired": "Sie müssen bestätigen, dass Sie verstehen, dass die Bearbeitung Ihre aktuelle Zuweisung aufhebt"
+      "assignmentLossConfirmRequired": "Sie müssen bestätigen, dass Sie verstehen, dass die Bearbeitung Ihre aktuelle Zuweisung aufhebt",
+      "noLanguagesSelected": "Bitte wählen Sie mindestens eine Sprache aus",
+      "noDestinationSelected": "Bitte wählen Sie mindestens einen Zielort aus",
+      "confirmRequired": "Bitte bestätigen Sie, dass alle Ihre Angaben korrekt sind"
     },
     "supplementaryWarning": {
       "title": "Ergänzungsphase — Ihre Zuweisung kann betroffen sein",
@@ -263,7 +381,17 @@
     "recommendationLetters": "Anzahl der Empfehlungsschreiben (0 – 10)",
     "saveChanges": "Änderungen speichern",
     "savedSuccessfully": "Änderungen erfolgreich gespeichert",
-    "invalidSignature": "Dieser Link ist ungültig oder wurde manipuliert"
+    "invalidSignature": "Dieser Link ist ungültig oder wurde manipuliert",
+    "failedToLoad": "Laden fehlgeschlagen",
+    "failedToSave": "Speichern fehlgeschlagen",
+    "noRegistration": "Keine abgeschlossene Registrierung für diesen Slot.",
+    "slotStatus": "Slot #{number} — Status: {status}",
+    "slotSubtitle": "Slot #{number}",
+    "enrollmentId": "Matrikelnummer",
+    "level": "Stufe",
+    "languages": "Sprachen",
+    "destinationPreferences": "Zielortpräferenzen",
+    "saveScores": "Bewertungen speichern"
   },
   "supplementary": {
     "title": "Ergänzungsphase",

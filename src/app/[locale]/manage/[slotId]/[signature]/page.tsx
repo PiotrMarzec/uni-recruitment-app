@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,8 @@ export default function TeacherManagePage() {
   const params = useParams();
   const slotId = params.slotId as string;
   const signature = params.signature as string;
+  const t = useTranslations("teacher");
+  const tc = useTranslations("common");
 
   const [data, setData] = useState<TeacherData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +47,7 @@ export default function TeacherManagePage() {
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          setError(body.error || "Failed to load");
+          setError(body.error || t("failedToLoad"));
           return;
         }
         const d: TeacherData = await res.json();
@@ -76,7 +79,7 @@ export default function TeacherManagePage() {
       });
       const result = await res.json();
       if (!res.ok) {
-        setSaveError(result.error || "Failed to save");
+        setSaveError(result.error || t("failedToSave"));
       } else {
         setSaved(true);
       }
@@ -88,7 +91,7 @@ export default function TeacherManagePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{tc("loading")}</p>
       </div>
     );
   }
@@ -112,8 +115,8 @@ export default function TeacherManagePage() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
-            <p className="font-medium">No completed registration for this slot.</p>
-            <p className="text-muted-foreground text-sm mt-1">Slot #{data.slot.number} — status: {data.slot.status}</p>
+            <p className="font-medium">{t("noRegistration")}</p>
+            <p className="text-muted-foreground text-sm mt-1">{t("slotStatus", { number: data.slot.number, status: data.slot.status })}</p>
           </CardContent>
         </Card>
       </div>
@@ -126,39 +129,39 @@ export default function TeacherManagePage() {
     <div className="min-h-screen bg-muted/10 py-8 px-4">
       <div className="max-w-lg mx-auto space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Teacher Management</h1>
-          <p className="text-muted-foreground text-sm">Slot #{data.slot.number}</p>
+          <h1 className="text-2xl font-bold">{t("title")}</h1>
+          <p className="text-muted-foreground text-sm">{t("slotSubtitle", { number: data.slot.number })}</p>
         </div>
 
         {/* Student info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Student Information</CardTitle>
+            <CardTitle className="text-base">{t("studentInfo")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Name</span>
+              <span className="text-muted-foreground">{tc("name")}</span>
               <span className="font-medium">{data.student?.fullName || reg.fullName || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Email</span>
+              <span className="text-muted-foreground">{tc("email")}</span>
               <span>{data.student?.email || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Enrollment ID</span>
+              <span className="text-muted-foreground">{t("enrollmentId")}</span>
               <span>{reg.enrollmentId || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Level</span>
+              <span className="text-muted-foreground">{t("level")}</span>
               <span className="capitalize">{reg.level || "—"}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Languages</span>
+              <span className="text-muted-foreground">{t("languages")}</span>
               <span>{reg.spokenLanguages?.join(", ") || "—"}</span>
             </div>
             {reg.destinationPreferences?.length > 0 && (
               <div>
-                <p className="text-muted-foreground mb-1">Destination preferences</p>
+                <p className="text-muted-foreground mb-1">{t("destinationPreferences")}</p>
                 <ol className="list-decimal list-inside space-y-0.5 pl-1">
                   {reg.destinationPreferences.map((name) => (
                     <li key={name} className="text-xs text-muted-foreground">{name}</li>
@@ -172,12 +175,12 @@ export default function TeacherManagePage() {
         {/* Scores form */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Scores</CardTitle>
+            <CardTitle className="text-base">{t("scores")}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSave} className="space-y-4">
               <div className="space-y-1">
-                <Label>Average Result <span className="text-muted-foreground font-normal">(0–6)</span></Label>
+                <Label>{t("averageResult")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -189,7 +192,7 @@ export default function TeacherManagePage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Additional Activities <span className="text-muted-foreground font-normal">(0–4)</span></Label>
+                <Label>{t("additionalActivities")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -201,7 +204,7 @@ export default function TeacherManagePage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Recommendation Letters <span className="text-muted-foreground font-normal">(0–10)</span></Label>
+                <Label>{t("recommendationLetters")}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -214,10 +217,10 @@ export default function TeacherManagePage() {
               </div>
 
               {saveError && <p className="text-sm text-destructive">{saveError}</p>}
-              {saved && <p className="text-sm text-green-600">Scores saved successfully.</p>}
+              {saved && <p className="text-sm text-green-600">{t("savedSuccessfully")}</p>}
 
               <Button type="submit" className="w-full" disabled={saving}>
-                {saving ? "Saving..." : "Save Scores"}
+                {saving ? tc("saving") : t("saveScores")}
               </Button>
             </form>
           </CardContent>

@@ -44,6 +44,9 @@ export default function StageDashboardPage() {
   const id = params.id as string;
   const stageId = params.stageId as string;
   const t = useTranslations("admin.stage");
+  const tc = useTranslations("common");
+  const td = useTranslations("admin.dashboard");
+  const tr = useTranslations("admin.recruitment");
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [connected, setConnected] = useState(false);
@@ -172,14 +175,14 @@ export default function StageDashboardPage() {
   }
 
   if (!data) {
-    return <AdminLayout><p>Loading...</p></AdminLayout>;
+    return <AdminLayout><p>{tc("loading")}</p></AdminLayout>;
   }
 
   return (
     <AdminLayout
       breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
-        { label: "Recruitment", href: `/admin/recruitment/${id}` },
+        { label: td("breadcrumb"), href: "/admin/dashboard" },
+        { label: tr("breadcrumb"), href: `/admin/recruitment/${id}` },
         { label: t("liveDashboard") },
       ]}
     >
@@ -191,7 +194,7 @@ export default function StageDashboardPage() {
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`} />
           <span className="text-sm text-muted-foreground">
-            {connected ? "Live" : "Reconnecting..."}
+            {connected ? t("live") : t("reconnecting")}
           </span>
         </div>
       </div>
@@ -226,7 +229,7 @@ export default function StageDashboardPage() {
 
       {/* Stage closes at */}
       <div className="mb-6 p-4 bg-muted/30 rounded-lg text-sm">
-        <span className="font-medium">Stage closes:</span>{" "}
+        <span className="font-medium">{t("stageClosed")}</span>{" "}
         <span>{formatDate(data.stage.endDate)}</span>
       </div>
 
@@ -242,9 +245,9 @@ export default function StageDashboardPage() {
             <div>
               {/* Column headers */}
               <div className="grid grid-cols-[1fr_120px_120px_80px] gap-4 px-1 pb-2 border-b text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
-                <span>Student</span>
-                <span>Created</span>
-                <span>Updated</span>
+                <span>{t("student")}</span>
+                <span>{t("created")}</span>
+                <span>{t("updated")}</span>
                 <span></span>
               </div>
               {data.recentRegistrations.map((reg) => (
@@ -256,9 +259,9 @@ export default function StageDashboardPage() {
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`h-2 w-2 rounded-full flex-shrink-0 ${reg.registrationCompleted ? "bg-green-500" : "bg-yellow-400"}`} />
                     <div className="min-w-0 truncate">
-                      <span className="font-medium">{reg.studentName ?? <span className="text-muted-foreground italic">Unknown</span>}</span>
+                      <span className="font-medium">{reg.studentName ?? <span className="text-muted-foreground italic">{t("unknown")}</span>}</span>
                       <span className="text-muted-foreground text-sm ml-2">
-                        — Slot #{reg.slotNumber}
+                        — {tr("slots.slotNumber", { number: reg.slotNumber })}
                       </span>
                       {reg.assignedDestination && (
                         <span className="text-blue-600 text-sm ml-2">
@@ -291,7 +294,7 @@ export default function StageDashboardPage() {
                           rel="noopener noreferrer"
                         >
                           <ExternalLink className="h-3 w-3" />
-                          Manage
+                          {t("manage")}
                         </a>
                       </Button>
                     )}

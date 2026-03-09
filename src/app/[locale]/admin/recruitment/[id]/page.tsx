@@ -82,6 +82,7 @@ export default function RecruitmentDetailPage() {
   const id = params.id as string;
   const t = useTranslations("admin.recruitment");
   const tc = useTranslations("common");
+  const td = useTranslations("admin.dashboard");
 
   const [activeTab, setActiveTab] = useState<Tab>("stages");
   const [recruitment, setRecruitment] = useState<Recruitment | null>(null);
@@ -204,7 +205,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function deleteSlot(slotId: string) {
-    if (!confirm("Remove this slot?")) return;
+    if (!confirm(t("slots.confirmRemoveSlot"))) return;
     await fetch(`/api/admin/recruitments/${id}/slots/${slotId}`, { method: "DELETE" });
     await fetchRecruitment();
   }
@@ -229,7 +230,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function deleteDestination(destId: string) {
-    if (!confirm("Remove this destination?")) return;
+    if (!confirm(t("destinations.confirmRemoveDestination"))) return;
     await fetch(`/api/admin/recruitments/${id}/destinations/${destId}`, { method: "DELETE" });
     await fetchRecruitment();
   }
@@ -344,7 +345,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function endStage(stageId: string) {
-    if (!confirm("End this stage now? The end date will be set to now and the next stage will become active.")) return;
+    if (!confirm(t("stages.confirmEndStage"))) return;
     const res = await fetch(`/api/admin/stages/${stageId}/end`, { method: "POST" });
     if (res.ok) {
       await fetchRecruitment();
@@ -352,7 +353,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function activateStageNow(stage: Stage) {
-    if (!confirm(`Activate "${getStageName(stage)}" now? Its start date will be set to now.`)) return;
+    if (!confirm(t("stages.confirmActivateNow", { name: getStageName(stage) }))) return;
     const sortedStages = [...(recruitment?.stages ?? [])].sort((a, b) => a.order - b.order);
     const prevStage = sortedStages.findLast((s) => s.order < stage.order);
     if (prevStage && prevStage.status === "active") {
@@ -367,7 +368,7 @@ export default function RecruitmentDetailPage() {
   }
 
   if (loading || !recruitment) {
-    return <AdminLayout><p>Loading...</p></AdminLayout>;
+    return <AdminLayout><p>{tc("loading")}</p></AdminLayout>;
   }
 
   const tabs: Tab[] = ["overview", "stages", "slots", "destinations", "requirements"];
@@ -378,14 +379,14 @@ export default function RecruitmentDetailPage() {
     slots: `${t("tabs.slots")} (${recruitment.slots.filter((s) => s.status !== "open").length}/${recruitment.slots.length})`,
     destinations: `${t("tabs.destinations")} (${recruitment.destinations.length})`,
     requirements: eligibleLevelsData
-      ? `Requirements (${eligibleLevelsData.eligibleLevels.length})`
-      : "Requirements",
+      ? `${t("tabs.requirements")} (${eligibleLevelsData.eligibleLevels.length})`
+      : t("tabs.requirements"),
   };
 
   return (
     <AdminLayout
       breadcrumbs={[
-        { label: "Dashboard", href: "/admin/dashboard" },
+        { label: td("breadcrumb"), href: "/admin/dashboard" },
         { label: recruitment.name },
       ]}
     >
@@ -417,39 +418,39 @@ export default function RecruitmentDetailPage() {
       {activeTab === "overview" && (
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <CardHeader><CardTitle>Details</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("overview.details")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Start Date</span>
+                <span className="text-muted-foreground">{t("fields.startDate")}</span>
                 <span>{formatDate(recruitment.startDate)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">End Date</span>
+                <span className="text-muted-foreground">{t("fields.endDate")}</span>
                 <span>{formatDate(recruitment.endDate)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Max Destinations</span>
+                <span className="text-muted-foreground">{t("overview.maxDestinations")}</span>
                 <span>{recruitment.maxDestinationChoices}</span>
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Stats</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t("overview.stats")}</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Stages</span>
+                <span className="text-muted-foreground">{t("overview.stages")}</span>
                 <span>{recruitment.stages.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Total Slots</span>
+                <span className="text-muted-foreground">{t("overview.totalSlots")}</span>
                 <span>{recruitment.slots.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Open Slots</span>
+                <span className="text-muted-foreground">{t("overview.openSlots")}</span>
                 <span>{recruitment.slots.filter((s) => s.status === "open").length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Destinations</span>
+                <span className="text-muted-foreground">{t("overview.destinations")}</span>
                 <span>{recruitment.destinations.length}</span>
               </div>
             </CardContent>
@@ -474,10 +475,10 @@ export default function RecruitmentDetailPage() {
                 </DialogHeader>
                 <form onSubmit={addStage} className="space-y-5">
                   <div className="space-y-3">
-                    <p className="text-sm font-semibold">Supplementary Stage</p>
+                    <p className="text-sm font-semibold">{t("stages.supplementaryStage")}</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Start Date</Label>
+                        <Label>{t("fields.startDate")}</Label>
                         <Input
                           type="datetime-local"
                           value={stageForm.supplementaryStage.startDate}
@@ -486,7 +487,7 @@ export default function RecruitmentDetailPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>End Date</Label>
+                        <Label>{t("fields.endDate")}</Label>
                         <Input
                           type="datetime-local"
                           value={stageForm.supplementaryStage.endDate}
@@ -498,10 +499,10 @@ export default function RecruitmentDetailPage() {
                   </div>
 
                   <div className="border-t pt-4 space-y-3">
-                    <p className="text-sm font-semibold">Admin Stage</p>
+                    <p className="text-sm font-semibold">{t("stages.adminStage")}</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Start Date</Label>
+                        <Label>{t("fields.startDate")}</Label>
                         <Input
                           type="datetime-local"
                           value={stageForm.adminStage.startDate}
@@ -510,7 +511,7 @@ export default function RecruitmentDetailPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>End Date</Label>
+                        <Label>{t("fields.endDate")}</Label>
                         <Input
                           type="datetime-local"
                           value={stageForm.adminStage.endDate}
@@ -519,12 +520,12 @@ export default function RecruitmentDetailPage() {
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">The recruitment end date will be updated to match this stage&apos;s end date.</p>
+                    <p className="text-xs text-muted-foreground">{t("stages.endDateHelper")}</p>
                   </div>
 
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setStageDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={savingStage}>Add Stages</Button>
+                    <Button type="button" variant="outline" onClick={() => setStageDialogOpen(false)}>{tc("cancel")}</Button>
+                    <Button type="submit" disabled={savingStage}>{t("stages.addStages")}</Button>
                   </div>
                 </form>
               </DialogContent>
@@ -557,30 +558,30 @@ export default function RecruitmentDetailPage() {
                       <div className="flex gap-2">
                         {stage.id === firstPendingId && (
                           <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => activateStageNow(stage)}>
-                            <Play className="w-3.5 h-3.5 mr-1" />Activate Now
+                            <Play className="w-3.5 h-3.5 mr-1" />{t("stages.activateNow")}
                           </Button>
                         )}
                         {(stage.type === "initial" || stage.type === "supplementary") && stage.status === "active" && (
                           <Link href={`/admin/recruitment/${id}/stage/${stage.id}`}>
                             <Button size="sm" className="bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-200">
-                              <Circle className="w-2.5 h-2.5 mr-1.5 fill-green-500 text-green-500" />Live Dashboard
+                              <Circle className="w-2.5 h-2.5 mr-1.5 fill-green-500 text-green-500" />{t("stages.liveDashboard")}
                             </Button>
                           </Link>
                         )}
                         {(stage.type === "initial" || stage.type === "supplementary") && stage.status === "active" && (
                           <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => endStage(stage.id)}>
-                            <Square className="w-3.5 h-3.5 mr-1" />End Stage
+                            <Square className="w-3.5 h-3.5 mr-1" />{t("stages.endStage")}
                           </Button>
                         )}
                         {stage.type === "admin" && stage.status === "active" && (
                           <>
                             <Link href={`/admin/recruitment/${id}/applications/${stage.id}`}>
                               <Button size="sm">
-                                <ClipboardList className="w-3.5 h-3.5 mr-1" />Review Applications
+                                <ClipboardList className="w-3.5 h-3.5 mr-1" />{t("stages.reviewApplications")}
                               </Button>
                             </Link>
                             <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => completeStage(stage.id)}>
-                              <Square className="w-3.5 h-3.5 mr-1" />End Stage
+                              <Square className="w-3.5 h-3.5 mr-1" />{t("stages.endStage")}
                             </Button>
                           </>
                         )}
@@ -617,7 +618,7 @@ export default function RecruitmentDetailPage() {
                 className="w-20 h-9"
               />
               <Button size="sm" onClick={addSlots} disabled={addingSlots} className="bg-green-600 hover:bg-green-700 text-white">
-                <Plus className="w-4 h-4 mr-1" />{addingSlots ? "Adding..." : t("slots.addSlots")}
+                <Plus className="w-4 h-4 mr-1" />{addingSlots ? tc("loading") : t("slots.addSlots")}
               </Button>
             </div>
           </div>
@@ -629,9 +630,9 @@ export default function RecruitmentDetailPage() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/50">
                   <tr>
-                    <th className="text-left p-3 font-medium">Slot #</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Registration Link</th>
+                    <th className="text-left p-3 font-medium">{t("slots.slotHeader")}</th>
+                    <th className="text-left p-3 font-medium">{tc("status")}</th>
+                    <th className="text-left p-3 font-medium">{t("slots.registrationLink")}</th>
                     <th className="p-3"></th>
                   </tr>
                 </thead>
@@ -662,7 +663,7 @@ export default function RecruitmentDetailPage() {
                             onClick={() => deleteSlot(slot.id)}
                             className="text-destructive hover:text-destructive"
                           >
-                            Remove
+                            {tc("remove")}
                           </Button>
                         )}
                       </td>
@@ -690,29 +691,29 @@ export default function RecruitmentDetailPage() {
                 </DialogHeader>
                 <form onSubmit={addDestination} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>{tc("name")}</Label>
                     <Input value={destForm.name} onChange={(e) => setDestForm(f => ({ ...f, name: e.target.value }))} required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Description</Label>
+                    <Label>{tc("description")}</Label>
                     <Textarea value={destForm.description} onChange={(e) => setDestForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
-                      <Label className="text-xs">Bachelor Slots</Label>
+                      <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
                       <Input type="number" min={0} value={destForm.slotsBachelor} onChange={(e) => setDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Master Slots</Label>
+                      <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
                       <Input type="number" min={0} value={destForm.slotsMaster} onChange={(e) => setDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Open Slots</Label>
+                      <Label className="text-xs">{t("destinations.slotsAny")}</Label>
                       <Input type="number" min={0} value={destForm.slotsAny} onChange={(e) => setDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Required Languages</Label>
+                    <Label>{t("destinations.requiredLanguages")}</Label>
                     <div className="flex flex-wrap gap-2">
                       {SUPPORTED_LANGUAGES.map((lang) => (
                         <label key={lang} className="flex items-center gap-1 text-sm cursor-pointer">
@@ -734,8 +735,8 @@ export default function RecruitmentDetailPage() {
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setDestDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={savingDest}>Add</Button>
+                    <Button type="button" variant="outline" onClick={() => setDestDialogOpen(false)}>{tc("cancel")}</Button>
+                    <Button type="submit" disabled={savingDest}>{tc("add")}</Button>
                   </div>
                 </form>
               </DialogContent>
@@ -758,7 +759,7 @@ export default function RecruitmentDetailPage() {
                           onClick={() => openEditDestination(dest)}
                           className="h-auto py-1"
                         >
-                          Edit
+                          {tc("edit")}
                         </Button>
                         <Button
                           size="sm"
@@ -766,7 +767,7 @@ export default function RecruitmentDetailPage() {
                           onClick={() => deleteDestination(dest.id)}
                           className="text-destructive hover:text-destructive h-auto py-1"
                         >
-                          Remove
+                          {tc("remove")}
                         </Button>
                       </div>
                     </div>
@@ -774,9 +775,9 @@ export default function RecruitmentDetailPage() {
                   </CardHeader>
                   <CardContent className="text-sm space-y-1">
                     <div className="flex gap-4">
-                      <span>Bachelor: <strong>{dest.slotsBachelor}</strong></span>
-                      <span>Master: <strong>{dest.slotsMaster}</strong></span>
-                      <span>Open: <strong>{dest.slotsAny}</strong></span>
+                      <span>{t("destinations.bachelor")} <strong>{dest.slotsBachelor}</strong></span>
+                      <span>{t("destinations.master")} <strong>{dest.slotsMaster}</strong></span>
+                      <span>{t("destinations.open")} <strong>{dest.slotsAny}</strong></span>
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {dest.requiredLanguages.map((lang) => (
@@ -795,25 +796,25 @@ export default function RecruitmentDetailPage() {
       {activeTab === "requirements" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Eligible Student Levels</h2>
+            <h2 className="text-lg font-semibold">{t("requirements.title")}</h2>
           </div>
 
           {eligibleLevelsLoading || !eligibleLevelsData ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{tc("loading")}</p>
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Select which student levels are eligible to apply for this recruitment.
+                {t("requirements.description")}
               </p>
 
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="border-b bg-muted/50">
                     <tr>
-                      <th className="text-left p-3 font-medium">Level</th>
-                      <th className="text-right p-3 font-medium">Completed registrations</th>
-                      <th className="text-right p-3 font-medium">Total destination slots</th>
-                      <th className="text-center p-3 font-medium">Eligible</th>
+                      <th className="text-left p-3 font-medium">{t("requirements.level")}</th>
+                      <th className="text-right p-3 font-medium">{t("requirements.completedRegistrations")}</th>
+                      <th className="text-right p-3 font-medium">{t("requirements.totalSlots")}</th>
+                      <th className="text-center p-3 font-medium">{t("requirements.eligible")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -855,7 +856,7 @@ export default function RecruitmentDetailPage() {
                     setEligibleLevelsDirty(false);
                   }}
                 >
-                  Cancel
+                  {tc("cancel")}
                 </Button>
                 <Button
                   disabled={!eligibleLevelsDirty || savingEligibleLevels}
@@ -875,7 +876,7 @@ export default function RecruitmentDetailPage() {
                     await doSaveEligibleLevels();
                   }}
                 >
-                  {savingEligibleLevels ? "Saving..." : "Save"}
+                  {savingEligibleLevels ? tc("saving") : tc("save")}
                 </Button>
               </div>
             </>
@@ -887,9 +888,9 @@ export default function RecruitmentDetailPage() {
       {showNoSupplementaryWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background border rounded-lg p-6 max-w-lg w-full mx-4 shadow-lg">
-            <h3 className="font-semibold text-base mb-2">No further supplementary stages planned</h3>
+            <h3 className="font-semibold text-base mb-2">{t("stages.noSupplementaryWarningTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.
+              {t("stages.noSupplementaryWarningDesc")}
             </p>
             <div className="flex gap-2 justify-between">
               <Button
@@ -899,7 +900,7 @@ export default function RecruitmentDetailPage() {
                   setPendingCompleteStageId(null);
                 }}
               >
-                Cancel
+                {tc("cancel")}
               </Button>
               <div className="flex gap-2">
               <Button
@@ -909,7 +910,7 @@ export default function RecruitmentDetailPage() {
                   setStageDialogOpen(true);
                 }}
               >
-                Add Supplementary Stage
+                {t("stages.addSupplementaryStage")}
               </Button>
               <Button
                 variant="destructive"
@@ -921,7 +922,7 @@ export default function RecruitmentDetailPage() {
                   setPendingCompleteStageId(null);
                 }}
               >
-                <Square className="w-4 h-4 mr-1.5" />End Stage Anyway
+                <Square className="w-4 h-4 mr-1.5" />{t("stages.endStageAnyway")}
               </Button>
               </div>
             </div>
@@ -933,27 +934,26 @@ export default function RecruitmentDetailPage() {
       {showRemoveWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4 shadow-lg">
-            <h3 className="font-semibold text-base mb-2">Warning: Completed Registrations Exist</h3>
+            <h3 className="font-semibold text-base mb-2">{t("requirements.warningTitle")}</h3>
             <p className="text-sm text-muted-foreground mb-3">
-              The following levels you are removing already have completed registrations:
+              {t("requirements.warningDesc")}
             </p>
             <ul className="text-sm font-medium mb-4 space-y-1">
               {removedLevelsWithRegs.map((l) => (
                 <li key={l} className="flex justify-between">
                   <span>{STUDENT_LEVEL_LABELS[l]}</span>
                   <span className="text-muted-foreground">
-                    {eligibleLevelsData?.levelStats[l]?.completedRegistrations} registrations
+                    {eligibleLevelsData?.levelStats[l]?.completedRegistrations} {t("requirements.registrations")}
                   </span>
                 </li>
               ))}
             </ul>
             <p className="text-sm text-muted-foreground mb-4">
-              Those registrations will remain unchanged, but students with these levels will no longer be eligible to apply.
-              Do you want to continue?
+              {t("requirements.warningConfirmation")}
             </p>
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setShowRemoveWarning(false)}>
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button
                 variant="destructive"
@@ -962,7 +962,7 @@ export default function RecruitmentDetailPage() {
                   await doSaveEligibleLevels();
                 }}
               >
-                Continue anyway
+                {t("requirements.continueAnyway")}
               </Button>
             </div>
           </div>
@@ -973,33 +973,33 @@ export default function RecruitmentDetailPage() {
       <Dialog open={editDestDialogOpen} onOpenChange={setEditDestDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Destination</DialogTitle>
+            <DialogTitle>{t("destinations.editDestination")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={saveEditDestination} className="space-y-4">
             <div className="space-y-2">
-              <Label>Name</Label>
+              <Label>{tc("name")}</Label>
               <Input value={editDestForm.name} onChange={(e) => setEditDestForm(f => ({ ...f, name: e.target.value }))} required />
             </div>
             <div className="space-y-2">
-              <Label>Description</Label>
+              <Label>{tc("description")}</Label>
               <Textarea value={editDestForm.description} onChange={(e) => setEditDestForm(f => ({ ...f, description: e.target.value }))} />
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Bachelor Slots</Label>
+                <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
                 <Input type="number" min={0} value={editDestForm.slotsBachelor} onChange={(e) => setEditDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Master Slots</Label>
+                <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
                 <Input type="number" min={0} value={editDestForm.slotsMaster} onChange={(e) => setEditDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Open Slots</Label>
+                <Label className="text-xs">{t("destinations.slotsAny")}</Label>
                 <Input type="number" min={0} value={editDestForm.slotsAny} onChange={(e) => setEditDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Required Languages</Label>
+              <Label>{t("destinations.requiredLanguages")}</Label>
               <div className="flex flex-wrap gap-2">
                 {SUPPORTED_LANGUAGES.map((lang) => (
                   <label key={lang} className="flex items-center gap-1 text-sm cursor-pointer">
@@ -1021,8 +1021,8 @@ export default function RecruitmentDetailPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setEditDestDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={savingEditDest}>Save</Button>
+              <Button type="button" variant="outline" onClick={() => setEditDestDialogOpen(false)}>{tc("cancel")}</Button>
+              <Button type="submit" disabled={savingEditDest}>{tc("save")}</Button>
             </div>
           </form>
         </DialogContent>

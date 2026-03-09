@@ -35,6 +35,7 @@ interface Recruitment {
 export default function AdminDashboardPage() {
   const t = useTranslations("admin.dashboard");
   const tc = useTranslations("common");
+  const tr = useTranslations("admin.recruitment");
 
   const [recruitments, setRecruitments] = useState<Recruitment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +122,7 @@ export default function AdminDashboardPage() {
             <form onSubmit={createRecruitment} className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Name</Label>
+                  <Label>{tr("fields.name")}</Label>
                   <Input
                     value={form.name}
                     onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -129,14 +130,14 @@ export default function AdminDashboardPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>{tr("fields.description")}</Label>
                   <Textarea
                     value={form.description}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Max Destination Choices</Label>
+                  <Label>{tr("fields.maxChoices")}</Label>
                   <Input
                     type="number"
                     min={1}
@@ -148,7 +149,7 @@ export default function AdminDashboardPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Eligible Student Levels</Label>
+                  <Label>{t("eligibleLevels")}</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {STUDENT_LEVELS.map((level) => (
                       <label key={level} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -172,10 +173,10 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="space-y-3 rounded-lg border p-4">
-                <p className="text-sm font-medium">Initial Stage</p>
+                <p className="text-sm font-medium">{t("initialStage")}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Start Date</Label>
+                    <Label>{tr("fields.startDate")}</Label>
                     <Input
                       type="datetime-local"
                       value={form.initialStage.startDate}
@@ -186,7 +187,7 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>End Date</Label>
+                    <Label>{tr("fields.endDate")}</Label>
                     <Input
                       type="datetime-local"
                       value={form.initialStage.endDate}
@@ -200,10 +201,10 @@ export default function AdminDashboardPage() {
               </div>
 
               <div className="space-y-3 rounded-lg border p-4">
-                <p className="text-sm font-medium">Admin Stage</p>
+                <p className="text-sm font-medium">{t("adminStage")}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
-                    <Label>Start Date</Label>
+                    <Label>{tr("fields.startDate")}</Label>
                     <Input
                       type="datetime-local"
                       value={form.adminStage.startDate}
@@ -214,7 +215,7 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>End Date</Label>
+                    <Label>{tr("fields.endDate")}</Label>
                     <Input
                       type="datetime-local"
                       value={form.adminStage.endDate}
@@ -257,12 +258,12 @@ export default function AdminDashboardPage() {
                   <div>
                     <CardTitle className="text-lg">{rec.name}</CardTitle>
                     <CardDescription className="mt-1 line-clamp-2">
-                      {rec.description || "No description"}
+                      {rec.description || t("noDescription")}
                     </CardDescription>
                   </div>
                   <Link href={`/admin/recruitment/${rec.id}`}>
                     <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                      <Eye className="mr-1 h-4 w-4" />View
+                      <Eye className="mr-1 h-4 w-4" />{t("view")}
                     </Button>
                   </Link>
                 </div>
@@ -272,7 +273,7 @@ export default function AdminDashboardPage() {
                   <span>
                     {formatDateShort(rec.startDate)} — {formatDateShort(rec.endDate)}
                   </span>
-                  <span>Max {rec.maxDestinationChoices} destinations</span>
+                  <span>{t("maxDestinations", { count: rec.maxDestinationChoices })}</span>
                 </div>
               </CardContent>
             </Card>
