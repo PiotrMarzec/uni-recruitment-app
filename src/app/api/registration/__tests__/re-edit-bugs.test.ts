@@ -348,14 +348,16 @@ describe("Bug 3 – complete route does not fire registration_step_update with r
  *   1. select slot
  *   2. select initial stage   (getActiveInitialStage)
  *   3. select user by email   (existing user found — no insert)
- *   4. select existingReg     (registrationCompleted: true, registrationCompletedAt set)
- *   5. select enrollment ID fallback (existingReg.enrollmentId is null → fallback query)
+ *   4. update user locale     (update locale for returning users)
+ *   5. select existingReg     (registrationCompleted: true, registrationCompletedAt set)
+ *   6. select enrollment ID fallback (existingReg.enrollmentId is null → fallback query)
  */
 function queueStep2ReEdit() {
   dbQueue.push(
     [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
+    [], // update user locale
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01T10:00:00.000Z"), enrollmentId: null }],
     [], // enrollment ID fallback — no prior registrations
   );
