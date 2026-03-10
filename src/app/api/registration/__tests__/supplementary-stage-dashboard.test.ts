@@ -41,11 +41,14 @@ import {
 
 const {
   dbQueue,
+  updateSetArgs,
   mockBroadcastSlotStatusUpdate,
   mockBroadcastRegistrationStepUpdate,
   mockBroadcastRegistrationUpdate,
 } = vi.hoisted(() => ({
   dbQueue: [] as any[][],
+  /** Captures every argument object passed to db.update(...).set(args) */
+  updateSetArgs: [] as any[],
   mockBroadcastSlotStatusUpdate: vi.fn(),
   mockBroadcastRegistrationStepUpdate: vi.fn(),
   mockBroadcastRegistrationUpdate: vi.fn(),
@@ -110,7 +113,7 @@ vi.mock("@/db", () => {
       limit: () => obj,
       groupBy: () => obj,
       orderBy: () => obj,
-      set: () => obj,
+      set: (args: any) => { updateSetArgs.push(args); return obj; },
       values: () => obj,
       returning: () => obj,
       innerJoin: () => obj,
@@ -256,19 +259,21 @@ function queueStep4Supplementary() {
  * Emma's slot is "registration_started" (GET already moved it from "registered").
  *
  * DB call order (complete/route.ts):
- *  1. select slot
- *  2. select initial stage         → [] (not active)
- *  3. select supplementary stage   → [active]
- *  4. select registration
- *  5. update registration (set completed: true)
- *  6. select completed admin stage (to clear assignment)
- *  7. update stageEnrollments      (clear assignedDestinationId)
- *  8. select user
- *  9. select destinations
- * 10. update slot (registration_started → registered)
- * 11. select open count
- * 12. select started count
- * 13. select registered count
+ *  1.  select slot
+ *  2.  select initial stage                   → [] (not active)
+ *  3.  select supplementary stage             → [active]
+ *  4.  select registration
+ *  5.  update registration (set completed: true)
+ *  6.  update stageEnrollments (set cancelled: true) ← marks re-registration
+ *  7.  select completed admin stage           (for clearing previous assignment)
+ *  8.  update stageEnrollments (set assignedDestinationId: null)
+ *  9.  select user                            (Promise.all[0])
+ * 10.  select recruitment name               (Promise.all[1])
+ * 11.  select destinations                   (Promise.all[2])
+ * 12.  update slot (registration_started → registered)
+ * 13.  select open count
+ * 14.  select started count
+ * 15.  select registered count
  */
 function queueCompleteSupplementary() {
   dbQueue.push(
@@ -290,23 +295,25 @@ function queueCompleteSupplementary() {
     }],
     // 5. update registration → void
     [],
-    // 6. completed admin stage (for clearing assignment)
+    // 6. update stageEnrollments (set cancelled: true) → void
+    [],
+    // 7. completed admin stage (for clearing previous assignment)
     [{ id: ADMIN1_STAGE_ID, type: "admin", status: "completed", order: 2, recruitmentId: RECRUITMENT_ID }],
-    // 7. update stageEnrollments → void
+    // 8. update stageEnrollments (clear assignedDestinationId) → void
     [],
-    // 8. user (Promise.all[0])
+    // 9. user (Promise.all[0])
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
-    // 9. recruitment name (Promise.all[1])
+    // 10. recruitment name (Promise.all[1])
     [{ name: "Winter Erasmus 2026" }],
-    // 10. destinations → empty (Promise.all[2], names not needed for this assertion)
+    // 11. destinations → empty (Promise.all[2])
     [],
-    // 11. update slot → void
+    // 12. update slot → void
     [],
-    // 12. open count
+    // 13. open count
     [{ count: 5 }],
-    // 13. started count
+    // 14. started count
     [{ count: 0 }],
-    // 14. registered count
+    // 15. registered count
     [{ count: 5 }],
   );
 }
@@ -321,6 +328,7 @@ import { POST as completePOST } from "../[slotId]/complete/route";
 
 beforeEach(() => {
   dbQueue.length = 0;
+  updateSetArgs.length = 0;
   vi.clearAllMocks();
 });
 
@@ -414,5 +422,47 @@ describe("Bug C – complete route does not broadcast to supplementary stage das
         stageId: SUPP_STAGE_ID,
       }),
     );
+  });
+});
+
+// ── Re-registration cancellation ──────────────────────────────────────────────
+
+describe("complete route — re-registration during supplementary stage marks enrollment as cancelled", () => {
+  /**
+   * When a student re-registers during the supplementary stage they forfeit their
+   * guaranteed placement.  The fix sets cancelled: true on their stageEnrollments
+   * row for the supplementary stage so the assignment algorithm and the admin
+   * applications grid both treat them as a re-entrant (not locked).
+   */
+  it("sets cancelled: true on the supplementary stageEnrollments row", async () => {
+    queueCompleteSupplementary();
+
+    const req = makeCompleteRequest(SLOT_ID);
+    await completePOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+
+    expect(updateSetArgs).toContainEqual(
+      expect.objectContaining({ cancelled: true }),
+    );
+  });
+
+  it("still clears the previous admin-stage assignedDestinationId after marking cancelled", async () => {
+    queueCompleteSupplementary();
+
+    const req = makeCompleteRequest(SLOT_ID);
+    await completePOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+
+    expect(updateSetArgs).toContainEqual(
+      expect.objectContaining({ assignedDestinationId: null }),
+    );
+  });
+
+  it("consumes all DB calls in the expected order (queue is empty after completion)", async () => {
+    queueCompleteSupplementary();
+
+    const req = makeCompleteRequest(SLOT_ID);
+    const res = await completePOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+
+    expect(res.status).toBe(200);
+    expect(dbQueue.length).toBe(0);
   });
 });

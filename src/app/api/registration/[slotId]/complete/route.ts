@@ -109,9 +109,21 @@ export async function POST(
     })
     .where(eq(registrations.id, registration.id));
 
-  // If completing during supplementary stage, clear the student's assignment
-  // from the most recently completed admin stage so they re-enter the pool.
+  // If completing during supplementary stage, mark the student as cancelled in
+  // the supplementary stage enrollment so they re-enter the assignment pool.
+  // Also clear their previous admin-stage assignment so it's no longer shown.
   if (supplementaryStage && !initialStage) {
+    // Mark the student as having forfeited their guaranteed placement
+    await db
+      .update(stageEnrollments)
+      .set({ cancelled: true })
+      .where(
+        and(
+          eq(stageEnrollments.stageId, supplementaryStage.id),
+          eq(stageEnrollments.registrationId, registration.id)
+        )
+      );
+
     const [adminStage] = await db
       .select()
       .from(stages)
