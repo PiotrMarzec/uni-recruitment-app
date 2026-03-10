@@ -34,6 +34,7 @@ import {
   WINTER_RECRUITMENT_ID,
   WINTER_REG_IDS,
   WINTER_DEST_BERLIN_ID,
+  WINTER_SLOT_IDS,
 } from "../../../../../../../scripts/seed-data";
 
 // ── hoisted mock state ────────────────────────────────────────────────────────
@@ -120,20 +121,20 @@ const RE_REGISTRATION_DATE = new Date("2026-02-15T09:00:00.000Z");
 // ── DB queue helpers ──────────────────────────────────────────────────────────
 
 /**
- * Queues the six DB calls made by POST /api/admin/stages/[id]/approve when
+ * Queues the seven DB calls made by POST /api/admin/stages/[id]/approve when
  * the stage being approved is Admin Stage 2 and the student previously had an
  * approved assignment in Admin Stage 1 but re-registered afterward.
  *
  * DB call order in approve/route.ts:
- *   1. select stage          (fetch the stage being approved)
- *   2. update assignmentResults (mark approved = true)
- *   3. update stages         (set status = "completed", endDate = now)
- *   4. select next stage     (look for pending stage with higher order)
- *   5. select results        (assignment results + student + destination info)
- *   6. select previousAssignments (check for prior approved assignments)
- *      After the fix this query joins registrations + stages and returns
- *      registrationCompletedAt / stageEndDate so the route can detect
- *      re-registrations in application code.
+ *   1. select stage               (fetch the stage being approved)
+ *   2. update assignmentResults   (mark approved = true)
+ *   3. update stages              (set status = "completed", endDate = now)
+ *   4. select next pending stage  (look for pending stage with higher order)
+ *   5. select next supplementary  (look for supplementary stage for email content)
+ *   6. select results             (assignment results + student + destination info)
+ *   7. select previousAssignments (check for prior approved assignments)
+ *      The route joins registrations + stages and returns registrationCompletedAt
+ *      / stageEndDate so it can detect re-registrations in application code.
  */
 function queueApproveStage2WithReRegisteredStudent() {
   dbQueue.push(
@@ -152,20 +153,24 @@ function queueApproveStage2WithReRegisteredStudent() {
     [],
     // 4. No next pending stage
     [],
-    // 5. Assignment results for this stage: Emma → Berlin
+    // 5. No next supplementary stage
+    [],
+    // 6. Assignment results for this stage: Emma → Berlin
     [{
       id: "result-uuid-0000-0000-0000-000000000001",
       registrationId: REG_ID,
       destinationId: WINTER_DEST_BERLIN_ID,
       studentName: "Emma Johnson",
       studentEmail: "emma.johnson@student.edu",
+      studentLocale: "en",
       destinationName: "Berlin University",
       destinationDescription: "A great university in Berlin",
+      slotId: WINTER_SLOT_IDS[0],
     }],
-    // 6. Previous approved assignments query.
+    // 7. Previous approved assignments query.
     //    Emma had an approved result in Admin Stage 1 (destinationId set).
-    //    After the fix the route reads registrationCompletedAt and stageEndDate
-    //    from the joined rows to determine whether the student re-registered.
+    //    The route reads registrationCompletedAt and stageEndDate from the joined
+    //    rows to determine whether the student re-registered.
     //    RE_REGISTRATION_DATE (2026-02-15) > STAGE1_END_DATE (2026-02-01)
     //    → re-registered after stage 1 closed → should NOT be in previouslyAssigned.
     [{
