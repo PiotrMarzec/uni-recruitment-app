@@ -3,6 +3,9 @@ import next from "next";
 import { WebSocketServer } from "ws";
 import { setupWebSocketServer, broadcastToStage } from "./lib/websocket/server";
 import { startJobs } from "./lib/jobs";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { getDb } from "./db";
+import path from "path";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
@@ -11,7 +14,14 @@ const port = parseInt(process.env.PORT || "3000", 10);
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+async function runMigrations() {
+  console.log("[Migrations] Running pending migrations...");
+  const db = getDb();
+  await migrate(db, { migrationsFolder: path.join(__dirname, "db/migrations") });
+  console.log("[Migrations] All migrations applied.");
+}
+
+runMigrations().then(() => app.prepare()).then(() => {
   const httpServer = createServer(async (req, res) => {
     try {
       await handle(req, res);

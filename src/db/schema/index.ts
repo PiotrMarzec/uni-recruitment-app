@@ -10,3 +10,4 @@ export * from "./assignment-results";
 export * from "./otp-codes";
 export * from "./audit-log";
 export * from "./supplementary-tokens";
+export * from "./email-queue";

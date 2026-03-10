@@ -1,9 +1,13 @@
 import cron from "node-cron";
 import { cleanupOtps } from "./otp-cleanup";
 import { processStageTransitions } from "./stage-transitions";
+import { startEmailWorker } from "./email-worker";
 
 export function startJobs(): void {
   console.log("[Jobs] Starting background jobs...");
+
+  // Email queue worker: dispatches queued emails to Resend at ≤1 req/s.
+  startEmailWorker();
 
   // Stage transitions: check every minute
   cron.schedule("* * * * *", async () => {
