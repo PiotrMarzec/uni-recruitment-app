@@ -8,7 +8,7 @@ import {
   users,
   slots,
 } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, isNotNull } from "drizzle-orm";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 
 interface SlotCounts {
@@ -54,10 +54,7 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
   // 1. Get all enrollments for this stage
   const enrollments = await db
     .select({
-      enrollmentId: stageEnrollments.id,
       registrationId: stageEnrollments.registrationId,
-      cancelled: stageEnrollments.cancelled,
-      existingAssignment: stageEnrollments.assignedDestinationId,
     })
     .from(stageEnrollments)
     .where(eq(stageEnrollments.stageId, stageId));
@@ -106,8 +103,81 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
     .from(destinations)
     .where(eq(destinations.recruitmentId, stage.recruitmentId));
 
-  // 5. Get locked assignments (from non-cancelled stage enrollments with existing assignments)
-  // For supplementary rounds: students who are NOT cancelled and already have assignments
+  // 5. Determine locked assignments from the previous supplementary stage (if any).
+  // Students who did NOT cancel during the supplementary stage retain their approved
+  // assignment from the admin stage that preceded it — they are excluded from re-run.
+  const lockedAssignments = new Map<string, { destinationId: string; score: number }>();
+
+  if (stage.order > 1) {
+    const [prevStage] = await db
+      .select()
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, stage.recruitmentId),
+          eq(stages.order, stage.order - 1)
+        )
+      )
+      .limit(1);
+
+    if (prevStage?.type === "supplementary") {
+      // Non-cancelled supplementary enrollments = students keeping their placement
+      const suppNonCancelled = await db
+        .select({ registrationId: stageEnrollments.registrationId })
+        .from(stageEnrollments)
+        .where(
+          and(
+            eq(stageEnrollments.stageId, prevStage.id),
+            eq(stageEnrollments.cancelled, false)
+          )
+        );
+
+      const nonCancelledIds = suppNonCancelled.map((e) => e.registrationId);
+
+      if (nonCancelledIds.length > 0) {
+        // Admin stage that preceded the supplementary stage holds the approved assignments
+        const [prevAdminStage] = await db
+          .select()
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, stage.recruitmentId),
+              eq(stages.order, prevStage.order - 1)
+            )
+          )
+          .limit(1);
+
+        if (prevAdminStage) {
+          const prevApproved = await db
+            .select({
+              registrationId: assignmentResults.registrationId,
+              destinationId: assignmentResults.destinationId,
+              score: assignmentResults.score,
+            })
+            .from(assignmentResults)
+            .where(
+              and(
+                eq(assignmentResults.stageId, prevAdminStage.id),
+                eq(assignmentResults.approved, true),
+                isNotNull(assignmentResults.destinationId),
+                inArray(assignmentResults.registrationId, nonCancelledIds)
+              )
+            );
+
+          for (const r of prevApproved) {
+            if (r.destinationId) {
+              lockedAssignments.set(r.registrationId, {
+                destinationId: r.destinationId,
+                score: parseFloat(r.score ?? "0"),
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Build available slot counts, starting from full capacity
   const lockedDestinationCounts = new Map<string, SlotCounts>();
 
   for (const dest of allDestinations) {
@@ -118,17 +188,12 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
     });
   }
 
-  // Count slots already consumed by locked assignments
-  const lockedEnrollments = enrollments.filter(
-    (e) => !e.cancelled && e.existingAssignment
-  );
-
-  for (const locked of lockedEnrollments) {
-    const destId = locked.existingAssignment!;
-    const regEntry = regData.find((r) => r.id === locked.registrationId);
+  // Consume slots for locked assignments
+  for (const [regId, locked] of lockedAssignments) {
+    const regEntry = regData.find((r) => r.id === regId);
     if (!regEntry || !regEntry.level) continue;
 
-    const counts = lockedDestinationCounts.get(destId);
+    const counts = lockedDestinationCounts.get(locked.destinationId);
     if (!counts) continue;
 
     if (levelCategory(regEntry.level) === "bachelor") {
@@ -140,14 +205,11 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
     }
   }
 
-  // 6. Build list of students to assign (those without locked assignments)
+  // 6. Build list of students to assign (exclude those with locked placements)
   const studentsToAssign: StudentForAssignment[] = [];
-  const lockedRegistrationIds = new Set(
-    lockedEnrollments.map((e) => e.registrationId)
-  );
 
   for (const reg of regData) {
-    if (lockedRegistrationIds.has(reg.id)) continue;
+    if (lockedAssignments.has(reg.id)) continue;
     if (!reg.level) continue;
 
     const prefs = JSON.parse(reg.destinationPreferences || "[]") as string[];
@@ -180,7 +242,25 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
 
   // 8. Run assignment algorithm
   const availableCounts = new Map(lockedDestinationCounts);
+  // Locked assignments go directly into results and get their stageEnrollment updated
   const assignments: Array<{ registrationId: string; destinationId: string | null; score: number }> = [];
+
+  for (const [regId, locked] of lockedAssignments) {
+    assignments.push({
+      registrationId: regId,
+      destinationId: locked.destinationId,
+      score: locked.score,
+    });
+    await db
+      .update(stageEnrollments)
+      .set({ assignedDestinationId: locked.destinationId })
+      .where(
+        and(
+          eq(stageEnrollments.stageId, stageId),
+          eq(stageEnrollments.registrationId, regId)
+        )
+      );
+  }
 
   for (const student of studentsToAssign) {
     let assigned = false;
