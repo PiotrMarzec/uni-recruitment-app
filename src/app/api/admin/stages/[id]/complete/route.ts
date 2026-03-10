@@ -17,7 +17,7 @@ import {
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
-import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
+import { eq, and, gt, lt, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -105,6 +105,21 @@ export async function POST(
     .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
     .where(eq(assignmentResults.stageId, id));
 
+  // Check if this is a supplementary admin stage (admin stage that follows a supplementary stage)
+  const [precedingSupplementaryStage] = await db
+    .select({ id: stages.id })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.type, "supplementary"),
+        lt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
+  const isSupplementaryAdminStage = !!precedingSupplementaryStage;
+
   // Find the next supplementary stage (if any) to include in unassigned emails
   const [supplementaryStage] = await db
     .select({ startDate: stages.startDate, endDate: stages.endDate })
@@ -120,9 +135,10 @@ export async function POST(
     .limit(1);
 
   // Determine students previously assigned in an earlier stage (skip re-sending email)
+  // For supplementary admin stages, all students receive their final assignment result
   const registrationIds = results.map((r) => r.registrationId);
   const previouslyAssigned = new Set<string>();
-  if (registrationIds.length > 0) {
+  if (registrationIds.length > 0 && !isSupplementaryAdminStage) {
     const previousAssignments = await db
       .select({
         registrationId: assignmentResults.registrationId,
