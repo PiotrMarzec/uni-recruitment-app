@@ -8,9 +8,10 @@ import {
   destinations,
   recruitments,
   assignmentResults,
+  stageEnrollments,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { eq, and, asc, gt } from "drizzle-orm";
+import { eq, and, asc, gt, inArray } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -97,6 +98,75 @@ export async function GET(
   const assignmentMap = new Map(
     existingAssignments.map((a) => [a.registrationId, a.destinationId ?? null])
   );
+
+  // For a supplementary admin stage that hasn't run the algorithm yet, pre-populate
+  // the Approved column with the guaranteed destinations from the previous admin stage.
+  // This lets admins see locked placements before pressing "Assign Students".
+  if (existingAssignments.length === 0 && stage.order > 1) {
+    const [prevSupplementaryStage] = await db
+      .select()
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, stage.recruitmentId),
+          eq(stages.type, "supplementary"),
+          eq(stages.order, stage.order - 1)
+        )
+      )
+      .limit(1);
+
+    if (prevSupplementaryStage) {
+      const [prevAdminStage] = await db
+        .select()
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, stage.recruitmentId),
+            eq(stages.type, "admin"),
+            eq(stages.order, prevSupplementaryStage.order - 1)
+          )
+        )
+        .limit(1);
+
+      if (prevAdminStage) {
+        const allSuppEnrollments = await db
+          .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
+          .from(stageEnrollments)
+          .where(eq(stageEnrollments.stageId, prevSupplementaryStage.id));
+
+        // If no supplementary enrollments exist (enrollment creation was missed), treat
+        // all students as non-cancelled so their guaranteed destinations are visible.
+        const guaranteedIds = allSuppEnrollments.length === 0
+          ? null // null = fetch for all students
+          : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
+
+        if (guaranteedIds === null || guaranteedIds.length > 0) {
+          const prevApproved = await db
+            .select({
+              registrationId: assignmentResults.registrationId,
+              destinationId: assignmentResults.destinationId,
+            })
+            .from(assignmentResults)
+            .where(
+              guaranteedIds !== null
+                ? and(
+                    eq(assignmentResults.stageId, prevAdminStage.id),
+                    eq(assignmentResults.approved, true),
+                    inArray(assignmentResults.registrationId, guaranteedIds)
+                  )
+                : and(
+                    eq(assignmentResults.stageId, prevAdminStage.id),
+                    eq(assignmentResults.approved, true)
+                  )
+            );
+
+          for (const r of prevApproved) {
+            assignmentMap.set(r.registrationId, r.destinationId ?? null);
+          }
+        }
+      }
+    }
+  }
 
   function mapRow(row: (typeof completedRows)[number]) {
     const prefIds: string[] = JSON.parse(row.destinationPreferences || "[]");

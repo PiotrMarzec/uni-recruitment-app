@@ -161,6 +161,15 @@ export async function POST(
         )
       );
 
+    // Enroll all completed registrations in the supplementary stage so the
+    // assignment algorithm can track which students keep their guaranteed placement
+    for (const reg of completedRegistrations) {
+      await db
+        .insert(stageEnrollments)
+        .values({ stageId: nextStage.id, registrationId: reg.id })
+        .onConflictDoNothing();
+    }
+
     for (const reg of completedRegistrations) {
       let currentDestinationName: string | null = null;
       if (prevAdminStage) {

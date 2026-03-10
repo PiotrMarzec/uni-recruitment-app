@@ -122,17 +122,17 @@ export async function runAssignmentAlgorithm(stageId: string): Promise<{
 
     if (prevStage?.type === "supplementary") {
       // Non-cancelled supplementary enrollments = students keeping their placement
-      const suppNonCancelled = await db
-        .select({ registrationId: stageEnrollments.registrationId })
+      const allSuppEnrollments = await db
+        .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
         .from(stageEnrollments)
-        .where(
-          and(
-            eq(stageEnrollments.stageId, prevStage.id),
-            eq(stageEnrollments.cancelled, false)
-          )
-        );
+        .where(eq(stageEnrollments.stageId, prevStage.id));
 
-      const nonCancelledIds = suppNonCancelled.map((e) => e.registrationId);
+      // If the supplementary stage has no enrollments at all (enrollment creation was missed),
+      // treat every student in this stage as non-cancelled (guaranteed) so their previous
+      // assignment is preserved — the same outcome as if no one had cancelled.
+      const nonCancelledIds = allSuppEnrollments.length === 0
+        ? registrationIds
+        : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
 
       if (nonCancelledIds.length > 0) {
         // Admin stage that preceded the supplementary stage holds the approved assignments

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { stages, registrations, slots, users, assignmentResults, destinations } from "@/db/schema";
+import { stages, registrations, slots, users, assignmentResults, destinations, stageEnrollments } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendSupplementaryStageEmail } from "@/lib/email/send";
@@ -84,6 +84,15 @@ export async function POST(
           eq(registrations.registrationCompleted, true)
         )
       );
+
+    // Enroll all completed registrations in the supplementary stage so the
+    // assignment algorithm can track which students keep their guaranteed placement
+    for (const reg of completedRegistrations) {
+      await db
+        .insert(stageEnrollments)
+        .values({ stageId: id, registrationId: reg.id })
+        .onConflictDoNothing();
+    }
 
     for (const reg of completedRegistrations) {
       let currentDestinationName: string | null = null;
