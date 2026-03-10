@@ -454,6 +454,15 @@
       "copyLink": "Ou copiez ce lien :",
       "noSupplementary": "Nous vous informerons si une session complémentaire devient disponible."
     },
+    "supplementaryStageClosed": {
+      "subject": "Phase supplémentaire terminée — {recruitmentName}",
+      "title": "Phase supplémentaire terminée",
+      "greeting": "Cher/Chère {fullName},",
+      "body": "La phase d'inscription supplémentaire pour {recruitmentName} est terminée. Votre inscription est confirmée et a été transmise pour examen administratif.",
+      "reviewNote": "La phase d'examen administratif devrait se terminer le {date}. Vous recevrez un e-mail lorsque votre affectation sera finalisée.",
+      "toBeAnnounced": "à annoncer",
+      "thanks": "Merci de votre participation."
+    },
     "supplementaryStage": {
       "subject": "Session complémentaire ouverte — {recruitmentName}",
       "title": "Session complémentaire maintenant ouverte",

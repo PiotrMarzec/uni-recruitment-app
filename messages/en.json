@@ -454,6 +454,15 @@
       "copyLink": "Or copy this link:",
       "noSupplementary": "We will notify you if a supplementary stage becomes available."
     },
+    "supplementaryStageClosed": {
+      "subject": "Supplementary stage closed — {recruitmentName}",
+      "title": "Supplementary Stage Closed",
+      "greeting": "Dear {fullName},",
+      "body": "The supplementary registration stage for {recruitmentName} has closed. Your registration has been confirmed and forwarded for administrative review.",
+      "reviewNote": "The administrative review stage is expected to conclude by {date}. You will receive an email when your destination assignment is finalized.",
+      "toBeAnnounced": "to be announced",
+      "thanks": "Thank you for your participation."
+    },
     "supplementaryStage": {
       "subject": "Supplementary stage open — {recruitmentName}",
       "title": "Supplementary Stage Now Open",

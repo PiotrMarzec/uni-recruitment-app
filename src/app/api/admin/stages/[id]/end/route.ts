@@ -4,7 +4,7 @@ import { stages, stageEnrollments, registrations, slots, users, assignmentResult
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { eq, and, desc } from "drizzle-orm";
-import { sendInitialStageClosedEmail, sendSupplementaryStageEmail } from "@/lib/email/send";
+import { sendInitialStageClosedEmail, sendSupplementaryStageClosedEmail, sendSupplementaryStageEmail } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 
@@ -94,6 +94,30 @@ export async function POST(
 
       for (const student of enrolledStudents) {
         await sendInitialStageClosedEmail({
+          email: student.email,
+          fullName: student.fullName,
+          recruitmentName: getStageName(stage),
+          adminStageEndDate: nextStage.endDate,
+          locale: student.locale,
+        });
+      }
+    }
+
+    if (stage.type === "supplementary") {
+      const enrolledStudents = await db
+        .select({ email: users.email, fullName: users.fullName, locale: users.locale })
+        .from(registrations)
+        .innerJoin(users, eq(registrations.studentId, users.id))
+        .innerJoin(slots, eq(registrations.slotId, slots.id))
+        .where(
+          and(
+            eq(slots.recruitmentId, stage.recruitmentId),
+            eq(registrations.registrationCompleted, true)
+          )
+        );
+
+      for (const student of enrolledStudents) {
+        await sendSupplementaryStageClosedEmail({
           email: student.email,
           fullName: student.fullName,
           recruitmentName: getStageName(stage),

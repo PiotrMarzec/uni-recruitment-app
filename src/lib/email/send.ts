@@ -161,6 +161,57 @@ export async function sendInitialStageClosedEmail(params: {
   }
 }
 
+export async function sendSupplementaryStageClosedEmail(params: {
+  email: string;
+  fullName: string;
+  recruitmentName: string;
+  adminStageEndDate: Date | null;
+  locale?: string;
+}): Promise<EmailResult> {
+  const locale = params.locale ?? "en";
+  const t = getEmailT(locale);
+  const dateLocale = getDateLocale(locale);
+
+  const endDateStr = params.adminStageEndDate
+    ? params.adminStageEndDate.toLocaleDateString(dateLocale, {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+    : t("supplementaryStageClosed.toBeAnnounced");
+
+  try {
+    await sendEmail({
+      from: EMAIL_FROM,
+      to: params.email,
+      subject: t("supplementaryStageClosed.subject", { recruitmentName: params.recruitmentName }),
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
+          <h2>${t("supplementaryStageClosed.title")}</h2>
+          <p>${t("supplementaryStageClosed.greeting", { fullName: params.fullName })}</p>
+          <p>${t("supplementaryStageClosed.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("supplementaryStageClosed.reviewNote", { date: `<strong>${endDateStr}</strong>` })}</p>
+          <p style="color: #71717a; font-size: 14px;">${t("supplementaryStageClosed.thanks")}</p>
+        </div>
+      `,
+    });
+    logger.info("email.sent", { template: "supplementaryStageClosed", recipient: params.email, recruitmentName: params.recruitmentName });
+    await logAuditEvent({
+      actorType: "system",
+      actorLabel: "System",
+      action: ACTIONS.EMAIL_SENT,
+      resourceType: "email",
+      resourceId: crypto.randomUUID(),
+      details: { template: "supplementaryStageClosed", recipient: params.email, recruitmentName: params.recruitmentName },
+    });
+    return { success: true };
+  } catch (err) {
+    logger.error("email.send_failed", { template: "supplementaryStageClosed", recipient: params.email, error: String(err) });
+    console.error("Failed to send supplementary stage closed email:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 export async function sendAssignmentApprovedEmail(params: {
   email: string;
   fullName: string;

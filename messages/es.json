@@ -454,6 +454,15 @@
       "copyLink": "O copia este enlace:",
       "noSupplementary": "Te notificaremos si hay una fase complementaria disponible."
     },
+    "supplementaryStageClosed": {
+      "subject": "Fase suplementaria cerrada — {recruitmentName}",
+      "title": "Fase suplementaria cerrada",
+      "greeting": "Estimado/a {fullName},",
+      "body": "La fase de inscripción suplementaria para {recruitmentName} ha cerrado. Tu inscripción está confirmada y ha sido enviada para revisión administrativa.",
+      "reviewNote": "Se espera que la fase de revisión administrativa concluya el {date}. Recibirás un correo cuando tu asignación de destino sea finalizada.",
+      "toBeAnnounced": "por anunciar",
+      "thanks": "Gracias por tu participación."
+    },
     "supplementaryStage": {
       "subject": "Fase complementaria abierta — {recruitmentName}",
       "title": "Fase complementaria ahora abierta",

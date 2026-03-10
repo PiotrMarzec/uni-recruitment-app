@@ -454,6 +454,15 @@
       "copyLink": "Oder kopieren Sie diesen Link:",
       "noSupplementary": "Wir informieren Sie, wenn eine Ergänzungsrunde verfügbar ist."
     },
+    "supplementaryStageClosed": {
+      "subject": "Ergänzungsphase beendet — {recruitmentName}",
+      "title": "Ergänzungsphase beendet",
+      "greeting": "Liebe/r {fullName},",
+      "body": "Die ergänzende Registrierungsphase für {recruitmentName} ist abgeschlossen. Ihre Registrierung wurde bestätigt und zur administrativen Überprüfung weitergeleitet.",
+      "reviewNote": "Die administrative Überprüfungsphase soll bis {date} abgeschlossen sein. Sie erhalten eine E-Mail, wenn Ihre Zuweisung abgeschlossen ist.",
+      "toBeAnnounced": "wird noch bekanntgegeben",
+      "thanks": "Vielen Dank für Ihre Teilnahme."
+    },
     "supplementaryStage": {
       "subject": "Ergänzungsrunde geöffnet — {recruitmentName}",
       "title": "Ergänzungsrunde jetzt geöffnet",

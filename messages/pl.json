@@ -454,6 +454,15 @@
       "copyLink": "Lub skopiuj link:",
       "noSupplementary": "Powiadomimy Cię, jeśli etap uzupełniający będzie dostępny."
     },
+    "supplementaryStageClosed": {
+      "subject": "Etap uzupełniający zakończony — {recruitmentName}",
+      "title": "Etap uzupełniający zakończony",
+      "greeting": "Drogi/-a {fullName},",
+      "body": "Uzupełniający etap rejestracji dla {recruitmentName} został zamknięty. Twoja rejestracja została potwierdzona i przekazana do weryfikacji administracyjnej.",
+      "reviewNote": "Etap weryfikacji administracyjnej powinien zakończyć się do {date}. Otrzymasz wiadomość e-mail, gdy Twoje przypisanie do miejsca zostanie sfinalizowane.",
+      "toBeAnnounced": "do ogłoszenia",
+      "thanks": "Dziękujemy za udział."
+    },
     "supplementaryStage": {
       "subject": "Etap uzupełniający otwarty — {recruitmentName}",
       "title": "Etap uzupełniający jest otwarty",

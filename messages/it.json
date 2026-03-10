@@ -454,6 +454,15 @@
       "copyLink": "Oppure copia questo link:",
       "noSupplementary": "Ti informeremo se sarà disponibile una fase supplementare."
     },
+    "supplementaryStageClosed": {
+      "subject": "Fase supplementare chiusa — {recruitmentName}",
+      "title": "Fase supplementare chiusa",
+      "greeting": "Caro/a {fullName},",
+      "body": "La fase di registrazione supplementare per {recruitmentName} è chiusa. La tua registrazione è confermata ed è stata inoltrata per la revisione amministrativa.",
+      "reviewNote": "La fase di revisione amministrativa dovrebbe concludersi entro il {date}. Riceverai un'email quando la tua assegnazione sarà finalizzata.",
+      "toBeAnnounced": "da annunciare",
+      "thanks": "Grazie per la tua partecipazione."
+    },
     "supplementaryStage": {
       "subject": "Fase supplementare aperta — {recruitmentName}",
       "title": "Fase supplementare ora aperta",
