@@ -441,7 +441,8 @@
       "title": "Your Destination Assignment",
       "greeting": "Dear {fullName},",
       "body": "We are pleased to inform you that you have been assigned to the following destination for {recruitmentName}:",
-      "congratulations": "Congratulations! Further details about your trip will be communicated separately."
+      "congratulations": "Congratulations! Further details about your trip will be communicated separately.",
+      "supplementaryInfo": "Please note that a supplementary stage has been scheduled for {recruitmentName}, running from {startDate} to {endDate}."
     },
     "assignmentUnassigned": {
       "subject": "Assignment result — {recruitmentName}",

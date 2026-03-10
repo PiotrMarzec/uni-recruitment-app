@@ -167,10 +167,29 @@ export async function sendAssignmentApprovedEmail(params: {
   recruitmentName: string;
   destinationName: string;
   destinationDescription: string;
+  supplementaryStage?: { startDate: Date; endDate: Date };
   locale?: string;
 }): Promise<EmailResult> {
   const locale = params.locale ?? "en";
   const t = getEmailT(locale);
+  const dateLocale = getDateLocale(locale);
+
+  const supplementarySection = params.supplementaryStage
+    ? (() => {
+        const startStr = params.supplementaryStage!.startDate.toLocaleDateString(dateLocale, {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        const endStr = params.supplementaryStage!.endDate.toLocaleDateString(dateLocale, {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        return `<p style="color: #374151;">${t("assignmentApproved.supplementaryInfo", { recruitmentName: `<strong>${params.recruitmentName}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>`;
+      })()
+    : "";
+
   try {
     await sendEmail({
       from: EMAIL_FROM,
@@ -186,6 +205,7 @@ export async function sendAssignmentApprovedEmail(params: {
             <p style="margin: 0; color: #374151;">${params.destinationDescription}</p>
           </div>
           <p style="color: #71717a; font-size: 14px;">${t("assignmentApproved.congratulations")}</p>
+          ${supplementarySection}
         </div>
       `,
     });

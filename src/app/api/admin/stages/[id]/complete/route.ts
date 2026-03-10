@@ -159,6 +159,7 @@ export async function POST(
         recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
+        supplementaryStage: supplementaryStage ?? undefined,
         locale: result.studentLocale,
       });
     } else {

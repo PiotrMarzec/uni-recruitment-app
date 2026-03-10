@@ -441,7 +441,8 @@
       "title": "Twoje przypisanie miejsca",
       "greeting": "Drogi/-a {fullName},",
       "body": "Z przyjemnością informujemy, że zostałeś/-aś przypisany/-a do następującego miejsca w ramach {recruitmentName}:",
-      "congratulations": "Gratulacje! Dalsze szczegóły dotyczące wyjazdu zostaną przekazane oddzielnie."
+      "congratulations": "Gratulacje! Dalsze szczegóły dotyczące wyjazdu zostaną przekazane oddzielnie.",
+      "supplementaryInfo": "Informujemy, że zaplanowano uzupełniający etap dla {recruitmentName}, który odbędzie się od {startDate} do {endDate}."
     },
     "assignmentUnassigned": {
       "subject": "Wynik przypisania — {recruitmentName}",

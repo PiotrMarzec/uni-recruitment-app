@@ -441,7 +441,8 @@
       "title": "Ihre Zielortzuweisung",
       "greeting": "Liebe/r {fullName},",
       "body": "Wir freuen uns, Ihnen mitteilen zu können, dass Sie für {recruitmentName} dem folgenden Zielort zugewiesen wurden:",
-      "congratulations": "Herzlichen Glückwunsch! Weitere Details zu Ihrer Reise werden Ihnen separat mitgeteilt."
+      "congratulations": "Herzlichen Glückwunsch! Weitere Details zu Ihrer Reise werden Ihnen separat mitgeteilt.",
+      "supplementaryInfo": "Bitte beachten Sie, dass für {recruitmentName} eine ergänzende Phase geplant ist, die vom {startDate} bis zum {endDate} stattfindet."
     },
     "assignmentUnassigned": {
       "subject": "Ergebnis der Zuweisung — {recruitmentName}",

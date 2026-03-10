@@ -441,7 +441,8 @@
       "title": "Votre affectation de destination",
       "greeting": "Cher/Chère {fullName},",
       "body": "Nous avons le plaisir de vous informer que vous avez été affecté(e) à la destination suivante pour {recruitmentName} :",
-      "congratulations": "Félicitations ! Des informations complémentaires sur votre séjour vous seront communiquées séparément."
+      "congratulations": "Félicitations ! Des informations complémentaires sur votre séjour vous seront communiquées séparément.",
+      "supplementaryInfo": "Veuillez noter qu'une phase supplémentaire a été programmée pour {recruitmentName}, du {startDate} au {endDate}."
     },
     "assignmentUnassigned": {
       "subject": "Résultat d'affectation — {recruitmentName}",

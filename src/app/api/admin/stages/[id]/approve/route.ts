@@ -6,6 +6,7 @@ import {
   registrations,
   users,
   destinations,
+  slots,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
@@ -14,6 +15,7 @@ import {
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
@@ -62,6 +64,20 @@ export async function POST(
     .orderBy(stages.order)
     .limit(1);
 
+  // Find the next supplementary stage (if any) to include in emails
+  const [supplementaryStage] = await db
+    .select({ startDate: stages.startDate, endDate: stages.endDate })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.type, "supplementary"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
+
   // Fetch all results with student and destination info for emails
   const results = await db
     .select({
@@ -73,10 +89,12 @@ export async function POST(
       studentLocale: users.locale,
       destinationName: destinations.name,
       destinationDescription: destinations.description,
+      slotId: slots.id,
     })
     .from(assignmentResults)
     .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
     .innerJoin(users, eq(registrations.studentId, users.id))
+    .innerJoin(slots, eq(registrations.slotId, slots.id))
     .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
     .where(eq(assignmentResults.stageId, id));
 
@@ -125,6 +143,7 @@ export async function POST(
         recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
+        supplementaryStage: supplementaryStage ?? undefined,
         locale: result.studentLocale,
       });
     } else {
@@ -132,6 +151,8 @@ export async function POST(
         email: result.studentEmail,
         fullName: result.studentName,
         recruitmentName: getStageName(stage),
+        supplementaryStage: supplementaryStage ?? undefined,
+        registrationLink: result.slotId ? getStudentRegistrationLink(result.slotId) : undefined,
         locale: result.studentLocale,
       });
     }

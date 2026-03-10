@@ -441,7 +441,8 @@
       "title": "La tua assegnazione di destinazione",
       "greeting": "Caro/a {fullName},",
       "body": "Siamo lieti di informarti che sei stato/a assegnato/a alla seguente destinazione per {recruitmentName}:",
-      "congratulations": "Congratulazioni! Ulteriori dettagli sul tuo viaggio ti saranno comunicati separatamente."
+      "congratulations": "Congratulazioni! Ulteriori dettagli sul tuo viaggio ti saranno comunicati separatamente.",
+      "supplementaryInfo": "Ti informiamo che è prevista una fase supplementare per {recruitmentName}, che si svolgerà dal {startDate} al {endDate}."
     },
     "assignmentUnassigned": {
       "subject": "Risultato assegnazione — {recruitmentName}",
