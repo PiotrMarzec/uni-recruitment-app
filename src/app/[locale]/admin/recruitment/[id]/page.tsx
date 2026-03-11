@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Square, Play, Circle, ClipboardList, ChevronDown } from "lucide-react";
+import { Plus, Square, Play, Circle, ClipboardList, ChevronDown, Printer, FileText, Files } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { getStageName } from "@/lib/stage-name";
@@ -606,34 +606,36 @@ export default function RecruitmentDetailPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{t("slots.title")}</h2>
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline">
-                    {t("slots.downloadPdf")} <ChevronDown className="ml-1 w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => downloadPdf("single")}>
-                    Single page layout
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => downloadPdf("dual")}>
-                    Dual page layout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Input
-                type="number"
-                min={1}
-                max={500}
-                value={addSlotsCount}
-                onChange={(e) => setAddSlotsCount(parseInt(e.target.value) || 1)}
-                className="w-20 h-9"
-              />
-              <Button size="sm" onClick={addSlots} disabled={addingSlots} className="bg-green-600 hover:bg-green-700 text-white">
-                <Plus className="w-4 h-4 mr-1" />{addingSlots ? tc("loading") : t("slots.addSlots")}
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm" variant="outline">
+                  <Printer className="w-4 h-4 mr-1" />{t("slots.downloadPdf")} <ChevronDown className="ml-1 w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => downloadPdf("single")}>
+                  <FileText className="w-4 h-4 mr-2" />Single page layout
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => downloadPdf("dual")}>
+                  <Files className="w-4 h-4 mr-2" />Dual page layout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <div className="flex items-center gap-3 border rounded-lg p-3">
+            <span className="text-sm font-medium">{t("slots.addSlots")}</span>
+            <Input
+              type="number"
+              min={1}
+              max={500}
+              value={addSlotsCount}
+              onChange={(e) => setAddSlotsCount(parseInt(e.target.value) || 1)}
+              className="w-24 h-9"
+            />
+            <Button size="sm" onClick={addSlots} disabled={addingSlots} className="bg-green-600 hover:bg-green-700 text-white">
+              <Plus className="w-4 h-4 mr-1" />{addingSlots ? tc("loading") : t("slots.addSlots")}
+            </Button>
           </div>
 
           {recruitment.slots.length === 0 ? (
