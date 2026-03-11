@@ -126,12 +126,12 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   teacherLeft: {
-    flex: 1,
-    paddingRight: 18,
-  },
-  teacherRight: {
     width: 138,
     alignItems: "flex-start",
+  },
+  teacherRight: {
+    flex: 1,
+    paddingLeft: 18,
   },
 
   // ── Teacher: bottom-right strip (link, above confidential bar) ────────────
@@ -567,16 +567,16 @@ export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
 
             <View style={styles.teacherContentRow}>
               <View style={styles.teacherLeft}>
-                <Text style={styles.teacherSlotLabel}>Slot</Text>
-                <Text style={styles.teacherSlotNumber}>#{slot.slotNumber}</Text>
-                <Text style={styles.recruitmentName}>{slot.recruitmentName}</Text>
-              </View>
-
-              <View style={styles.teacherRight}>
                 <Image
                   src={`data:image/png;base64,${slot.teacherQrBase64}`}
                   style={styles.qrImage}
                 />
+              </View>
+
+              <View style={styles.teacherRight}>
+                <Text style={styles.teacherSlotLabel}>Slot</Text>
+                <Text style={styles.teacherSlotNumber}>#{slot.slotNumber}</Text>
+                <Text style={styles.recruitmentName}>{slot.recruitmentName}</Text>
               </View>
             </View>
 
