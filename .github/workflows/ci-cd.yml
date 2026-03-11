@@ -196,7 +196,11 @@ jobs:
             # Pull the new image
             docker compose -f docker-compose.prod.yml pull app
 
-            # Run DB migrations before starting the app (waits for DB to be healthy)
+            # Ensure DB is up and healthy before migrating
+            docker compose -f docker-compose.prod.yml up -d db
+            docker compose -f docker-compose.prod.yml wait db
+
+            # Run DB migrations
             docker compose -f docker-compose.prod.yml run --rm app npx tsx scripts/migrate.ts
 
             # Start/restart all services
