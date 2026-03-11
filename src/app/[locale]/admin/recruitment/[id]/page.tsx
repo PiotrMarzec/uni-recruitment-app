@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Square, Play, Circle, ClipboardList } from "lucide-react";
+import { Plus, Square, Play, Circle, ClipboardList, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { getStageName } from "@/lib/stage-name";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
@@ -317,8 +318,8 @@ export default function RecruitmentDetailPage() {
     }
   }
 
-  async function downloadPdf() {
-    window.open(`/api/admin/recruitments/${id}/pdf`, "_blank");
+  function downloadPdf(layout: "single" | "dual") {
+    window.open(`/api/admin/recruitments/${id}/pdf?layout=${layout}`, "_blank");
   }
 
   async function completeStage(stageId: string) {
@@ -606,9 +607,21 @@ export default function RecruitmentDetailPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{t("slots.title")}</h2>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={downloadPdf}>
-                {t("slots.downloadPdf")}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline">
+                    {t("slots.downloadPdf")} <ChevronDown className="ml-1 w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => downloadPdf("single")}>
+                    Single page layout
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => downloadPdf("dual")}>
+                    Dual page layout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Input
                 type="number"
                 min={1}

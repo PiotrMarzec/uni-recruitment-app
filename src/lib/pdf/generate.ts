@@ -3,7 +3,7 @@ import { slots, recruitments, stages } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import { renderToBuffer, DocumentProps } from "@react-pdf/renderer";
 import QRCode from "qrcode";
-import { SlotPdfDocument } from "./slot-pdf";
+import { SlotPdfDocument, DualPageSlotPdfDocument, SlotPdfLayout } from "./slot-pdf";
 import { signTeacherLink, getStudentRegistrationLink, getTeacherLink } from "@/lib/auth/hmac";
 import { getStageName } from "@/lib/stage-name";
 import React from "react";
@@ -25,7 +25,7 @@ async function generateQrBase64(url: string): Promise<string> {
   return dataUrl.split(",")[1];
 }
 
-export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
+export async function generateSlotsPdf(recruitmentId: string, layout: SlotPdfLayout = "single"): Promise<Buffer> {
   // Fetch recruitment info
   const [recruitment] = await db
     .select()
@@ -85,7 +85,8 @@ export async function generateSlotsPdf(recruitmentId: string): Promise<Buffer> {
   );
 
   // Render PDF to buffer
-  const element = React.createElement(SlotPdfDocument, { slots: slotPageData }) as unknown as React.ReactElement<DocumentProps>;
+  const PdfComponent = layout === "dual" ? DualPageSlotPdfDocument : SlotPdfDocument;
+  const element = React.createElement(PdfComponent, { slots: slotPageData }) as unknown as React.ReactElement<DocumentProps>;
   const buffer = await renderToBuffer(element);
 
   return Buffer.from(buffer);

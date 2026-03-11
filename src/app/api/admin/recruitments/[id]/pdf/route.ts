@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { generateSlotsPdf } from "@/lib/pdf/generate";
+import type { SlotPdfLayout } from "@/lib/pdf/slot-pdf";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 
 export async function GET(
@@ -11,9 +12,11 @@ export async function GET(
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const layoutParam = req.nextUrl.searchParams.get("layout");
+  const layout: SlotPdfLayout = layoutParam === "dual" ? "dual" : "single";
 
   try {
-    const pdfBuffer = await generateSlotsPdf(id);
+    const pdfBuffer = await generateSlotsPdf(id, layout);
 
     await logAuditEvent({
       actorType: "admin",
