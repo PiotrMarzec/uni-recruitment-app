@@ -15,12 +15,26 @@
       "when": 1772576362635,
       "tag": "0001_ancient_pride",
       "breakpoints": true
-    }
-    ,{
+    },
+    {
       "idx": 2,
       "version": "7",
       "when": 1772969900090,
       "tag": "0002_student_levels",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773000000000,
+      "tag": "0003_user_locale",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773100000000,
+      "tag": "0004_email_queue",
       "breakpoints": true
     }
   ]

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ClipboardList, UserPlus, LogOut } from "lucide-react";
+import { ClipboardList, Mail, UserPlus, LogOut } from "lucide-react";
 
 const LOCALE_LABELS: Record<string, string> = {
   en: "EN", pl: "PL", de: "DE", fr: "FR", es: "ES", it: "IT",
@@ -101,6 +101,9 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
             <LanguageSwitcher />
             <Button variant="outline" size="sm" asChild>
               <Link href="/admin/audit"><ClipboardList className="w-4 h-4 mr-2" />Audit Log</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/admin/email-log"><Mail className="w-4 h-4 mr-2" />Email Log</Link>
             </Button>
             <Dialog
               open={inviteOpen}

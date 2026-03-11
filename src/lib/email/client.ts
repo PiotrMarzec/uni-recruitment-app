@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import { db } from "@/db";
 import { emailQueue } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@example.com";
 
@@ -33,14 +34,33 @@ export async function sendEmailDirect(opts: SendEmailOptions): Promise<void> {
 }
 
 /**
- * Queue an email for delivery (Resend mode) or send immediately (SMTP mode).
+ * Persist an email to the queue and deliver it.
+ * - SMTP mode: sends immediately and marks the row as sent.
+ * - Resend mode: inserts as pending; the worker dispatches at ≤1 req/s.
  * All application code should call this function.
  */
 export async function sendEmail(opts: SendEmailOptions): Promise<void> {
   if (process.env.SMTP_HOST) {
-    // In SMTP/dev mode send immediately — no rate-limit concerns.
+    // Insert first so every email appears in the log regardless of transport.
+    const [row] = await db.insert(emailQueue).values({
+      from: opts.from,
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    }).returning({ id: emailQueue.id });
+
     console.log(`[email] sending via SMTP (${process.env.SMTP_HOST}:${process.env.SMTP_PORT ?? 1025}) to ${opts.to}`);
-    await sendEmailDirect(opts);
+    try {
+      await sendEmailDirect(opts);
+      await db.update(emailQueue)
+        .set({ status: "sent", processedAt: new Date() })
+        .where(eq(emailQueue.id, row.id));
+    } catch (err) {
+      await db.update(emailQueue)
+        .set({ status: "failed", error: String(err), processedAt: new Date() })
+        .where(eq(emailQueue.id, row.id));
+      throw err;
+    }
   } else {
     // In Resend/production mode, persist to queue; worker dispatches at ≤1 req/s.
     console.log(`[email] queuing for Resend delivery to ${opts.to}`);
