@@ -49,17 +49,29 @@ export async function POST(req: NextRequest) {
   }
 
   // Check if admin
-  const isAdmin =
-    role === "admin" ||
-    (await db
-      .select()
-      .from(admins)
-      .where(eq(admins.userId, user.id))
-      .limit(1)
-      .then((r) => r.length > 0));
+  const adminRecord = await db
+    .select()
+    .from(admins)
+    .where(eq(admins.userId, user.id))
+    .limit(1)
+    .then((r) => r[0] ?? null);
 
-  if (role === "admin" && !isAdmin) {
+  const isAdmin = role === "admin" || adminRecord !== null;
+
+  if (role === "admin" && !adminRecord) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  if (adminRecord?.disabledAt) {
+    return NextResponse.json({ error: "Account disabled" }, { status: 403 });
+  }
+
+  // Mark first login for admin accounts
+  if (adminRecord && !adminRecord.firstLoginAt) {
+    await db
+      .update(admins)
+      .set({ firstLoginAt: new Date() })
+      .where(eq(admins.userId, user.id));
   }
 
   // Set session

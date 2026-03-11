@@ -1,6 +1,9 @@
 import { getIronSession, IronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { admins } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export interface AdminSessionData {
   userId: string;
@@ -74,6 +77,14 @@ export async function getRegistrationSessionFromRequest(
 export async function requireAdmin(): Promise<AdminSessionData | null> {
   const session = await getAdminSession();
   if (!session.isAdmin || !session.userId) {
+    return null;
+  }
+  // Check that the admin account hasn't been disabled since login
+  const [adminRecord] = await db
+    .select({ disabledAt: admins.disabledAt })
+    .from(admins)
+    .where(eq(admins.userId, session.userId));
+  if (!adminRecord || adminRecord.disabledAt) {
     return null;
   }
   return session;

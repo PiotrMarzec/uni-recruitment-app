@@ -7,6 +7,38 @@ import { sendAdminInviteEmail } from "@/lib/email/send";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 
+export async function GET() {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rows = await db
+    .select({
+      userId: admins.userId,
+      fullName: users.fullName,
+      email: users.email,
+      firstLoginAt: admins.firstLoginAt,
+      disabledAt: admins.disabledAt,
+    })
+    .from(admins)
+    .innerJoin(users, eq(admins.userId, users.id))
+    .orderBy(users.fullName);
+
+  const result = rows.map((row) => ({
+    userId: row.userId,
+    fullName: row.fullName,
+    email: row.email,
+    status: row.disabledAt
+      ? "disabled"
+      : row.firstLoginAt
+      ? "active"
+      : "invited",
+  }));
+
+  return NextResponse.json(result);
+}
+
 const inviteSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1).max(255),

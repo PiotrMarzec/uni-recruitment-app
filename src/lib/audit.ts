@@ -93,6 +93,7 @@ export const ACTIONS = {
   OTP_EXPIRED: "otp.expired",
   // Admin
   ADMIN_INVITED: "admin.invited",
+  ADMIN_DISABLED: "admin.disabled",
   REGISTRATION_ADMIN_EDITED: "registration.admin_edited",
   // Email
   EMAIL_SENT: "email.sent",
