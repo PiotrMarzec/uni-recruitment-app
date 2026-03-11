@@ -122,9 +122,11 @@ export default function AssignmentResultsPage() {
         <div>
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-muted-foreground">{stageName}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("assignedCount", { assigned: assignedCount, unassigned: unassignedCount })}
-          </p>
+          {!loading && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {t("assignedCount", { assigned: assignedCount, unassigned: unassignedCount })}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {!approved && (
