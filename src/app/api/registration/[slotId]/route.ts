@@ -130,8 +130,10 @@ export async function GET(
       .limit(1);
 
     if (regResult.length > 0) {
+      // Exclude admin-only fields before returning to the student-facing client.
+      const { notes: _notes, averageResult: _avg, additionalActivities: _acts, recommendationLetters: _recs, ...regPublic } = regResult[0];
       registration = {
-        ...regResult[0],
+        ...regPublic,
         spokenLanguages: JSON.parse(regResult[0].spokenLanguages || "[]"),
         destinationPreferences: JSON.parse(regResult[0].destinationPreferences || "[]"),
       };
