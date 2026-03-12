@@ -313,7 +313,7 @@ interface SlotPdfDocumentProps {
   slots: SlotPageData[];
 }
 
-export type SlotPdfLayout = "single" | "dual" | "compact";
+export type SlotPdfLayout = "single" | "dual" | "compact" | "triple";
 
 const dualStyles = StyleSheet.create({
   page: {
@@ -620,6 +620,193 @@ export function CompactSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
     </Document>
   );
 }
+
+export function TripleSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
+  // Group slots three per page
+  const pages: [SlotPageData, SlotPageData | null, SlotPageData | null][] = [];
+  for (let i = 0; i < slots.length; i += 3) {
+    pages.push([slots[i], slots[i + 1] ?? null, slots[i + 2] ?? null]);
+  }
+
+  function renderStudentSection(slot: SlotPageData) {
+    return (
+      <View style={tripleStyles.studentSection}>
+        <Text style={styles.studentHeaderBar}>Student Registration</Text>
+
+        <View style={tripleStyles.studentTitleBlock}>
+          <Text style={tripleStyles.recruitmentName}>{slot.recruitmentName}</Text>
+          {slot.recruitmentDescription ? (
+            <Text style={tripleStyles.description}>{slot.recruitmentDescription}</Text>
+          ) : null}
+        </View>
+
+        <View style={tripleStyles.studentContentRow}>
+          <View style={tripleStyles.studentLeft}>
+            {slot.stages.length > 0 && (
+              <View>
+                <Text style={tripleStyles.stagesTitle}>Recruitment Stages</Text>
+                <View style={tripleStyles.stagesHeaderRow}>
+                  <Text style={tripleStyles.stagesHeaderName}>Stage</Text>
+                  <Text style={tripleStyles.stagesHeaderDate}>From</Text>
+                  <Text style={tripleStyles.stagesHeaderDate}>To</Text>
+                </View>
+                {slot.stages.map((stage, i) => (
+                  <View key={i} style={tripleStyles.stageRow}>
+                    <Text style={tripleStyles.stageName}>{stage.name}</Text>
+                    <Text style={tripleStyles.stageDateColumn}>{stage.startDate}</Text>
+                    <Text style={tripleStyles.stageDateColumn}>{stage.endDate}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <RegistrationInstructions />
+          </View>
+
+          <View style={tripleStyles.studentRight}>
+            <Image
+              src={`data:image/png;base64,${slot.registrationQrBase64}`}
+              style={tripleStyles.qrImage}
+            />
+          </View>
+        </View>
+
+        <View style={tripleStyles.studentBottomStrip}>
+          <Text style={tripleStyles.registrationLink}>{slot.registrationLink}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={tripleStyles.studentSlotLabel}>Slot</Text>
+            <Text style={tripleStyles.studentSlotNumber}>#{slot.slotNumber}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Document title="Slot Registration Cards" author="University Recruitment System">
+      {pages.map(([s1, s2, s3], pageIndex) => (
+        <Page key={pageIndex} size="A4" style={styles.page}>
+          {renderStudentSection(s1)}
+          {s2 ? renderStudentSection(s2) : null}
+          {s3 ? renderStudentSection(s3) : null}
+        </Page>
+      ))}
+    </Document>
+  );
+}
+
+const tripleStyles = StyleSheet.create({
+  studentSection: {
+    height: "33.333%",
+    flexDirection: "column",
+  },
+  studentTitleBlock: {
+    paddingHorizontal: H_PAD,
+    paddingTop: 5,
+    paddingBottom: 3,
+  },
+  recruitmentName: {
+    fontSize: 10,
+    fontFamily: "Helvetica-Bold",
+    marginBottom: 2,
+    color: "#1a1a1a",
+  },
+  description: {
+    fontSize: 7,
+    color: "#444444",
+    lineHeight: 1.3,
+  },
+  studentContentRow: {
+    flex: 1,
+    flexDirection: "row",
+    paddingHorizontal: H_PAD,
+    paddingBottom: 2,
+  },
+  studentLeft: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  studentRight: {
+    width: 90,
+    alignItems: "flex-end",
+  },
+  qrImage: {
+    width: 86,
+    height: 86,
+  },
+  studentBottomStrip: {
+    paddingHorizontal: H_PAD,
+    paddingBottom: 6,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  studentSlotLabel: {
+    fontSize: 6,
+    color: "#aaaaaa",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    textAlign: "right",
+    marginBottom: 1,
+  },
+  studentSlotNumber: {
+    fontSize: 9,
+    fontFamily: "Helvetica-Bold",
+    color: "#1a1a1a",
+    textAlign: "right",
+  },
+  registrationLink: {
+    fontSize: 6,
+    color: "#333333",
+    textAlign: "left",
+  },
+  stagesTitle: {
+    fontSize: 7,
+    color: "#888888",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  stagesHeaderRow: {
+    flexDirection: "row",
+    paddingBottom: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#cccccc",
+    marginBottom: 1,
+  },
+  stagesHeaderName: {
+    fontSize: 6,
+    color: "#aaaaaa",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    flex: 1,
+  },
+  stagesHeaderDate: {
+    fontSize: 6,
+    color: "#aaaaaa",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    width: 72,
+    textAlign: "right",
+  },
+  stageRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eeeeee",
+  },
+  stageName: {
+    fontSize: 7,
+    color: "#1a1a1a",
+    flex: 1,
+  },
+  stageDateColumn: {
+    fontSize: 7,
+    color: "#555555",
+    width: 72,
+    textAlign: "right",
+  },
+});
 
 export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   return (

@@ -16,6 +16,7 @@ export async function GET(
   const layout: SlotPdfLayout =
     layoutParam === "dual" ? "dual" :
     layoutParam === "compact" ? "compact" :
+    layoutParam === "triple" ? "triple" :
     "single";
 
   try {

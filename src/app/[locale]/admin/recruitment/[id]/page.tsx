@@ -318,7 +318,7 @@ export default function RecruitmentDetailPage() {
     }
   }
 
-  function downloadPdf(layout: "single" | "dual" | "compact") {
+  function downloadPdf(layout: "single" | "dual" | "compact" | "triple") {
     window.open(`/api/admin/recruitments/${id}/pdf?layout=${layout}`, "_blank");
   }
 
@@ -621,6 +621,9 @@ export default function RecruitmentDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => downloadPdf("compact")}>
                   <LayoutTemplate className="w-4 h-4 mr-2" />Compact
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => downloadPdf("triple")}>
+                  <LayoutTemplate className="w-4 h-4 mr-2" />Triple
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
