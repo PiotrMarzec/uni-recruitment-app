@@ -1,11 +1,61 @@
-import { createServer } from "http";
+import { createServer, IncomingMessage } from "http";
 import next from "next";
 import { WebSocketServer } from "ws";
 import { setupWebSocketServer, broadcastToStage } from "./lib/websocket/server";
 import { startJobs } from "./lib/jobs";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { getDb } from "./db";
+import { db } from "./db";
+import { admins } from "./db/schema";
+import { eq } from "drizzle-orm";
+import { getIronSession } from "iron-session";
+import { AdminSessionData } from "./lib/auth/session";
 import path from "path";
+
+const sessionOptions = {
+  password: process.env.SESSION_SECRET || "fallback-dev-secret-32-characters!!",
+  cookieName: "session",
+  cookieOptions: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: "lax" as const,
+    maxAge: 60 * 60 * 24 * 7,
+  },
+};
+
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(";").map((c) => {
+      const [k, ...v] = c.trim().split("=");
+      return [k.trim(), decodeURIComponent(v.join("="))];
+    })
+  );
+}
+
+async function isAdminUpgradeRequest(request: IncomingMessage): Promise<boolean> {
+  try {
+    const parsed = parseCookies(request.headers["cookie"]);
+    const cookieStore = {
+      get: (name: string) => {
+        const value = parsed[name];
+        return value !== undefined ? { name, value } : undefined;
+      },
+    };
+    const session = await getIronSession<AdminSessionData>(
+      cookieStore as any,
+      sessionOptions
+    );
+    if (!session.isAdmin || !session.userId) return false;
+    const [adminRecord] = await db
+      .select({ disabledAt: admins.disabledAt })
+      .from(admins)
+      .where(eq(admins.userId, session.userId));
+    return !!(adminRecord && !adminRecord.disabledAt);
+  } catch {
+    return false;
+  }
+}
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
@@ -47,8 +97,18 @@ runMigrations().then(() => app.prepare()).then(() => {
     const { pathname } = new URL(request.url!, `http://${hostname}`);
 
     if (pathname === "/api/ws") {
-      wss.handleUpgrade(request, socket as import("net").Socket, head, (ws) => {
-        wss.emit("connection", ws, request);
+      isAdminUpgradeRequest(request).then((isAdmin) => {
+        if (!isAdmin) {
+          socket.write("HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n");
+          socket.destroy();
+          return;
+        }
+        wss.handleUpgrade(request, socket as import("net").Socket, head, (ws) => {
+          wss.emit("connection", ws, request);
+        });
+      }).catch(() => {
+        socket.write("HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n");
+        socket.destroy();
       });
     } else {
       nextUpgrade(request, socket, head);
