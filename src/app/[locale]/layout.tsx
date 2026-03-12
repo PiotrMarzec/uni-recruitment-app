@@ -6,7 +6,10 @@ import { routing } from "@/i18n/routing";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: "University Recruitment",
+  title: {
+    template: "Regie - %s",
+    default: "Regie",
+  },
   description: "International trip recruitment application",
 };
 

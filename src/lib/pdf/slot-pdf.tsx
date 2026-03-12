@@ -462,7 +462,7 @@ const dualStyles = StyleSheet.create({
 
 export function DualPageSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   return (
-    <Document title="Slot Registration Cards" author="University Recruitment System">
+    <Document title="Slot Registration Cards" author="Regie">
       {slots.map((slot) => (
         <React.Fragment key={slot.slotId}>
           {/* Student Registration Page */}
@@ -610,7 +610,7 @@ export function CompactSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   }
 
   return (
-    <Document title="Slot Registration Cards" author="University Recruitment System">
+    <Document title="Slot Registration Cards" author="Regie">
       {pages.map(([topSlot, bottomSlot], pageIndex) => (
         <Page key={pageIndex} size="A4" style={styles.page}>
           {renderStudentSection(topSlot, false)}
@@ -682,7 +682,7 @@ export function TripleSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   }
 
   return (
-    <Document title="Slot Registration Cards" author="University Recruitment System">
+    <Document title="Slot Registration Cards" author="Regie">
       {pages.map(([s1, s2, s3], pageIndex) => (
         <Page key={pageIndex} size="A4" style={styles.page}>
           {renderStudentSection(s1)}
@@ -812,7 +812,7 @@ export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   return (
     <Document
       title="Slot Registration Cards"
-      author="University Recruitment System"
+      author="Regie"
     >
       {slots.map((slot) => (
         <Page key={slot.slotId} size="A4" style={styles.page}>

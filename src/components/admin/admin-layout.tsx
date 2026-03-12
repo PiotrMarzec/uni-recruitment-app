@@ -65,8 +65,11 @@ export function AdminLayout({ children, breadcrumbs, fullWidth }: AdminLayoutPro
       {/* Top nav */}
       <header className="border-b bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link href="/admin/dashboard" className="font-semibold text-lg">
-            University Recruitment
+          <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold text-lg">
+            <div className="w-7 h-7 rounded-md bg-[#2d4a8e] flex items-center justify-center text-white font-bold text-base font-serif leading-none">
+              R
+            </div>
+            Regie
           </Link>
           <nav className="flex items-center gap-4">
             <LanguageSwitcher />
