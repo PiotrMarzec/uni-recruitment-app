@@ -17,6 +17,7 @@ const updateSchema = z.object({
   averageResult: z.number().min(0).max(6).nullable().optional(),
   additionalActivities: z.number().int().min(0).max(4).nullable().optional(),
   recommendationLetters: z.number().int().min(0).max(10).nullable().optional(),
+  notes: z.string().max(5000).nullable().optional(),
 });
 
 export async function PATCH(
@@ -111,6 +112,12 @@ export async function PATCH(
     after.recommendationLetters = data.recommendationLetters;
   }
 
+  if (data.notes !== undefined) {
+    before.notes = existingReg.notes;
+    updates.notes = data.notes;
+    after.notes = data.notes;
+  }
+
   await db.update(registrations).set(updates).where(eq(registrations.id, id));
 
   await logAuditEvent({
@@ -202,6 +209,7 @@ export async function PATCH(
           averageResult: finalAvgResult,
           additionalActivities: finalActivities,
           recommendationLetters: finalLetters,
+          notes: data.notes !== undefined ? data.notes : existingReg.notes,
           score,
           assignedDestinationId: assignedDestId,
           assignedDestinationName: assignedDestId ? (destMap[assignedDestId] ?? null) : null,

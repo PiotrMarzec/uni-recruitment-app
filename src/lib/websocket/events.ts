@@ -95,6 +95,7 @@ export interface ApplicationRowUpdateEvent {
     averageResult: number | null;
     additionalActivities: number | null;
     recommendationLetters: number | null;
+    notes: string | null;
     score: number;
     assignedDestinationId: string | null;
     assignedDestinationName: string | null;

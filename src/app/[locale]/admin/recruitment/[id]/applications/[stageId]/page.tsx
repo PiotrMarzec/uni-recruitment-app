@@ -31,6 +31,7 @@ interface Application {
   additionalActivities: number | null;
   recommendationLetters: number | null;
   score: number;
+  notes: string | null;
   assignedDestinationId: string | null;
   assignedDestinationName: string | null;
 }
@@ -44,6 +45,7 @@ interface EditState {
   averageResult: string;
   additionalActivities: string;
   recommendationLetters: string;
+  notes: string;
 }
 
 type Tab = "completed" | "incomplete";
@@ -202,6 +204,7 @@ export default function ApplicationsPage() {
           app.additionalActivities !== null ? String(app.additionalActivities) : "",
         recommendationLetters:
           app.recommendationLetters !== null ? String(app.recommendationLetters) : "",
+        notes: app.notes ?? "",
       })
     );
   }
@@ -266,6 +269,9 @@ export default function ApplicationsPage() {
     const newLetters =
       edit.recommendationLetters !== "" ? parseInt(edit.recommendationLetters) : null;
     if (newLetters !== app.recommendationLetters) body.recommendationLetters = newLetters;
+
+    const newNotes = edit.notes.trim() !== "" ? edit.notes : null;
+    if (newNotes !== app.notes) body.notes = newNotes;
 
     try {
       const res = await fetch(`/api/admin/registrations/${app.registrationId}`, {
@@ -354,7 +360,8 @@ export default function ApplicationsPage() {
 
               if (edit) {
                 return (
-                  <tr key={app.registrationId} className="border-b bg-blue-50/40">
+                  <>
+                  <tr key={app.registrationId} className="bg-blue-50/40">
                     <td className="p-3 font-mono text-muted-foreground align-top">
                       #{app.slotNumber}
                     </td>
@@ -517,6 +524,23 @@ export default function ApplicationsPage() {
                       </div>
                     </td>
                   </tr>
+                  <tr key={`${app.registrationId}-notes`} className="border-b bg-blue-50/40">
+                    <td colSpan={12} className="px-3 pb-3">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">
+                        Notes
+                      </label>
+                      <textarea
+                        value={edit.notes}
+                        onChange={(e) =>
+                          updateEdit(app.registrationId, { notes: e.target.value })
+                        }
+                        rows={2}
+                        className="w-full border rounded px-2 py-1 text-sm bg-background resize-y"
+                        placeholder="Add notes…"
+                      />
+                    </td>
+                  </tr>
+                  </>
                 );
               }
 
@@ -526,9 +550,10 @@ export default function ApplicationsPage() {
                 app.recommendationLetters === null;
 
               return (
+                <>
                 <tr
                   key={app.registrationId}
-                  className={`border-b hover:bg-muted/20 ${missingScores ? "bg-amber-50/30" : ""}`}
+                  className={`${app.notes ? "" : "border-b"} hover:bg-muted/20 ${missingScores ? "bg-amber-50/30" : ""}`}
                 >
                   <td className="p-3 font-mono text-muted-foreground">#{app.slotNumber}</td>
                   <td className="p-3 font-medium">{app.studentName}</td>
@@ -610,6 +635,15 @@ export default function ApplicationsPage() {
                     </Button>
                   </td>
                 </tr>
+                {app.notes && (
+                  <tr key={`${app.registrationId}-notes`} className={`border-b hover:bg-muted/20 ${missingScores ? "bg-amber-50/30" : ""}`}>
+                    <td colSpan={12} className="px-3 pb-2 pt-0">
+                      <p className="text-xs text-muted-foreground font-medium mb-0.5">Notes</p>
+                      <p className="text-sm whitespace-pre-wrap">{app.notes}</p>
+                    </td>
+                  </tr>
+                )}
+                </>
               );
             })}
           </tbody>

@@ -57,6 +57,7 @@ export async function GET(
     averageResult: registrations.averageResult,
     additionalActivities: registrations.additionalActivities,
     recommendationLetters: registrations.recommendationLetters,
+    notes: registrations.notes,
   };
 
   const [completedRows, incompleteRows] = await Promise.all([
@@ -192,6 +193,7 @@ export async function GET(
       averageResult: avgResult,
       additionalActivities: row.additionalActivities,
       recommendationLetters: row.recommendationLetters,
+      notes: row.notes ?? null,
       score,
       assignedDestinationId: assignedDestId,
       assignedDestinationName: assignedDestId ? (destMap[assignedDestId] ?? null) : null,

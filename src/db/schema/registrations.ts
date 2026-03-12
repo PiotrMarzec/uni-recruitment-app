@@ -64,6 +64,8 @@ export const registrations = pgTable("registrations", {
   averageResult: numeric("average_result", { precision: 3, scale: 1 }),
   additionalActivities: integer("additional_activities"),
   recommendationLetters: integer("recommendation_letters"),
+  // Admin notes
+  notes: text("notes"),
   // Registration state
   registrationCompleted: boolean("registration_completed").notNull().default(false),
   notEligible: boolean("not_eligible").notNull().default(false),
