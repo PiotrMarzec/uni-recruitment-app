@@ -55,6 +55,12 @@ export default function AssignmentResultsPage() {
     fetchData();
   }, [stageId]);
 
+  useEffect(() => {
+    if (recruitmentName) {
+      document.title = `Regie - ${recruitmentName} - ${t("title")}`;
+    }
+  }, [recruitmentName, t]);
+
   async function fetchData() {
     setLoading(true);
     try {

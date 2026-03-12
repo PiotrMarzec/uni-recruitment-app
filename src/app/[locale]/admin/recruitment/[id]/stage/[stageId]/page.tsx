@@ -42,6 +42,12 @@ export default function StageDashboardPage() {
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (data?.recruitmentName) {
+      document.title = `Regie - ${data.recruitmentName} - ${t("liveDashboard")}`;
+    }
+  }, [data?.recruitmentName, t]);
+
+  useEffect(() => {
     mountedRef.current = true;
     fetchDashboard();
     connectWebSocket();

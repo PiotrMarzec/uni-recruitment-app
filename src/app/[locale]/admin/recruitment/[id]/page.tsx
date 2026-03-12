@@ -211,6 +211,12 @@ export default function RecruitmentDetailPage() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (recruitment?.name) {
+      document.title = `Regie - ${recruitment.name}`;
+    }
+  }, [recruitment?.name]);
+
   async function fetchEligibleLevels() {
     setEligibleLevelsLoading(true);
     try {

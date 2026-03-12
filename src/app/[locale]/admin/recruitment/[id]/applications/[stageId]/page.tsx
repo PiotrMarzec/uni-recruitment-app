@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -198,6 +198,7 @@ export default function ApplicationsPage() {
   const stageId = params.stageId as string;
 
   const [stageName, setStageName] = useState("");
+  const [recruitmentName, setRecruitmentName] = useState("");
   const [hasAssignments, setHasAssignments] = useState(false);
   const [hasNextSupplementary, setHasNextSupplementary] = useState(true);
   const [showNoSupplementaryWarning, setShowNoSupplementaryWarning] = useState(false);
@@ -214,11 +215,19 @@ export default function ApplicationsPage() {
     hasAssignments: boolean;
     hasNextSupplementary: boolean;
     stage: { type: string; order: number } | null;
+    recruitmentName: string | null;
   }) {
     setHasAssignments(info.hasAssignments);
     setHasNextSupplementary(info.hasNextSupplementary);
     if (info.stage) setStageName(getStageName(info.stage));
+    if (info.recruitmentName) setRecruitmentName(info.recruitmentName);
   }
+
+  useEffect(() => {
+    if (recruitmentName) {
+      document.title = `Regie - ${recruitmentName} - ${t("title")}`;
+    }
+  }, [recruitmentName, t]);
 
   async function assignStudents(tiebreakerWinnerId?: string) {
     setAssigning(true);
@@ -268,7 +277,7 @@ export default function ApplicationsPage() {
       fullWidth
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
-        { label: tr("breadcrumb"), href: `/admin/recruitment/${recruitmentId}` },
+        { label: recruitmentName || tr("breadcrumb"), href: `/admin/recruitment/${recruitmentId}` },
         { label: t("title") },
       ]}
     >

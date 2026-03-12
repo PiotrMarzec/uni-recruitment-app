@@ -23,7 +23,7 @@ export async function GET(
   const stageId = req.nextUrl.searchParams.get("stageId");
 
   const [recruitment] = await db
-    .select({ maxDestinationChoices: recruitments.maxDestinationChoices })
+    .select({ maxDestinationChoices: recruitments.maxDestinationChoices, name: recruitments.name })
     .from(recruitments)
     .where(eq(recruitments.id, recruitmentId))
     .limit(1);
@@ -149,6 +149,7 @@ export async function GET(
     registrations: rows.map(mapRow),
     destinations: allDestinations,
     maxDestinationChoices: recruitment.maxDestinationChoices ?? 3,
+    recruitmentName: recruitment.name ?? null,
     hasAssignments,
     hasNextSupplementary,
     stage: stageInfo,

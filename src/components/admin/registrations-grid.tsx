@@ -64,6 +64,7 @@ export interface RegistrationsGridDataLoad {
   hasAssignments: boolean;
   hasNextSupplementary: boolean;
   stage: { type: string; order: number } | null;
+  recruitmentName: string | null;
 }
 
 export interface RegistrationsGridProps {
@@ -162,6 +163,7 @@ export function RegistrationsGrid({
           hasAssignments: data.hasAssignments ?? false,
           hasNextSupplementary: data.hasNextSupplementary ?? false,
           stage: data.stage ?? null,
+          recruitmentName: data.recruitmentName ?? null,
         });
       }
     } finally {
