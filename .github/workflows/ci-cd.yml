@@ -43,6 +43,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Validate migration journal
+        run: npx tsx scripts/check-migrations.ts
+
       - name: Run DB migrations
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/recruitment_test
