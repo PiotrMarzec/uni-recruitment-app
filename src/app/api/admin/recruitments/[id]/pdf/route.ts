@@ -13,7 +13,10 @@ export async function GET(
 
   const { id } = await params;
   const layoutParam = req.nextUrl.searchParams.get("layout");
-  const layout: SlotPdfLayout = layoutParam === "dual" ? "dual" : "single";
+  const layout: SlotPdfLayout =
+    layoutParam === "dual" ? "dual" :
+    layoutParam === "compact" ? "compact" :
+    "single";
 
   try {
     const pdfBuffer = await generateSlotsPdf(id, layout);

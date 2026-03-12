@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Square, Play, Circle, ClipboardList, ChevronDown, Printer, FileText, Files } from "lucide-react";
+import { Plus, Square, Play, Circle, ClipboardList, ChevronDown, Printer, FileText, Files, LayoutTemplate } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { getStageName } from "@/lib/stage-name";
@@ -318,7 +318,7 @@ export default function RecruitmentDetailPage() {
     }
   }
 
-  function downloadPdf(layout: "single" | "dual") {
+  function downloadPdf(layout: "single" | "dual" | "compact") {
     window.open(`/api/admin/recruitments/${id}/pdf?layout=${layout}`, "_blank");
   }
 
@@ -618,6 +618,9 @@ export default function RecruitmentDetailPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => downloadPdf("dual")}>
                   <Files className="w-4 h-4 mr-2" />Dual page layout
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => downloadPdf("compact")}>
+                  <LayoutTemplate className="w-4 h-4 mr-2" />Compact
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

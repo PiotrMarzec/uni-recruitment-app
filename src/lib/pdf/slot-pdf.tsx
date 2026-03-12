@@ -12,6 +12,15 @@ import {
 const H_PAD = 32;
 const CUT_GAP = 16;
 
+const REGISTRATION_INSTRUCTIONS = [
+  { n: "1.", text: "Scan the QR code on your mobile device to start your registration." },
+  { n: "2.", text: "Fill out all the steps to complete your registration." },
+  { n: "3.", text: "After completing your registration you will receive a confirmation email." },
+  { n: "4.", text: "You will receive updates about the recruitment process via email." },
+  { n: "5.", text: "Do not lose or share this page." },
+  { n: "6.", text: "You can use the QR code to update your registration details." },
+];
+
 const styles = StyleSheet.create({
   page: {
     padding: 0,
@@ -208,6 +217,33 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 
+  // Instructions
+  instructionsTitle: {
+    fontSize: 7,
+    color: "#888888",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 3,
+    marginTop: 8,
+  },
+  instructionRow: {
+    flexDirection: "row",
+    marginBottom: 2,
+  },
+  instructionNumber: {
+    fontSize: 7,
+    color: "#1a1a1a",
+    fontFamily: "Helvetica-Bold",
+    width: 14,
+    flexShrink: 0,
+  },
+  instructionText: {
+    fontSize: 7,
+    color: "#1a1a1a",
+    lineHeight: 1.35,
+    flex: 1,
+  },
+
   // QR images
   qrImage: {
     width: 118,
@@ -241,6 +277,20 @@ const styles = StyleSheet.create({
   },
 });
 
+function RegistrationInstructions() {
+  return (
+    <>
+      <Text style={styles.instructionsTitle}>How to register</Text>
+      {REGISTRATION_INSTRUCTIONS.map((item) => (
+        <View key={item.n} style={styles.instructionRow}>
+          <Text style={styles.instructionNumber}>{item.n}</Text>
+          <Text style={styles.instructionText}>{item.text}</Text>
+        </View>
+      ))}
+    </>
+  );
+}
+
 interface StageInfo {
   name: string;
   startDate: string;
@@ -263,7 +313,7 @@ interface SlotPdfDocumentProps {
   slots: SlotPageData[];
 }
 
-export type SlotPdfLayout = "single" | "dual";
+export type SlotPdfLayout = "single" | "dual" | "compact";
 
 const dualStyles = StyleSheet.create({
   page: {
@@ -495,6 +545,82 @@ export function DualPageSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   );
 }
 
+export function CompactSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
+  // Pair up slots — two student sections per page
+  const pages: [SlotPageData, SlotPageData | null][] = [];
+  for (let i = 0; i < slots.length; i += 2) {
+    pages.push([slots[i], slots[i + 1] ?? null]);
+  }
+
+  function renderStudentSection(slot: SlotPageData, isBottom: boolean) {
+    return (
+      <View style={styles.studentSection}>
+        {isBottom && <View style={styles.creaseSpacer} />}
+
+        <Text style={styles.studentHeaderBar}>Student Registration</Text>
+
+        <View style={styles.studentTitleBlock}>
+          <Text style={styles.recruitmentName}>{slot.recruitmentName}</Text>
+          {slot.recruitmentDescription ? (
+            <Text style={styles.description}>{slot.recruitmentDescription}</Text>
+          ) : null}
+        </View>
+
+        <View style={styles.studentContentRow}>
+          <View style={styles.studentLeft}>
+            {slot.stages.length > 0 && (
+              <View>
+                <Text style={styles.stagesTitle}>Recruitment Stages</Text>
+                <View style={styles.stagesHeaderRow}>
+                  <Text style={styles.stagesHeaderName}>Stage</Text>
+                  <Text style={styles.stagesHeaderDate}>From</Text>
+                  <Text style={styles.stagesHeaderDate}>To</Text>
+                </View>
+                {slot.stages.map((stage, i) => (
+                  <View key={i} style={styles.stageRow}>
+                    <Text style={styles.stageName}>{stage.name}</Text>
+                    <Text style={styles.stageDateColumn}>{stage.startDate}</Text>
+                    <Text style={styles.stageDateColumn}>{stage.endDate}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <RegistrationInstructions />
+          </View>
+
+          <View style={styles.studentRight}>
+            <Image
+              src={`data:image/png;base64,${slot.registrationQrBase64}`}
+              style={styles.qrImage}
+            />
+          </View>
+        </View>
+
+        <View style={styles.studentBottomStrip}>
+          <Text style={styles.registrationLink}>{slot.registrationLink}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={styles.studentSlotLabel}>Slot</Text>
+            <Text style={styles.studentSlotNumber}>#{slot.slotNumber}</Text>
+          </View>
+        </View>
+
+        {!isBottom && <View style={styles.cutLine} />}
+      </View>
+    );
+  }
+
+  return (
+    <Document title="Slot Registration Cards" author="University Recruitment System">
+      {pages.map(([topSlot, bottomSlot], pageIndex) => (
+        <Page key={pageIndex} size="A4" style={styles.page}>
+          {renderStudentSection(topSlot, false)}
+          {bottomSlot ? renderStudentSection(bottomSlot, true) : null}
+        </Page>
+      ))}
+    </Document>
+  );
+}
+
 export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   return (
     <Document
@@ -536,6 +662,7 @@ export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
                     ))}
                   </View>
                 )}
+                <RegistrationInstructions />
               </View>
 
               <View style={styles.studentRight}>
