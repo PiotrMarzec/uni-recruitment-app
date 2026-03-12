@@ -11,7 +11,7 @@ import {
 } from "@/db/schema";
 import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
-import { eq, and, count, desc } from "drizzle-orm";
+import { eq, and, count, desc, inArray } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -189,6 +189,34 @@ export async function GET(
     }
   }
 
+  // Get all stages for the recruitment (for the welcome page)
+  const allStages = await db
+    .select({
+      id: stages.id,
+      name: stages.name,
+      description: stages.description,
+      startDate: stages.startDate,
+      endDate: stages.endDate,
+      type: stages.type,
+      status: stages.status,
+      order: stages.order,
+    })
+    .from(stages)
+    .where(eq(stages.recruitmentId, slot.recruitmentId))
+    .orderBy(stages.order);
+
+  // Resolve destination names for the registration's preferences
+  let destinationNames: string[] = [];
+  if (registration && registration.destinationPreferences.length > 0) {
+    const prefIds = registration.destinationPreferences as string[];
+    const destResults = await db
+      .select({ id: destinations.id, name: destinations.name })
+      .from(destinations)
+      .where(inArray(destinations.id, prefIds));
+    const destMap = Object.fromEntries(destResults.map((d) => [d.id, d.name]));
+    destinationNames = prefIds.map((id) => destMap[id] ?? id);
+  }
+
   return NextResponse.json({
     slot,
     recruitment: {
@@ -197,6 +225,7 @@ export async function GET(
       description: recruitment.description,
       maxDestinationChoices: recruitment.maxDestinationChoices,
     },
+    allStages,
     initialStage: initialStage
       ? { id: initialStage.id, status: initialStage.status, endDate: initialStage.endDate }
       : null,
@@ -205,5 +234,6 @@ export async function GET(
     currentAssignment,
     registration,
     student,
+    destinationNames,
   });
 }

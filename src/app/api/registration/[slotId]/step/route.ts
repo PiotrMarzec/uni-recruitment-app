@@ -343,7 +343,7 @@ export async function POST(
   }
 
   if (data.step === 4) {
-    if (!activeStageInfo.isInitial) {
+    if (!activeStageInfo.isInitial && existingReg.registrationCompleted) {
       return NextResponse.json(
         { error: "Study level cannot be changed during supplementary registration." },
         { status: 403 }
@@ -376,7 +376,7 @@ export async function POST(
   }
 
   if (data.step === 5) {
-    if (!activeStageInfo.isInitial) {
+    if (!activeStageInfo.isInitial && existingReg.registrationCompleted) {
       return NextResponse.json(
         { error: "Languages cannot be changed during supplementary registration." },
         { status: 403 }

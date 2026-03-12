@@ -291,6 +291,21 @@
     "alreadyCompletedDesc": "Vous avez déjà complété votre inscription. Vous pouvez mettre à jour vos informations jusqu'à la fin de la phase initiale.",
     "initialStageClosed": "L'inscription est fermée",
     "initialStageClosedDesc": "La phase initiale est terminée. Vous ne pouvez plus mettre à jour vos informations.",
+    "welcome": {
+      "stages": "Étapes de candidature",
+      "current": "En cours",
+      "startRegistration": "Commencer l'inscription",
+      "updateRegistration": "Mettre à jour mon inscription",
+      "yourRegistration": "Détails de votre inscription",
+      "registrationNotOpen": "Les inscriptions ne sont pas ouvertes actuellement.",
+      "supplementaryPlanned": "Une phase d'inscription complémentaire est prévue : {name} ({startDate} – {endDate}).",
+      "fieldName": "Nom",
+      "fieldEmail": "E-mail",
+      "fieldEnrollmentId": "Numéro d'étudiant",
+      "fieldLevel": "Niveau d'études",
+      "fieldLanguages": "Langues parlées",
+      "fieldDestinations": "Préférences de destination"
+    },
     "steps": {
       "step1": "Contact & Consentement",
       "step2": "Vérification",

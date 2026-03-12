@@ -291,6 +291,21 @@
     "alreadyCompletedDesc": "Hai già completato la registrazione. Puoi aggiornare le tue informazioni fino alla fine della fase iniziale.",
     "initialStageClosed": "La registrazione è chiusa",
     "initialStageClosedDesc": "La fase iniziale è terminata. Non puoi più aggiornare le tue informazioni.",
+    "welcome": {
+      "stages": "Fasi di candidatura",
+      "current": "Attuale",
+      "startRegistration": "Inizia la registrazione",
+      "updateRegistration": "Aggiorna la mia registrazione",
+      "yourRegistration": "Dettagli della tua registrazione",
+      "registrationNotOpen": "La registrazione non è attualmente aperta.",
+      "supplementaryPlanned": "È prevista una fase di registrazione supplementare: {name} ({startDate} – {endDate}).",
+      "fieldName": "Nome",
+      "fieldEmail": "Email",
+      "fieldEnrollmentId": "Numero di matricola",
+      "fieldLevel": "Livello di studi",
+      "fieldLanguages": "Lingue parlate",
+      "fieldDestinations": "Preferenze di destinazione"
+    },
     "steps": {
       "step1": "Contatto e consenso",
       "step2": "Verifica",

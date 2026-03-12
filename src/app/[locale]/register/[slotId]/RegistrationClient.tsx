@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import WelcomeView from "./WelcomeView";
 
 const LOCALE_LABELS: Record<string, string> = {
   en: "EN",
@@ -69,9 +70,21 @@ const STUDENT_LEVEL_LABELS: Record<StudentLevel, string> = {
   master_3: "Master (3rd year)",
 };
 
+interface StageInfo {
+  id: string;
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  type: "initial" | "admin" | "supplementary";
+  status: "pending" | "active" | "completed";
+  order: number;
+}
+
 interface SlotInfo {
   slot: { id: string; number: number; status: string };
-  recruitment: { id: string; name: string; maxDestinationChoices: number };
+  recruitment: { id: string; name: string; description: string | null; maxDestinationChoices: number };
+  allStages: StageInfo[];
   initialStage: { id: string; status: string; endDate: string } | null;
   isInitialActive: boolean;
   isSupplementaryActive: boolean;
@@ -86,6 +99,7 @@ interface SlotInfo {
     registrationCompleted: boolean;
   } | null;
   student: { fullName: string; email: string } | null;
+  destinationNames: string[];
 }
 
 interface Destination {
@@ -113,6 +127,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [completed, setCompleted] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
 
@@ -143,7 +158,10 @@ export default function RegisterPage() {
       const saved = sessionStorage.getItem(sessionKey);
       if (!saved) return;
       const parsed = JSON.parse(saved);
-      if (parsed.currentStep) setCurrentStep(parsed.currentStep as Step);
+      if (parsed.currentStep) {
+        setCurrentStep(parsed.currentStep as Step);
+        setShowWelcome(false);
+      }
       if (parsed.email !== undefined) setEmail(parsed.email);
       if (parsed.emailConsent !== undefined) setEmailConsent(parsed.emailConsent);
       if (parsed.privacyConsent !== undefined) setPrivacyConsent(parsed.privacyConsent);
@@ -216,12 +234,10 @@ export default function RegisterPage() {
         setDestinationPreferences(data.registration.destinationPreferences || []);
 
         if (data.registration.registrationCompleted) {
-          if (!data.isInitialActive && !data.isSupplementaryActive) {
-            setCompleted(true);
-          } else {
-            // Can still edit — start from step 1
-            setCurrentStep(1);
-          }
+          // Completed and stage closed: welcome page will show the details.
+          // Completed and stage open: user can still edit — welcome page offers "Update" button.
+          // Either way, keep showWelcome=true (unless we're restoring session state).
+          setCurrentStep(1);
         }
       }
     } finally {
@@ -289,7 +305,10 @@ export default function RegisterPage() {
       return;
     }
     const ok = await submitStep(1, { email, emailConsent, privacyConsent, locale });
-    if (ok) setCurrentStep(2);
+    if (ok) {
+      setOtpCode("");
+      setCurrentStep(2);
+    }
   }
 
   async function handleStep2(e: React.FormEvent) {
@@ -315,7 +334,7 @@ export default function RegisterPage() {
   async function handleStep4(e: React.FormEvent) {
     e.preventDefault();
     if (!level) return;
-    if (slotInfo?.isSupplementaryActive) {
+    if (slotInfo?.isSupplementaryActive && slotInfo.registration?.registrationCompleted) {
       setCurrentStep(5);
       return;
     }
@@ -325,7 +344,7 @@ export default function RegisterPage() {
 
   async function handleStep5(e: React.FormEvent) {
     e.preventDefault();
-    if (slotInfo?.isSupplementaryActive) {
+    if (slotInfo?.isSupplementaryActive && slotInfo.registration?.registrationCompleted) {
       setCurrentStep(6);
       return;
     }
@@ -368,7 +387,8 @@ export default function RegisterPage() {
         return;
       }
 
-      setCompleted(true);
+      await loadSlotInfo();
+      setShowWelcome(true);
     } finally {
       setSubmitting(false);
     }
@@ -421,7 +441,7 @@ export default function RegisterPage() {
 
   const registrationOpen = slotInfo.isInitialActive || slotInfo.isSupplementaryActive;
 
-  if (completed || (!registrationOpen && slotInfo.registration?.registrationCompleted)) {
+  if (completed) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -434,15 +454,23 @@ export default function RegisterPage() {
     );
   }
 
-  if (!registrationOpen) {
+  if (showWelcome) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center">
-            <p className="font-semibold">{t("initialStageClosed")}</p>
-            <p className="text-muted-foreground text-sm mt-2">{t("initialStageClosedDesc")}</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-muted/10 py-8 px-4">
+        <div className="max-w-xl mx-auto">
+          <div className="mb-6 flex justify-end">
+            <LanguageSwitcher onBeforeSwitch={saveStateForLocaleSwitch} />
+          </div>
+          <WelcomeView
+            recruitment={slotInfo.recruitment}
+            allStages={slotInfo.allStages}
+            isRegistrationOpen={registrationOpen}
+            registration={slotInfo.registration}
+            student={slotInfo.student}
+            destinationNames={slotInfo.destinationNames}
+            onProceed={() => setShowWelcome(false)}
+          />
+        </div>
       </div>
     );
   }
@@ -580,6 +608,7 @@ export default function RegisterPage() {
                     onChange={(e) => setOtpCode(e.target.value.toUpperCase())}
                     maxLength={6}
                     required
+                    autoComplete="off"
                     className="text-center text-2xl tracking-widest font-mono"
                   />
                 </div>
@@ -632,17 +661,19 @@ export default function RegisterPage() {
             {/* Step 4: Level */}
             {currentStep === 4 && (
               <form onSubmit={handleStep4} className="space-y-4">
-                {slotInfo.isSupplementaryActive && (
+                {slotInfo.isSupplementaryActive && slotInfo.registration?.registrationCompleted && (
                   <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">{t("step4.lockedNote")}</p>
                 )}
                 <div className="space-y-2">
-                  {STUDENT_LEVELS.map((lvl) => (
+                  {STUDENT_LEVELS.map((lvl) => {
+                    const locked = slotInfo.isSupplementaryActive && !!slotInfo.registration?.registrationCompleted;
+                    return (
                     <label
                       key={lvl}
                       className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
                         level === lvl
                           ? "bg-primary/10 border-primary"
-                          : slotInfo.isSupplementaryActive
+                          : locked
                           ? "opacity-50"
                           : "cursor-pointer hover:bg-muted/30"
                       }`}
@@ -653,11 +684,12 @@ export default function RegisterPage() {
                         value={lvl}
                         checked={level === lvl}
                         onChange={() => setLevel(lvl)}
-                        disabled={slotInfo.isSupplementaryActive}
+                        disabled={locked}
                       />
                       <span className="font-medium text-sm">{STUDENT_LEVEL_LABELS[lvl]}</span>
                     </label>
-                  ))}
+                    );
+                  })}
                 </div>
                 {stepError && <p className="text-sm text-destructive">{stepError}</p>}
                 <Button type="submit" className="w-full" disabled={!level || submitting}>
@@ -669,18 +701,20 @@ export default function RegisterPage() {
             {/* Step 5: Languages */}
             {currentStep === 5 && (
               <form onSubmit={handleStep5} className="space-y-4">
-                {slotInfo.isSupplementaryActive
+                {slotInfo.isSupplementaryActive && slotInfo.registration?.registrationCompleted
                   ? <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">{t("step5.lockedNote")}</p>
                   : <p className="text-sm text-muted-foreground">{t("step5.desc")}</p>
                 }
                 <div className="grid grid-cols-2 gap-2">
-                  {SUPPORTED_LANGUAGES.map((lang) => (
+                  {SUPPORTED_LANGUAGES.map((lang) => {
+                    const locked = slotInfo.isSupplementaryActive && !!slotInfo.registration?.registrationCompleted;
+                    return (
                     <label
                       key={lang}
                       className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
                         spokenLanguages.includes(lang)
                           ? "bg-primary/10 border-primary"
-                          : slotInfo.isSupplementaryActive
+                          : locked
                           ? "opacity-50"
                           : "cursor-pointer hover:bg-muted/30"
                       }`}
@@ -688,7 +722,7 @@ export default function RegisterPage() {
                       <input
                         type="checkbox"
                         checked={spokenLanguages.includes(lang)}
-                        disabled={slotInfo.isSupplementaryActive}
+                        disabled={locked}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSpokenLanguages((prev) => [...prev, lang]);
@@ -699,7 +733,8 @@ export default function RegisterPage() {
                       />
                       <span className="text-sm font-medium">{lang}</span>
                     </label>
-                  ))}
+                    );
+                  })}
                 </div>
                 {stepError && <p className="text-sm text-destructive">{stepError}</p>}
                 <Button type="submit" className="w-full" disabled={submitting}>

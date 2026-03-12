@@ -291,6 +291,21 @@
     "alreadyCompletedDesc": "Sie haben Ihre Registrierung bereits abgeschlossen. Sie können Ihre Daten bis zum Ende der Anfangsphase aktualisieren.",
     "initialStageClosed": "Registrierung ist geschlossen",
     "initialStageClosedDesc": "Die Anfangsphase ist beendet. Sie können Ihre Daten nicht mehr aktualisieren.",
+    "welcome": {
+      "stages": "Bewerbungsphasen",
+      "current": "Aktuell",
+      "startRegistration": "Registrierung starten",
+      "updateRegistration": "Meine Registrierung aktualisieren",
+      "yourRegistration": "Ihre Registrierungsdetails",
+      "registrationNotOpen": "Die Registrierung ist derzeit nicht geöffnet.",
+      "supplementaryPlanned": "Eine ergänzende Registrierungsphase ist geplant: {name} ({startDate} – {endDate}).",
+      "fieldName": "Name",
+      "fieldEmail": "E-Mail",
+      "fieldEnrollmentId": "Matrikelnummer",
+      "fieldLevel": "Studiengrad",
+      "fieldLanguages": "Gesprochene Sprachen",
+      "fieldDestinations": "Zielortpräferenzen"
+    },
     "steps": {
       "step1": "Kontakt & Einwilligung",
       "step2": "Verifizierung",

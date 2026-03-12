@@ -291,6 +291,21 @@
     "alreadyCompletedDesc": "Rejestracja została zakończona. Możesz aktualizować informacje do końca etapu wstępnego.",
     "initialStageClosed": "Rejestracja jest zamknięta",
     "initialStageClosedDesc": "Etap wstępny dobiegł końca. Nie można już aktualizować danych.",
+    "welcome": {
+      "stages": "Etapy rekrutacji",
+      "current": "Aktualny",
+      "startRegistration": "Rozpocznij rejestrację",
+      "updateRegistration": "Zaktualizuj moją rejestrację",
+      "yourRegistration": "Twoje dane rejestracyjne",
+      "registrationNotOpen": "Rejestracja nie jest obecnie otwarta.",
+      "supplementaryPlanned": "Planowany jest dodatkowy etap rejestracji: {name} ({startDate} – {endDate}).",
+      "fieldName": "Imię i nazwisko",
+      "fieldEmail": "Email",
+      "fieldEnrollmentId": "Numer albumu",
+      "fieldLevel": "Poziom studiów",
+      "fieldLanguages": "Języki obce",
+      "fieldDestinations": "Preferencje uczelni"
+    },
     "steps": {
       "step1": "Kontakt i zgody",
       "step2": "Weryfikacja",

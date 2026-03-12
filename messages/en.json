@@ -291,6 +291,21 @@
     "alreadyCompletedDesc": "You have already completed your registration. You can update your information until the initial stage closes.",
     "initialStageClosed": "Registration is closed",
     "initialStageClosedDesc": "The initial registration stage has ended. You can no longer update your information.",
+    "welcome": {
+      "stages": "Registration Stages",
+      "current": "Current",
+      "startRegistration": "Start Registration",
+      "updateRegistration": "Update My Registration",
+      "yourRegistration": "Your Registration Details",
+      "registrationNotOpen": "Registration is not currently open.",
+      "supplementaryPlanned": "A supplementary registration stage is planned: {name} ({startDate} – {endDate}).",
+      "fieldName": "Name",
+      "fieldEmail": "Email",
+      "fieldEnrollmentId": "Enrollment ID",
+      "fieldLevel": "Study Level",
+      "fieldLanguages": "Spoken Languages",
+      "fieldDestinations": "Destination Preferences"
+    },
     "steps": {
       "step1": "Contact & Consent",
       "step2": "Verification",
