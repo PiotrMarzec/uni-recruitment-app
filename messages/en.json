@@ -136,7 +136,10 @@
         "registrationLink": "Registration Link",
         "teacherLink": "Teacher Link",
         "slotHeader": "Slot #",
-        "confirmRemoveSlot": "Remove this slot?"
+        "confirmRemoveSlot": "Remove this slot?",
+        "totalSlots": "Total Slots",
+        "registeredSlots": "Registered Slots",
+        "remainingSlots": "Remaining Slots"
       },
       "destinations": {
         "title": "Destinations",

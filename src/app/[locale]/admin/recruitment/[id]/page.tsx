@@ -697,56 +697,20 @@ export default function RecruitmentDetailPage() {
             </Button>
           </div>
 
-          {recruitment.slots.length === 0 ? (
-            <p className="text-muted-foreground">{t("slots.noSlots")}</p>
-          ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/50">
-                  <tr>
-                    <th className="text-left p-3 font-medium">{t("slots.slotHeader")}</th>
-                    <th className="text-left p-3 font-medium">{tc("status")}</th>
-                    <th className="text-left p-3 font-medium">{t("slots.registrationLink")}</th>
-                    <th className="p-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recruitment.slots.map((slot) => (
-                    <tr key={slot.id} className="border-b last:border-0 hover:bg-muted/20">
-                      <td className="p-3 font-mono">#{slot.number}</td>
-                      <td className="p-3">
-                        <Badge variant={slot.status === "open" ? "success" : "default"}>
-                          {slot.status}
-                        </Badge>
-                      </td>
-                      <td className="p-3 max-w-xs">
-                        <a
-                          href={slot.studentRegistrationLink}
-                          className="text-primary hover:underline truncate block"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {slot.studentRegistrationLink}
-                        </a>
-                      </td>
-                      <td className="p-3 text-right">
-                        {slot.status === "open" && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteSlot(slot.id)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            {tc("remove")}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold">{recruitment.slots.length}</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("slots.totalSlots")}</div>
             </div>
-          )}
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold">{recruitment.slots.filter(s => s.status !== "open").length}</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("slots.registeredSlots")}</div>
+            </div>
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold">{recruitment.slots.filter(s => s.status === "open").length}</div>
+              <div className="text-sm text-muted-foreground mt-1">{t("slots.remainingSlots")}</div>
+            </div>
+          </div>
         </div>
       )}
 
