@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { recruitments, stages } from "@/db/schema";
+import { recruitments, stages, destinations, slots } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
@@ -41,9 +41,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [allRecruitments, allStages] = await Promise.all([
+  const [allRecruitments, allStages, allDestinations, allSlots] = await Promise.all([
     db.select().from(recruitments).orderBy(desc(recruitments.createdAt)),
     db.select().from(stages),
+    db.select({ recruitmentId: destinations.recruitmentId, name: destinations.name }).from(destinations),
+    db.select({ recruitmentId: slots.recruitmentId, status: slots.status }).from(slots),
   ]);
 
   const stagesByRecruitment = new Map<string, Stage[]>();
@@ -53,11 +55,41 @@ export async function GET(req: NextRequest) {
     stagesByRecruitment.set(stage.recruitmentId, list);
   }
 
+  const destinationsByRecruitment = new Map<string, string[]>();
+  for (const dest of allDestinations) {
+    const list = destinationsByRecruitment.get(dest.recruitmentId) ?? [];
+    list.push(dest.name);
+    destinationsByRecruitment.set(dest.recruitmentId, list);
+  }
+
+  const slotsByRecruitment = new Map<string, { total: number; open: number; registered: number }>();
+  for (const slot of allSlots) {
+    const counts = slotsByRecruitment.get(slot.recruitmentId) ?? { total: 0, open: 0, registered: 0 };
+    counts.total++;
+    if (slot.status === "open") counts.open++;
+    else if (slot.status === "registered") counts.registered++;
+    slotsByRecruitment.set(slot.recruitmentId, counts);
+  }
+
   return NextResponse.json(
-    allRecruitments.map((rec) => ({
-      ...rec,
-      status: computeRecruitmentStatus(rec.archivedAt, stagesByRecruitment.get(rec.id) ?? []),
-    }))
+    allRecruitments.map((rec) => {
+      const recStages = stagesByRecruitment.get(rec.id) ?? [];
+      const activeStage = recStages.find((s) => s.status === "active") ?? null;
+      const nextStage = recStages
+        .filter((s) => s.status === "pending")
+        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] ?? null;
+      const slotCounts = slotsByRecruitment.get(rec.id) ?? { total: 0, open: 0, registered: 0 };
+      return {
+        ...rec,
+        status: computeRecruitmentStatus(rec.archivedAt, recStages),
+        destinationNames: destinationsByRecruitment.get(rec.id) ?? [],
+        totalSlots: slotCounts.total,
+        openSlots: slotCounts.open,
+        registeredSlots: slotCounts.registered,
+        activeStage: activeStage ? { name: activeStage.name, startDate: activeStage.startDate, endDate: activeStage.endDate, type: activeStage.type } : null,
+        nextStage: nextStage ? { name: nextStage.name, startDate: nextStage.startDate, endDate: nextStage.endDate } : null,
+      };
+    })
   );
 }
 

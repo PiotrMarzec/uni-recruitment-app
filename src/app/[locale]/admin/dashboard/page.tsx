@@ -22,6 +22,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 import type { RecruitmentStatus } from "@/db/schema/recruitments";
 
+interface StageInfo {
+  name: string;
+  startDate: string;
+  endDate: string;
+  type: "initial" | "admin" | "supplementary";
+}
+
 interface Recruitment {
   id: string;
   name: string;
@@ -31,6 +38,12 @@ interface Recruitment {
   maxDestinationChoices: number;
   createdAt: string;
   status: RecruitmentStatus;
+  destinationNames: string[];
+  totalSlots: number;
+  openSlots: number;
+  registeredSlots: number;
+  activeStage: StageInfo | null;
+  nextStage: StageInfo | null;
 }
 
 const STATUS_LABELS: Record<RecruitmentStatus, string> = {
@@ -156,8 +169,12 @@ export default function AdminDashboardPage() {
   const archivedRecruitments = recruitments.filter((r) => r.status === "archived");
 
   function RecruitmentCard({ rec }: { rec: Recruitment }) {
+    const borderClass =
+      rec.status === "current" && rec.activeStage?.type === "admin"
+        ? "border-2 border-blue-400"
+        : STATUS_BORDER[rec.status];
     return (
-      <Card key={rec.id} className={`group hover:shadow-md transition-shadow ${STATUS_BORDER[rec.status]}`}>
+      <Card key={rec.id} className={`group hover:shadow-md transition-shadow ${borderClass}`}>
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -213,13 +230,33 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0">
-          <div className="flex gap-4 text-sm text-muted-foreground">
+        <CardContent className="pt-0 space-y-1">
+          <div className="flex gap-4 text-sm text-muted-foreground flex-wrap">
             <span>
               {formatDateShort(rec.startDate)} — {formatDateShort(rec.endDate)}
             </span>
-            <span>{t("maxDestinations", { count: rec.maxDestinationChoices })}</span>
+            {rec.destinationNames.length > 0 && (
+              <span>{rec.destinationNames.join(", ")}</span>
+            )}
           </div>
+          <div className="flex gap-4 text-sm text-muted-foreground">
+            <span>Total slots: {rec.totalSlots}</span>
+            <span>Registered: {rec.registeredSlots}</span>
+            <span>Remaining: {rec.openSlots}</span>
+          </div>
+          {(rec.activeStage || rec.nextStage) && (
+            <div className="text-sm text-muted-foreground">
+              {rec.activeStage ? (
+                <span className={rec.activeStage.type === "admin" ? "text-blue-700" : "text-green-700"}>
+                  Active: {rec.activeStage.name} ({formatDateShort(rec.activeStage.startDate)} — {formatDateShort(rec.activeStage.endDate)})
+                </span>
+              ) : rec.nextStage ? (
+                <span>
+                  Next: {rec.nextStage.name} ({formatDateShort(rec.nextStage.startDate)} — {formatDateShort(rec.nextStage.endDate)})
+                </span>
+              ) : null}
+            </div>
+          )}
         </CardContent>
       </Card>
     );
