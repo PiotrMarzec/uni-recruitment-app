@@ -343,6 +343,12 @@ export async function POST(
   }
 
   if (data.step === 4) {
+    if (!activeStageInfo.isInitial) {
+      return NextResponse.json(
+        { error: "Study level cannot be changed during supplementary registration." },
+        { status: 403 }
+      );
+    }
     const chosenLevel = (data as { level: StudentLevel }).level;
     updates.level = chosenLevel;
 
@@ -370,6 +376,12 @@ export async function POST(
   }
 
   if (data.step === 5) {
+    if (!activeStageInfo.isInitial) {
+      return NextResponse.json(
+        { error: "Languages cannot be changed during supplementary registration." },
+        { status: 403 }
+      );
+    }
     updates.spokenLanguages = JSON.stringify((data as { spokenLanguages: string[] }).spokenLanguages);
   }
 

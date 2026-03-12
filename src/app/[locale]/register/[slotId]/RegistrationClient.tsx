@@ -315,12 +315,20 @@ export default function RegisterPage() {
   async function handleStep4(e: React.FormEvent) {
     e.preventDefault();
     if (!level) return;
+    if (slotInfo?.isSupplementaryActive) {
+      setCurrentStep(5);
+      return;
+    }
     const ok = await submitStep(4, { level });
     if (ok) setCurrentStep(5);
   }
 
   async function handleStep5(e: React.FormEvent) {
     e.preventDefault();
+    if (slotInfo?.isSupplementaryActive) {
+      setCurrentStep(6);
+      return;
+    }
     if (spokenLanguages.length === 0) {
       setStepError(t("errors.noLanguagesSelected"));
       return;
@@ -624,12 +632,19 @@ export default function RegisterPage() {
             {/* Step 4: Level */}
             {currentStep === 4 && (
               <form onSubmit={handleStep4} className="space-y-4">
+                {slotInfo.isSupplementaryActive && (
+                  <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">{t("step4.lockedNote")}</p>
+                )}
                 <div className="space-y-2">
                   {STUDENT_LEVELS.map((lvl) => (
                     <label
                       key={lvl}
-                      className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                        level === lvl ? "bg-primary/10 border-primary" : "hover:bg-muted/30"
+                      className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                        level === lvl
+                          ? "bg-primary/10 border-primary"
+                          : slotInfo.isSupplementaryActive
+                          ? "opacity-50"
+                          : "cursor-pointer hover:bg-muted/30"
                       }`}
                     >
                       <input
@@ -638,6 +653,7 @@ export default function RegisterPage() {
                         value={lvl}
                         checked={level === lvl}
                         onChange={() => setLevel(lvl)}
+                        disabled={slotInfo.isSupplementaryActive}
                       />
                       <span className="font-medium text-sm">{STUDENT_LEVEL_LABELS[lvl]}</span>
                     </label>
@@ -653,18 +669,26 @@ export default function RegisterPage() {
             {/* Step 5: Languages */}
             {currentStep === 5 && (
               <form onSubmit={handleStep5} className="space-y-4">
-                <p className="text-sm text-muted-foreground">{t("step5.desc")}</p>
+                {slotInfo.isSupplementaryActive
+                  ? <p className="text-xs text-muted-foreground bg-muted/30 p-2 rounded">{t("step5.lockedNote")}</p>
+                  : <p className="text-sm text-muted-foreground">{t("step5.desc")}</p>
+                }
                 <div className="grid grid-cols-2 gap-2">
                   {SUPPORTED_LANGUAGES.map((lang) => (
                     <label
                       key={lang}
-                      className={`flex items-center gap-2 p-3 border rounded-lg cursor-pointer transition-colors ${
-                        spokenLanguages.includes(lang) ? "bg-primary/10 border-primary" : "hover:bg-muted/30"
+                      className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
+                        spokenLanguages.includes(lang)
+                          ? "bg-primary/10 border-primary"
+                          : slotInfo.isSupplementaryActive
+                          ? "opacity-50"
+                          : "cursor-pointer hover:bg-muted/30"
                       }`}
                     >
                       <input
                         type="checkbox"
                         checked={spokenLanguages.includes(lang)}
+                        disabled={slotInfo.isSupplementaryActive}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSpokenLanguages((prev) => [...prev, lang]);

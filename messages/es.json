@@ -331,11 +331,13 @@
     "step4": {
       "title": "Nivel de estudios",
       "bachelor": "Grado",
-      "master": "Máster"
+      "master": "Máster",
+      "lockedNote": "El nivel de estudios no puede modificarse durante la inscripción complementaria."
     },
     "step5": {
       "title": "Idiomas hablados",
-      "desc": "Selecciona todos los idiomas que hablas a nivel comunicativo"
+      "desc": "Selecciona todos los idiomas que hablas a nivel comunicativo",
+      "lockedNote": "Los idiomas no pueden modificarse durante la inscripción complementaria."
     },
     "step6": {
       "title": "Preferencias de destinos",

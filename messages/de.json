@@ -331,11 +331,13 @@
     "step4": {
       "title": "Studienstufe",
       "bachelor": "Bachelor-Studium",
-      "master": "Master-Studium"
+      "master": "Master-Studium",
+      "lockedNote": "Die Studienstufe kann während der Nachregistrierung nicht geändert werden."
     },
     "step5": {
       "title": "Gesprochene Sprachen",
-      "desc": "Wählen Sie alle Sprachen aus, die Sie kommunikativ sprechen"
+      "desc": "Wählen Sie alle Sprachen aus, die Sie kommunikativ sprechen",
+      "lockedNote": "Sprachen können während der Nachregistrierung nicht geändert werden."
     },
     "step6": {
       "title": "Zielortpräferenzen",

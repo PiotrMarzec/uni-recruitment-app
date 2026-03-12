@@ -331,11 +331,13 @@
     "step4": {
       "title": "Study Level",
       "bachelor": "Bachelor's degree",
-      "master": "Master's degree"
+      "master": "Master's degree",
+      "lockedNote": "Study level cannot be changed during supplementary registration."
     },
     "step5": {
       "title": "Spoken Languages",
-      "desc": "Select all languages you speak at a communicative level"
+      "desc": "Select all languages you speak at a communicative level",
+      "lockedNote": "Languages cannot be changed during supplementary registration."
     },
     "step6": {
       "title": "Destination Preferences",

@@ -331,11 +331,13 @@
     "step4": {
       "title": "Niveau d'études",
       "bachelor": "Licence",
-      "master": "Master"
+      "master": "Master",
+      "lockedNote": "Le niveau d'études ne peut pas être modifié pendant l'inscription complémentaire."
     },
     "step5": {
       "title": "Langues parlées",
-      "desc": "Sélectionnez toutes les langues que vous parlez à un niveau communicatif"
+      "desc": "Sélectionnez toutes les langues que vous parlez à un niveau communicatif",
+      "lockedNote": "Les langues ne peuvent pas être modifiées pendant l'inscription complémentaire."
     },
     "step6": {
       "title": "Préférences de destinations",

@@ -331,11 +331,13 @@
     "step4": {
       "title": "Poziom studiów",
       "bachelor": "Studia licencjackie",
-      "master": "Studia magisterskie"
+      "master": "Studia magisterskie",
+      "lockedNote": "Poziom studiów nie może być zmieniony podczas rejestracji uzupełniającej."
     },
     "step5": {
       "title": "Języki",
-      "desc": "Zaznacz wszystkie języki, którymi posługujesz się na poziomie komunikatywnym"
+      "desc": "Zaznacz wszystkie języki, którymi posługujesz się na poziomie komunikatywnym",
+      "lockedNote": "Języki nie mogą być zmienione podczas rejestracji uzupełniającej."
     },
     "step6": {
       "title": "Preferencje destynacji",

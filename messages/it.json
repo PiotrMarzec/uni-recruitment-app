@@ -331,11 +331,13 @@
     "step4": {
       "title": "Livello di studi",
       "bachelor": "Laurea triennale",
-      "master": "Laurea magistrale"
+      "master": "Laurea magistrale",
+      "lockedNote": "Il livello di studi non può essere modificato durante la registrazione supplementare."
     },
     "step5": {
       "title": "Lingue parlate",
-      "desc": "Seleziona tutte le lingue che parli a livello comunicativo"
+      "desc": "Seleziona tutte le lingue che parli a livello comunicativo",
+      "lockedNote": "Le lingue non possono essere modificate durante la registrazione supplementare."
     },
     "step6": {
       "title": "Preferenze destinazioni",

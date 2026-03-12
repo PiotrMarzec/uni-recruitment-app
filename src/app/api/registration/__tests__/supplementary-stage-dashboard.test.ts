@@ -222,7 +222,8 @@ function queueGetSupplementaryRegisteredSlot() {
 }
 
 /**
- * POST /api/registration/[slotId]/step with {step: 4} when ONLY supplementary is active.
+ * POST /api/registration/[slotId]/step with {step: 6} when ONLY supplementary is active.
+ * (Steps 4 and 5 are locked during supplementary, so step 6 is used to verify the broadcast.)
  *
  * DB call order (step/route.ts):
  *  1. select slot
@@ -232,7 +233,7 @@ function queueGetSupplementaryRegisteredSlot() {
  *  5. update registration
  *  6. select updatedUser
  */
-function queueStep4Supplementary() {
+function queueStep6Supplementary() {
   dbQueue.push(
     // 1. slot
     [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
@@ -245,7 +246,6 @@ function queueStep4Supplementary() {
       id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID,
       registrationCompleted: true,
       registrationCompletedAt: new Date("2026-03-10T10:00:00.000Z"),
-      level: "bachelor",
     }],
     // 5. update registration → void
     [],
@@ -359,9 +359,9 @@ describe("Bug A – GET route does not broadcast slot_status_update to supplemen
 
 describe("Bug B – step route does not broadcast registration_step_update to supplementary stage dashboard", () => {
   it("should broadcast registration_step_update using the supplementary stageId so the recentRegistrations list updates", async () => {
-    queueStep4Supplementary();
+    queueStep6Supplementary();
 
-    const req = makeStepRequest(SLOT_ID, { step: 4, level: "master_1" });
+    const req = makeStepRequest(SLOT_ID, { step: 6, destinationPreferences: [ASSIGNED_DEST_ID] });
     await stepPOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
 
     // ✗ CURRENTLY FAILS:
