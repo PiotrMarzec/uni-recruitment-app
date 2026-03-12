@@ -304,7 +304,14 @@
       "fieldEnrollmentId": "Numer albumu",
       "fieldLevel": "Poziom studiów",
       "fieldLanguages": "Języki obce",
-      "fieldDestinations": "Preferencje uczelni"
+      "fieldDestinations": "Preferencje uczelni",
+      "registrationCompleted": "Rejestracja zakończona",
+      "assignedDestination": "Twoja przypisana uczelnia",
+      "yourScore": "Twój wynik",
+      "fieldAvgResult": "Śr. wynik",
+      "fieldActivities": "Aktywności",
+      "fieldLetters": "Listy",
+      "fieldScore": "Wynik łączny"
     },
     "steps": {
       "step1": "Kontakt i zgody",

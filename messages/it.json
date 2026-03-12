@@ -304,7 +304,14 @@
       "fieldEnrollmentId": "Numero di matricola",
       "fieldLevel": "Livello di studi",
       "fieldLanguages": "Lingue parlate",
-      "fieldDestinations": "Preferenze di destinazione"
+      "fieldDestinations": "Preferenze di destinazione",
+      "registrationCompleted": "Registrazione completata",
+      "assignedDestination": "La tua destinazione assegnata",
+      "yourScore": "Il tuo punteggio",
+      "fieldAvgResult": "Risultato medio",
+      "fieldActivities": "Attività",
+      "fieldLetters": "Lettere",
+      "fieldScore": "Punteggio totale"
     },
     "steps": {
       "step1": "Contatto e consenso",

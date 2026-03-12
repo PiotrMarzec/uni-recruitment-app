@@ -468,6 +468,7 @@ export default function RegisterPage() {
             registration={slotInfo.registration}
             student={slotInfo.student}
             destinationNames={slotInfo.destinationNames}
+            currentAssignment={slotInfo.currentAssignment}
             onProceed={() => setShowWelcome(false)}
           />
         </div>

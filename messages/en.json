@@ -304,7 +304,14 @@
       "fieldEnrollmentId": "Enrollment ID",
       "fieldLevel": "Study Level",
       "fieldLanguages": "Spoken Languages",
-      "fieldDestinations": "Destination Preferences"
+      "fieldDestinations": "Destination Preferences",
+      "registrationCompleted": "Registration Completed",
+      "assignedDestination": "Your Assigned Destination",
+      "yourScore": "Your Score",
+      "fieldAvgResult": "Avg Result",
+      "fieldActivities": "Activities",
+      "fieldLetters": "Letters",
+      "fieldScore": "Total Score"
     },
     "steps": {
       "step1": "Contact & Consent",

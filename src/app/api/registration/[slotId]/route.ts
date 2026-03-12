@@ -77,6 +77,21 @@ export async function GET(
 
   const isSupplementaryActive = !!supplementaryStage;
 
+  // Find active admin stage
+  const [activeAdminStage] = await db
+    .select({ id: stages.id })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, slot.recruitmentId),
+        eq(stages.type, "admin"),
+        eq(stages.status, "active")
+      )
+    )
+    .limit(1);
+
+  const isAdminStageActive = !!activeAdminStage;
+
   // Mark slot as registration_started when the link is opened.
   // Handles both first-time opens ("open") and re-edits of completed registrations ("registered").
   if ((isInitialActive || isSupplementaryActive) && (slot.status === "open" || slot.status === "registered")) {
@@ -131,11 +146,18 @@ export async function GET(
 
     if (regResult.length > 0) {
       // Exclude admin-only fields before returning to the student-facing client.
-      const { notes: _notes, averageResult: _avg, additionalActivities: _acts, recommendationLetters: _recs, ...regPublic } = regResult[0];
+      // Scoring fields (averageResult, additionalActivities, recommendationLetters) are
+      // only revealed when no admin stage is currently active.
+      const { notes: _notes, averageResult, additionalActivities, recommendationLetters, ...regPublic } = regResult[0];
       registration = {
         ...regPublic,
         spokenLanguages: JSON.parse(regResult[0].spokenLanguages || "[]"),
         destinationPreferences: JSON.parse(regResult[0].destinationPreferences || "[]"),
+        ...(!isAdminStageActive && {
+          averageResult,
+          additionalActivities,
+          recommendationLetters,
+        }),
       };
 
       const [studentResult] = await db
@@ -145,9 +167,8 @@ export async function GET(
         .limit(1);
       student = studentResult;
 
-      // If supplementary stage is active, look up the student's current assignment
-      // from the most recently completed admin stage.
-      if (isSupplementaryActive) {
+      // Look up the student's current assignment from the most recently completed admin stage.
+      {
         const [adminStage] = await db
           .select()
           .from(stages)

@@ -4,6 +4,8 @@ import { useTranslations, useLocale } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CheckCircle2 } from "lucide-react";
+import { computeScore } from "@/lib/algorithm/score";
 
 const STUDENT_LEVEL_LABELS: Record<string, string> = {
   bachelor_1: "Bachelor (1st year)",
@@ -35,9 +37,13 @@ interface WelcomeViewProps {
     destinationPreferences: string[];
     enrollmentId: string | null;
     registrationCompleted: boolean;
+    averageResult?: string | null;
+    additionalActivities?: number | null;
+    recommendationLetters?: number | null;
   } | null;
   student: { fullName: string; email: string } | null;
   destinationNames: string[];
+  currentAssignment?: { destinationId: string; destinationName: string } | null;
   onProceed: () => void;
 }
 
@@ -48,22 +54,40 @@ export default function WelcomeView({
   registration,
   student,
   destinationNames,
+  currentAssignment,
   onProceed,
 }: WelcomeViewProps) {
   const t = useTranslations("registration.welcome");
   const locale = useLocale();
 
   function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString(locale, {
+    return new Date(dateStr).toLocaleString(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     });
   }
 
   const pendingSupplementaryStages = allStages.filter(
     (s) => s.type === "supplementary" && s.status === "pending"
   );
+
+  const hasScores =
+    registration &&
+    (registration.averageResult != null ||
+      registration.additionalActivities != null ||
+      registration.recommendationLetters != null);
+
+  const computedScore = hasScores
+    ? computeScore(
+        registration!.averageResult ?? null,
+        registration!.additionalActivities ?? null,
+        registration!.recommendationLetters ?? null
+      )
+    : null;
 
   const hasExistingRegistration = !!registration && !!student;
 
@@ -80,6 +104,26 @@ export default function WelcomeView({
           )}
         </CardHeader>
       </Card>
+
+      {/* Registration completed banner */}
+      {registration?.registrationCompleted && (
+        <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-300 rounded-lg">
+          <CheckCircle2 className="text-green-600 shrink-0" size={22} />
+          <span className="text-sm font-medium text-green-800">{t("registrationCompleted")}</span>
+        </div>
+      )}
+
+      {/* Assigned destination */}
+      {currentAssignment && (
+        <Card className="border-green-300 bg-green-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-green-800">{t("assignedDestination")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm font-semibold text-green-900">{currentAssignment.destinationName}</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stages */}
       <Card>
@@ -164,6 +208,35 @@ export default function WelcomeView({
                   </ol>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Scoring details */}
+      {hasScores && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("yourScore")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">{t("fieldAvgResult")}:</span>
+                <span>{registration!.averageResult ?? 0}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">{t("fieldActivities")}:</span>
+                <span>{registration!.additionalActivities ?? 0}</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-muted-foreground w-36 shrink-0">{t("fieldLetters")}:</span>
+                <span>{registration!.recommendationLetters ?? 0}</span>
+              </div>
+              <div className="flex gap-2 pt-1 border-t mt-1">
+                <span className="text-muted-foreground w-36 shrink-0 font-medium">{t("fieldScore")}:</span>
+                <span className="font-semibold">{computedScore?.toFixed(1)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>

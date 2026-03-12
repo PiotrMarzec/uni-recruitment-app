@@ -304,7 +304,14 @@
       "fieldEnrollmentId": "Matrikelnummer",
       "fieldLevel": "Studiengrad",
       "fieldLanguages": "Gesprochene Sprachen",
-      "fieldDestinations": "Zielortpräferenzen"
+      "fieldDestinations": "Zielortpräferenzen",
+      "registrationCompleted": "Registrierung abgeschlossen",
+      "assignedDestination": "Ihr zugewiesenes Ziel",
+      "yourScore": "Ihr Ergebnis",
+      "fieldAvgResult": "Ø Ergebnis",
+      "fieldActivities": "Aktivitäten",
+      "fieldLetters": "Briefe",
+      "fieldScore": "Gesamtpunktzahl"
     },
     "steps": {
       "step1": "Kontakt & Einwilligung",

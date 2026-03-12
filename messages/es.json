@@ -304,7 +304,14 @@
       "fieldEnrollmentId": "Número de matrícula",
       "fieldLevel": "Nivel de estudios",
       "fieldLanguages": "Idiomas hablados",
-      "fieldDestinations": "Preferencias de destino"
+      "fieldDestinations": "Preferencias de destino",
+      "registrationCompleted": "Registro completado",
+      "assignedDestination": "Tu destino asignado",
+      "yourScore": "Tu resultado",
+      "fieldAvgResult": "Resultado medio",
+      "fieldActivities": "Actividades",
+      "fieldLetters": "Cartas",
+      "fieldScore": "Puntuación total"
     },
     "steps": {
       "step1": "Contacto y consentimiento",
