@@ -456,8 +456,8 @@ export default function RegisterPage() {
 
   if (showWelcome) {
     return (
-      <div className="min-h-screen bg-muted/10 py-8 px-4">
-        <div className="max-w-xl mx-auto">
+      <div className="min-h-screen bg-muted/10 py-8 px-4 flex flex-col">
+        <div className="max-w-xl mx-auto flex-1 w-full">
           <div className="mb-6 flex justify-end">
             <LanguageSwitcher onBeforeSwitch={saveStateForLocaleSwitch} />
           </div>
@@ -471,6 +471,15 @@ export default function RegisterPage() {
             currentAssignment={slotInfo.currentAssignment}
             onProceed={() => setShowWelcome(false)}
           />
+        </div>
+        <div className="mt-8 flex justify-center">
+          <div className="flex items-center gap-1.5">
+            <svg width="18" height="18" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="6" fill="#2d4a8e"/>
+              <text x="16" y="23" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="24" fill="white" textAnchor="middle">R</text>
+            </svg>
+            <span className="text-xs font-medium text-muted-foreground/60">Regie</span>
+          </div>
         </div>
       </div>
     );
@@ -487,8 +496,8 @@ export default function RegisterPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-muted/10 py-8 px-4">
-      <div className="max-w-xl mx-auto">
+    <div className="min-h-screen bg-muted/10 py-8 px-4 flex flex-col">
+      <div className="max-w-xl mx-auto flex-1 w-full">
         {/* Header */}
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold">{t("title")}</h1>
@@ -895,6 +904,15 @@ export default function RegisterPage() {
         {/* Language switcher */}
         <div className="mt-6 flex justify-center">
           <LanguageSwitcher onBeforeSwitch={saveStateForLocaleSwitch} />
+        </div>
+      </div>
+      <div className="mt-8 flex justify-center">
+        <div className="flex items-center gap-1.5">
+          <svg width="18" height="18" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="6" fill="#2d4a8e"/>
+            <text x="16" y="23" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="bold" fontSize="24" fill="white" textAnchor="middle">R</text>
+          </svg>
+          <span className="text-xs font-medium text-muted-foreground/60">Regie</span>
         </div>
       </div>
     </div>

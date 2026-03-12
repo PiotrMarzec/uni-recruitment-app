@@ -1,9 +1,37 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { db } from "@/db";
-import { slots, users } from "@/db/schema";
+import { slots, users, recruitments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { routing } from "@/i18n/routing";
 import RegistrationClient from "./RegistrationClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slotId: string }>;
+}): Promise<Metadata> {
+  const { slotId } = await params;
+  const [slot] = await db
+    .select({ recruitmentId: slots.recruitmentId })
+    .from(slots)
+    .where(eq(slots.id, slotId))
+    .limit(1);
+
+  if (slot?.recruitmentId) {
+    const [recruitment] = await db
+      .select({ name: recruitments.name })
+      .from(recruitments)
+      .where(eq(recruitments.id, slot.recruitmentId))
+      .limit(1);
+
+    if (recruitment?.name) {
+      return { title: recruitment.name };
+    }
+  }
+
+  return { title: { absolute: "Regie" } };
+}
 
 export default async function RegistrationPage({
   params,
