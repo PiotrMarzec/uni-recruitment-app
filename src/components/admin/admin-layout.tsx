@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
@@ -42,6 +43,16 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
   const t = useTranslations("admin");
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/admin/session").then((res) => {
+      if (res.status === 401) {
+        fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+          router.push("/admin/login");
+        });
+      }
+    });
+  }, [router]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
