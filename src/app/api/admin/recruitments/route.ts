@@ -7,6 +7,18 @@ import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { getStageName } from "@/lib/stage-name";
 import { z } from "zod";
 import { desc } from "drizzle-orm";
+import type { Stage } from "@/db/schema/stages";
+import type { RecruitmentStatus } from "@/db/schema/recruitments";
+
+function computeRecruitmentStatus(
+  archivedAt: Date | null,
+  recruitmentStages: Stage[]
+): RecruitmentStatus {
+  if (archivedAt) return "archived";
+  if (recruitmentStages.some((s) => s.status === "active")) return "current";
+  if (recruitmentStages.some((s) => s.status === "pending")) return "upcoming";
+  return "completed";
+}
 
 const stageSchema = z.object({
   description: z.string().default(""),
@@ -29,12 +41,24 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const allRecruitments = await db
-    .select()
-    .from(recruitments)
-    .orderBy(desc(recruitments.createdAt));
+  const [allRecruitments, allStages] = await Promise.all([
+    db.select().from(recruitments).orderBy(desc(recruitments.createdAt)),
+    db.select().from(stages),
+  ]);
 
-  return NextResponse.json(allRecruitments);
+  const stagesByRecruitment = new Map<string, Stage[]>();
+  for (const stage of allStages) {
+    const list = stagesByRecruitment.get(stage.recruitmentId) ?? [];
+    list.push(stage);
+    stagesByRecruitment.set(stage.recruitmentId, list);
+  }
+
+  return NextResponse.json(
+    allRecruitments.map((rec) => ({
+      ...rec,
+      status: computeRecruitmentStatus(rec.archivedAt, stagesByRecruitment.get(rec.id) ?? []),
+    }))
+  );
 }
 
 export async function POST(req: NextRequest) {

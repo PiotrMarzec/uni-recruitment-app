@@ -60,6 +60,9 @@ export const ACTIONS = {
   // Recruitment
   RECRUITMENT_CREATED: "recruitment.created",
   RECRUITMENT_UPDATED: "recruitment.updated",
+  RECRUITMENT_ARCHIVED: "recruitment.archived",
+  RECRUITMENT_UNARCHIVED: "recruitment.unarchived",
+  RECRUITMENT_DELETED: "recruitment.deleted",
   // Stage
   STAGE_CREATED: "stage.created",
   STAGE_UPDATED: "stage.updated",
