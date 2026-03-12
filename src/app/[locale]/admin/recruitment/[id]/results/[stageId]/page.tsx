@@ -43,6 +43,7 @@ export default function AssignmentResultsPage() {
   const tr = useTranslations("admin.recruitment");
 
   const [stageName, setStageName] = useState("");
+  const [recruitmentName, setRecruitmentName] = useState("");
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
@@ -64,6 +65,7 @@ export default function AssignmentResultsPage() {
       if (appsRes.ok) {
         const data = await appsRes.json();
         setStageName(data.stage ? getStageName(data.stage) : "");
+        setRecruitmentName(data.recruitmentName ?? "");
         setApplications(data.applications ?? []);
       }
       if (resultsRes.ok) {
@@ -114,7 +116,7 @@ export default function AssignmentResultsPage() {
     <AdminLayout
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
-        { label: tr("breadcrumb"), href: `/admin/recruitment/${id}` },
+        { label: recruitmentName || tr("breadcrumb"), href: `/admin/recruitment/${id}` },
         { label: t("title") },
       ]}
     >

@@ -17,6 +17,7 @@ interface DashboardData {
     order: number;
     endDate: string;
   };
+  recruitmentName: string | null;
   stats: {
     totalSlots: number;
     openSlots: number;
@@ -129,7 +130,7 @@ export default function StageDashboardPage() {
       fullWidth
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
-        { label: tr("breadcrumb"), href: `/admin/recruitment/${id}` },
+        { label: data.recruitmentName || tr("breadcrumb"), href: `/admin/recruitment/${id}` },
         { label: t("liveDashboard") },
       ]}
     >

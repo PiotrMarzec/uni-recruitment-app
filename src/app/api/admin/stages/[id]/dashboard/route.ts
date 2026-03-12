@@ -7,6 +7,7 @@ import {
   users,
   slots,
   destinations,
+  recruitments,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { getTeacherPath } from "@/lib/auth/hmac";
@@ -31,6 +32,12 @@ export async function GET(
   if (!stage) {
     return NextResponse.json({ error: "Stage not found" }, { status: 404 });
   }
+
+  const [recruitment] = await db
+    .select({ name: recruitments.name })
+    .from(recruitments)
+    .where(eq(recruitments.id, stage.recruitmentId))
+    .limit(1);
 
   // Count total and open slots for this recruitment.
   // Join with registrations so "registered" reflects completed registrations
@@ -121,6 +128,7 @@ export async function GET(
 
   return NextResponse.json({
     stage,
+    recruitmentName: recruitment?.name ?? null,
     stats: {
       totalSlots,
       openSlots,

@@ -33,7 +33,7 @@ export async function GET(
   }
 
   const [recruitment] = await db
-    .select({ maxDestinationChoices: recruitments.maxDestinationChoices })
+    .select({ maxDestinationChoices: recruitments.maxDestinationChoices, name: recruitments.name })
     .from(recruitments)
     .where(eq(recruitments.id, stage.recruitmentId))
     .limit(1);
@@ -224,6 +224,7 @@ export async function GET(
     incompleteApplications: incompleteRows.map(mapRow),
     destinations: allDestinations,
     maxDestinationChoices: recruitment?.maxDestinationChoices ?? 3,
+    recruitmentName: recruitment?.name ?? null,
     hasAssignments: existingAssignments.length > 0,
     hasNextSupplementary: !!nextSupplementary,
   });
