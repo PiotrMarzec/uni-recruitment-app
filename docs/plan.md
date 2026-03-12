@@ -23,6 +23,7 @@ A web application that supports university recruitment for students wanting to p
 - Manages recruitments, stages, slots, and destinations
 - Approves assignment results
 - Can trigger supplementary stages
+- Can be disabled (access revoked) by another admin; disabled admins cannot log in
 
 ### 2.2 Student
 - Registers via a unique slot link (QR code or URL)
@@ -59,6 +60,15 @@ A web application that supports university recruitment for students wanting to p
 | end_date | datetime | |
 | max_destination_choices | integer | Max destinations a student can rank (≥1) |
 | eligible_levels | array of enum | Subset of all student levels allowed to register |
+| archived_at | datetime, nullable | Set when admin archives the recruitment; null = not archived |
+
+**Recruitment status** is derived (not stored), computed from dates and archived_at:
+- `upcoming` — start_date is in the future
+- `current` — between start_date and end_date (or no end_date yet passed)
+- `completed` — end_date has passed and not archived
+- `archived` — archived_at is set
+
+Only archived recruitments can be deleted (hard delete with cascade).
 
 ### 3.2 Stage
 | Field | Type | Notes |
@@ -123,6 +133,7 @@ A web application that supports university recruitment for students wanting to p
 | average_result | float, nullable | 0.0–6.0, one decimal place (entered by teacher) |
 | additional_activities | integer, nullable | 0–4 (entered by teacher) |
 | recommendation_letters | integer, nullable | 0–10 (entered by teacher) |
+| notes | text, nullable | Internal admin notes on this registration (max 5000 chars) |
 | registration_completed | boolean | Whether the student finished all steps |
 | registration_completed_at | datetime, nullable | Timestamp of completion (used as tiebreaker) |
 
@@ -156,6 +167,31 @@ A web application that supports university recruitment for students wanting to p
 | token | string | Unique secure token sent in supplementary email |
 | expires_at | datetime | Token expiry (tied to supplementary stage end date) |
 
+### 3.9 Admin
+| Field | Type | Notes |
+|---|---|---|
+| user_id | UUID | PK + FK → User (cascade delete) |
+| first_login_at | datetime, nullable | Set on first successful OTP login |
+| disabled_at | datetime, nullable | Set when another admin disables this account; null = active |
+
+A disabled admin's session is invalidated on next request (session check reads `disabled_at`).
+
+### 3.10 Email Queue
+| Field | Type | Notes |
+|---|---|---|
+| id | UUID | Primary key |
+| from | string | Sender address |
+| to | string | Recipient address |
+| subject | string | Email subject line |
+| html | string | Full HTML body |
+| status | enum | `pending`, `processing`, `sent`, `failed` |
+| attempts | integer | Number of delivery attempts made |
+| error | string, nullable | Last error message on failure |
+| created_at | datetime | When the email was enqueued |
+| processed_at | datetime, nullable | When delivery was last attempted |
+
+All outbound emails are written to this table first and delivered asynchronously by a background worker (retries on failure). The admin panel has a read-only email log view backed by this table.
+
 ---
 
 ## 4. Key Business Rules
@@ -184,14 +220,17 @@ Run when an admin manually triggers assignment for an admin stage:
 1. Lock slots for students who already have non-cancelled assignments (supplementary re-run only)
 2. Build list of eligible students (completed registrations only)
 3. Rank all students by score descending
-4. **Tiebreaker:** Earlier `registration_completed_at` wins
-5. For each student (highest score first):
+4. **Tiebreaker (automatic):** Among equal-score students, earlier `registration_completed_at` wins
+5. **Tiebreaker (manual):** If two equal-score students compete for the last slot at a destination where only one can be assigned, the algorithm detects this as a **tie** and stops. It returns a `TieInfo` payload to the admin UI without saving any results. The admin reviews both students' full data (scores, level, languages, notes, outcomes for each scenario) and picks a winner. The algorithm then re-runs with the designated winner prioritised, skipping tie detection for that pair.
+6. For each student (highest score first):
    a. Try to assign their 1st preference destination
    b. Check if slots remain for their level; if not, check "any" pool
    c. If 1st preference full, try 2nd preference, and so on
    d. If no preference can be satisfied, student is unassigned (destination_id = null)
-6. Present results to admin for manual review and approval
-7. Admin approval sends emails automatically
+7. Present results to admin for manual review and approval
+8. Admin approval sends emails automatically
+
+**Tie detection detail:** During step 6, before consuming a slot for student A, the algorithm simulates consumption and checks whether any subsequent student B with the **same score** also wants that destination but would be left without a slot after A takes it. If so, a `TieInfo` is returned containing: both students' full profiles, the contested destination, and the downstream outcome for each student under each scenario (what their next eligible destination would be if they lose the contested spot). No results are saved until the tie is resolved.
 
 ### 4.5 Supplementary Round Assignment
 - All students who did NOT cancel retain their existing assignments (locked, excluded from re-run)
@@ -278,9 +317,12 @@ Run when an admin manually triggers assignment for an admin stage:
 - CRUD for destinations within a recruitment (name, description, slot counts by level, required languages)
 
 **Admin Management**
-- Invite new admins by email from the dashboard
+- Dedicated `/admin/admins` page lists all admins with status (active / disabled), first login date
+- Invite new admins by email from the admins page or dashboard
 - Invited admin receives email with admin panel link; logs in via OTP
 - Existing user with admin row = admin (no separate password)
+- Admins can be disabled (access revoked) by any active admin; disabled admins are blocked on their next request
+- `GET /api/admin/session` — lightweight session check endpoint used by the layout to detect session invalidation
 
 **Bulk PDF Generation**
 - Per recruitment: generate a PDF with 2 pages per slot
@@ -306,6 +348,22 @@ Run when an admin manually triggers assignment for an admin stage:
 - Initiate supplementary stages
 - View historical assignment results
 
+**Recruitment Management (additions)**
+- Recruitments can be archived / unarchived; archived recruitments are visually separated on the dashboard
+- Hard delete is available only for archived recruitments; cascades to all related stages, slots, destinations, and registrations (and orphaned users who have no other registrations are also cleaned up)
+- Dashboard shows recruitment status badges: `upcoming`, `current`, `completed`, `archived`
+
+**Admin Notes**
+- Admins can attach free-text notes (max 5000 chars) to any student registration from the applications view
+- Notes are stored in the `notes` column of the registrations table
+- Notes are visible in the applications view and are included in the assignment algorithm context (surfaced in tie-resolution UI)
+- Notes are audited via the standard registration update audit event
+
+**Email Log**
+- `/admin/email-log` page shows all outbound emails with status, recipient, subject, timestamps
+- Filterable by status (`pending`, `processing`, `sent`, `failed`) and searchable by recipient or subject
+- Backed by the `email_queue` table; all emails are enqueued before delivery
+
 **Audit Log**
 - View full audit trail with filters (recruitment, actor type, action type, date range)
 - Searchable by email or resource ID
@@ -314,7 +372,9 @@ Run when an admin manually triggers assignment for an admin stage:
 
 ### 7.2 Student Registration Flow (Single Page)
 
-A single-page, multi-step wizard accessible via the unique slot link:
+A single-page, multi-step wizard accessible via the unique slot link. The page first displays a **welcome screen** before the student begins entering data.
+
+**Welcome screen:** Shown before step 1. Displays recruitment details (name, description, dates), slot number, and a "Start Registration" button. If the slot is already registered and the initial stage is still active, the welcome screen offers an "Edit Registration" option instead.
 
 | Step | Fields | Notes |
 |---|---|---|
@@ -334,6 +394,8 @@ A single-page, multi-step wizard accessible via the unique slot link:
 - Student can revisit the link and update any data until initial stage end date
 - Slot status transitions: `open` → `registration_started` on step 1, `registration_started` → `registered` on completion
 
+**Supplementary registration lock:** When a student accesses their registration via a supplementary token link, steps 4 (level) and 5 (spoken languages) are read-only and cannot be changed. Only destination preferences can be updated.
+
 ### 7.3 Teacher Management View
 
 Accessed via teacher management link (no login required, secured by HMAC signature).
@@ -344,7 +406,7 @@ Accessed via teacher management link (no login required, secured by HMAC signatu
 - Score fields (average result, additional activities, recommendation letters)
 
 **Teacher can edit:**
-- Any student-entered field
+- Any student-entered field, including spoken languages
 - Average result (float, 0.0–6.0, one decimal)
 - Additional activities count (integer, 0–4)
 - Recommendation letters count (integer, 0–10)
@@ -367,13 +429,15 @@ When a supplementary stage is active, students receive an email with a secure to
 |---|---|---|
 | `/` | Public | Landing page |
 | `/admin/login` | Public | Admin login: email → OTP verification |
-| `/admin/dashboard` | Admin | List of all recruitments; invite admin button |
+| `/admin/dashboard` | Admin | List of all recruitments with status badges; invite admin button |
+| `/admin/admins` | Admin | List all admins; disable admins; invite new admin |
 | `/admin/recruitment/:id` | Admin | Recruitment detail: stages, slots, destinations |
 | `/admin/recruitment/:id/stage/:stageId` | Admin | Live stage dashboard (real-time WebSocket updates) |
-| `/admin/recruitment/:id/applications/:stageId` | Admin | All applications with scores; run assignment |
+| `/admin/recruitment/:id/applications/:stageId` | Admin | All applications with scores and notes; run assignment (with tie resolution UI) |
 | `/admin/recruitment/:id/results/:stageId` | Admin | Assignment results review and approval |
 | `/admin/audit` | Admin | Global audit log with filtering |
-| `/register/:slotId` | Public | Student 6-step registration wizard |
+| `/admin/email-log` | Admin | Outbound email log (status, recipient, subject, timestamps) |
+| `/register/:slotId` | Public | Student registration wizard (welcome screen + 6 steps) |
 | `/manage/:slotId/:signature` | Public | Teacher management view (HMAC-protected) |
 | `/supplementary/:token` | Public (token-gated) | Supplementary stage: cancel assignment / update preferences |
 
@@ -386,6 +450,7 @@ When a supplementary stage is active, students receive an email with a secure to
 | Stage transition: initial → admin | Initial stage `end_date` passes | Mark initial stage completed; auto-activate next admin stage; send initial-stage-closed emails to enrolled students |
 | Stage transition: supplementary → admin | Supplementary stage `end_date` passes | Mark supplementary stage completed; auto-activate next admin stage |
 | OTP cleanup | Periodic | Remove expired one-time codes |
+| Email worker | Continuous (background) | Polls `email_queue` for `pending` entries; delivers via SMTP/Resend; updates status to `sent` or `failed`; retries on failure |
 
 ---
 
@@ -439,9 +504,16 @@ When a supplementary stage is active, students receive an email with a secure to
 ### Admin — Other
 | Endpoint | Method | Purpose |
 |---|---|---|
+| `/api/admin/admins` | GET | List all admins with status |
 | `/api/admin/admins` | POST | Invite new admin; send invite email |
+| `/api/admin/admins/[id]` | PATCH | Disable an admin account (sets `disabled_at`) |
+| `/api/admin/session` | GET | Check current admin session (used for invalidation detection) |
 | `/api/admin/registrations/[id]` | GET | Get registration details |
+| `/api/admin/registrations/[id]` | PATCH | Update registration fields including `notes` |
+| `/api/admin/recruitments/[id]/archive` | POST | Archive or unarchive a recruitment (`{ action: "archive" \| "unarchive" }`) |
+| `/api/admin/recruitments/[id]` | DELETE | Hard-delete an archived recruitment (cascades) |
 | `/api/admin/audit` | GET | Audit log with filtering |
+| `/api/admin/email-queue` | GET | Email log with status/search filtering |
 | `/api/admin/supplementary/start` | POST | Activate supplementary stage; generate tokens; email all students |
 
 ### Supplementary
@@ -489,14 +561,14 @@ Every meaningful action in the system is recorded in an append-only audit log. E
 ### 12.3 Tracked Actions
 
 **Admin actions:**
-- `recruitment.created`, `recruitment.updated`
+- `recruitment.created`, `recruitment.updated`, `recruitment.archived`, `recruitment.unarchived`, `recruitment.deleted`
 - `stage.created`, `stage.updated`, `stage.completed`, `stage.transitioned`
 - `slot.added`, `slot.removed`
 - `destination.created`, `destination.updated`, `destination.removed`
 - `assignment.computed`, `assignment.approved`
 - `supplementary_stage.started`
 - `bulk_pdf.generated`
-- `admin.invited`
+- `admin.invited`, `admin.disabled`
 
 **Student actions:**
 - `registration.step_completed` (step number in details)
@@ -527,9 +599,11 @@ Every meaningful action in the system is recorded in an append-only audit log. E
 | OTP (6-char, 10 min, single-use) | Admin login; student identity verification |
 | HMAC-signed teacher links | Teacher management access without a login session |
 | iron-session cookies (HttpOnly) | Admin and student sessions stored separately to avoid cross-role collision |
+| Admin session invalidation | `disabled_at` checked on each request; disabled admins are immediately locked out even with a valid cookie |
 | Zod input validation | All API routes |
 | Audit trail | All actor-triggered actions with IP address |
 | Email consent capture | Privacy and email marketing opt-in per registration |
+| Recruitment hard-delete guard | Only archived recruitments may be deleted; prevents accidental data loss |
 
 ---
 
