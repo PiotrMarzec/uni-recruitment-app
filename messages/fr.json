@@ -135,7 +135,10 @@
         "registrationLink": "Lien d'inscription",
         "teacherLink": "Lien enseignant",
         "slotHeader": "Place #",
-        "confirmRemoveSlot": "Supprimer cet emplacement ?"
+        "confirmRemoveSlot": "Supprimer cet emplacement ?",
+        "totalSlots": "Total des créneaux",
+        "registeredSlots": "Créneaux réservés",
+        "remainingSlots": "Créneaux restants"
       },
       "destinations": {
         "title": "Destinations",

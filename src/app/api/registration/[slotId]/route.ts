@@ -153,11 +153,11 @@ export async function GET(
         ...regPublic,
         spokenLanguages: JSON.parse(regResult[0].spokenLanguages || "[]"),
         destinationPreferences: JSON.parse(regResult[0].destinationPreferences || "[]"),
-        ...(!isAdminStageActive && {
+        ...(!isAdminStageActive ? {
           averageResult,
           additionalActivities,
           recommendationLetters,
-        }),
+        } : {}),
       };
 
       const [studentResult] = await db

@@ -135,7 +135,10 @@
         "registrationLink": "Enlace de registro",
         "teacherLink": "Enlace del profesor",
         "slotHeader": "Plaza #",
-        "confirmRemoveSlot": "¿Eliminar esta plaza?"
+        "confirmRemoveSlot": "¿Eliminar esta plaza?",
+        "totalSlots": "Total de plazas",
+        "registeredSlots": "Plazas registradas",
+        "remainingSlots": "Plazas disponibles"
       },
       "destinations": {
         "title": "Destinos",
