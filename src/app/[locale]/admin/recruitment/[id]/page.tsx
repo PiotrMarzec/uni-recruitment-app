@@ -71,6 +71,58 @@ interface EligibleLevelsData {
   levelStats: Record<StudentLevel, LevelStat>;
 }
 
+function nextBusinessDay(date: Date): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + 1);
+  while (result.getDay() === 0 || result.getDay() === 6) {
+    result.setDate(result.getDate() + 1);
+  }
+  return result;
+}
+
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
+
+function toDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getDefaultStageDates() {
+  const now = new Date();
+
+  const suppStart = nextBusinessDay(now);
+  suppStart.setHours(9, 0, 0, 0);
+
+  const suppEnd = addBusinessDays(suppStart, 1);
+  suppEnd.setHours(18, 0, 0, 0);
+
+  const adminStart = nextBusinessDay(suppEnd);
+  adminStart.setHours(9, 0, 0, 0);
+
+  const adminEnd = new Date(adminStart);
+  adminEnd.setHours(16, 0, 0, 0);
+
+  return {
+    supplementaryStage: {
+      startDate: toDatetimeLocal(suppStart),
+      endDate: toDatetimeLocal(suppEnd),
+    },
+    adminStage: {
+      startDate: toDatetimeLocal(adminStart),
+      endDate: toDatetimeLocal(adminEnd),
+    },
+  };
+}
+
 const stageStatusColors: Record<string, "default" | "success" | "warning" | "secondary" | "outline"> = {
   pending: "secondary",
   active: "success",
@@ -133,11 +185,10 @@ export default function RecruitmentDetailPage() {
 
   // Add stage form
   const [stageDialogOpen, setStageDialogOpen] = useState(false);
-  const [stageForm, setStageForm] = useState({
+  const [stageForm, setStageForm] = useState(() => ({
     description: "",
-    supplementaryStage: { startDate: "", endDate: "" },
-    adminStage: { startDate: "", endDate: "" },
-  });
+    ...getDefaultStageDates(),
+  }));
   const [savingStage, setSavingStage] = useState(false);
 
   useEffect(() => {
@@ -147,6 +198,12 @@ export default function RecruitmentDetailPage() {
       setStageDialogOpen(true);
     }
   }, [id]);
+
+  useEffect(() => {
+    if (stageDialogOpen) {
+      setStageForm((f) => ({ ...f, ...getDefaultStageDates() }));
+    }
+  }, [stageDialogOpen]);
 
   useEffect(() => {
     if (activeTab === "requirements") {
@@ -290,11 +347,7 @@ export default function RecruitmentDetailPage() {
       });
       if (res.ok) {
         setStageDialogOpen(false);
-        setStageForm({
-          description: "",
-          supplementaryStage: { startDate: "", endDate: "" },
-          adminStage: { startDate: "", endDate: "" },
-        });
+        setStageForm({ description: "", ...getDefaultStageDates() });
         await fetchRecruitment();
       }
     } finally {
