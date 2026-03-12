@@ -50,6 +50,13 @@
       "when": 1773300000000,
       "tag": "0006_registration_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773400000000,
+      "tag": "0007_recruitment_archived",
+      "breakpoints": true
     }
   ]
 }
