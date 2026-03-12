@@ -4,12 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AdminLayout } from "@/components/admin/admin-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
-import { formatDate, formatRelativeDate } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
 import { getStageName } from "@/lib/stage-name";
+import { RegistrationsGrid } from "@/components/admin/registrations-grid";
 
 interface DashboardData {
   stage: {
@@ -25,18 +23,6 @@ interface DashboardData {
     startedSlots: number;
     registeredSlots: number;
   };
-  recentRegistrations: Array<{
-    slotId: string;
-    slotNumber: number;
-    studentName: string | null;
-    studentEmail: string | null;
-    completedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-    registrationCompleted: boolean | null;
-    teacherManagementLink: string;
-    assignedDestination?: string | null;
-  }>;
 }
 
 export default function StageDashboardPage() {
@@ -50,7 +36,6 @@ export default function StageDashboardPage() {
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [connected, setConnected] = useState(false);
-  const [, setTick] = useState(0);
   const wsRef = useRef<WebSocket | null>(null);
   const mountedRef = useRef(true);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,13 +44,11 @@ export default function StageDashboardPage() {
     mountedRef.current = true;
     fetchDashboard();
     connectWebSocket();
-    const ticker = setInterval(() => setTick((t) => t + 1), 30000);
 
     return () => {
       mountedRef.current = false;
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
       wsRef.current?.close();
-      clearInterval(ticker);
     };
   }, [stageId]);
 
@@ -93,26 +76,6 @@ export default function StageDashboardPage() {
         if (message.type === "slot_status_update" && message.stageId === stageId) {
           setData((prev) => {
             if (!prev) return prev;
-            let recentRegistrations = prev.recentRegistrations;
-            if (message.startedSlot) {
-              const { slotId, slotNumber, createdAt, teacherManagementLink } = message.startedSlot;
-              const exists = recentRegistrations.some((r) => r.slotId === slotId);
-              if (!exists) {
-                const newEntry = {
-                  slotId,
-                  slotNumber,
-                  studentName: null,
-                  studentEmail: null,
-                  completedAt: null,
-                  createdAt,
-                  updatedAt: createdAt,
-                  registrationCompleted: null,
-                  teacherManagementLink,
-                  assignedDestination: null,
-                };
-                recentRegistrations = [newEntry, ...recentRegistrations].slice(0, 50);
-              }
-            }
             return {
               ...prev,
               stats: {
@@ -120,7 +83,6 @@ export default function StageDashboardPage() {
                 openSlots: message.openSlotsCount,
                 startedSlots: message.startedSlotsCount,
               },
-              recentRegistrations,
             };
           });
         }
@@ -137,22 +99,6 @@ export default function StageDashboardPage() {
                 registeredSlots: message.registeredCount ?? prev.stats.registeredSlots,
               },
             };
-          });
-        }
-
-        if (message.type === "registration_step_update" && message.stageId === stageId) {
-          setData((prev) => {
-            if (!prev) return prev;
-            const incoming = message.registration;
-            const idx = prev.recentRegistrations.findIndex((r) => r.slotId === incoming.slotId);
-            const updated = idx >= 0
-              // Merge to preserve createdAt from the existing entry (incoming lacks it)
-              ? prev.recentRegistrations.map((r, i) => (i === idx ? { ...r, ...incoming } : r))
-              : [{ ...incoming, createdAt: incoming.updatedAt }, ...prev.recentRegistrations];
-            const sorted = [...updated].sort(
-              (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            );
-            return { ...prev, recentRegistrations: sorted.slice(0, 50) };
           });
         }
       } catch {
@@ -180,6 +126,7 @@ export default function StageDashboardPage() {
 
   return (
     <AdminLayout
+      fullWidth
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
         { label: tr("breadcrumb"), href: `/admin/recruitment/${id}` },
@@ -233,78 +180,16 @@ export default function StageDashboardPage() {
         <span>{formatDate(data.stage.endDate)}</span>
       </div>
 
-      {/* Recent registrations */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("recentRegistrations")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {data.recentRegistrations.length === 0 ? (
-            <p className="text-muted-foreground text-sm">{t("noRegistrations")}</p>
-          ) : (
-            <div>
-              {/* Column headers */}
-              <div className="grid grid-cols-[1fr_120px_120px_80px] gap-4 px-1 pb-2 border-b text-xs font-medium text-muted-foreground/60 uppercase tracking-wide">
-                <span>{t("student")}</span>
-                <span>{t("created")}</span>
-                <span>{t("updated")}</span>
-                <span></span>
-              </div>
-              {data.recentRegistrations.map((reg) => (
-                <div
-                  key={reg.slotId}
-                  className="grid grid-cols-[1fr_120px_120px_80px] gap-4 items-center px-1 py-2 border-b last:border-0"
-                >
-                  {/* Student info */}
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${reg.registrationCompleted ? "bg-green-500" : "bg-yellow-400"}`} />
-                    <div className="min-w-0 truncate">
-                      <span className="font-medium">{reg.studentName ?? <span className="text-muted-foreground italic">{t("unknown")}</span>}</span>
-                      <span className="text-muted-foreground text-sm ml-2">
-                        — {tr("slots.slotNumber", { number: reg.slotNumber })}
-                      </span>
-                      {reg.assignedDestination && (
-                        <span className="text-blue-600 text-sm ml-2">
-                          → {reg.assignedDestination}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Created */}
-                  <span
-                    className="text-xs text-muted-foreground cursor-default underline decoration-dotted decoration-muted-foreground/40 whitespace-nowrap"
-                    title={formatDate(reg.createdAt)}
-                  >
-                    {formatRelativeDate(reg.createdAt)}
-                  </span>
-                  {/* Updated */}
-                  <span
-                    className="text-xs text-muted-foreground cursor-default underline decoration-dotted decoration-muted-foreground/40 whitespace-nowrap"
-                    title={formatDate(reg.updatedAt)}
-                  >
-                    {formatRelativeDate(reg.updatedAt)}
-                  </span>
-                  {/* Actions */}
-                  <div>
-                    {reg.registrationCompleted === true && (
-                      <Button asChild size="sm" variant="outline" className="h-7 px-2 text-xs gap-1">
-                        <a
-                          href={reg.teacherManagementLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          {t("manage")}
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Registrations */}
+      <RegistrationsGrid
+        recruitmentId={id}
+        stageId={stageId}
+        defaultSortKey="status"
+        defaultSortDir="asc"
+        defaultStatusFilter="all"
+        defaultSearchQuery=""
+        defaultShowStarted={true}
+      />
     </AdminLayout>
   );
 }

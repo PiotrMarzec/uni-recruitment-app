@@ -38,9 +38,10 @@ function LanguageSwitcher() {
 interface AdminLayoutProps {
   children: React.ReactNode;
   breadcrumbs?: Array<{ label: string; href?: string }>;
+  fullWidth?: boolean;
 }
 
-export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
+export function AdminLayout({ children, breadcrumbs, fullWidth }: AdminLayoutProps) {
   const t = useTranslations("admin");
   const router = useRouter();
 
@@ -106,7 +107,7 @@ export function AdminLayout({ children, breadcrumbs }: AdminLayoutProps) {
       )}
 
       {/* Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={`${fullWidth ? "w-full" : "max-w-7xl mx-auto"} px-4 sm:px-6 lg:px-8 py-8`}>
         {children}
       </main>
     </div>
