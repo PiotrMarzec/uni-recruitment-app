@@ -46,6 +46,58 @@ interface Recruitment {
   nextStage: StageInfo | null;
 }
 
+function nextBusinessDay(date: Date): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + 1);
+  while (result.getDay() === 0 || result.getDay() === 6) {
+    result.setDate(result.getDate() + 1);
+  }
+  return result;
+}
+
+function addBusinessDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const day = result.getDay();
+    if (day !== 0 && day !== 6) added++;
+  }
+  return result;
+}
+
+function toDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getDefaultStageDates() {
+  const now = new Date();
+
+  const initialStart = nextBusinessDay(now);
+  initialStart.setHours(9, 0, 0, 0);
+
+  const initialEnd = addBusinessDays(initialStart, 5);
+  initialEnd.setHours(16, 0, 0, 0);
+
+  const adminStart = nextBusinessDay(initialEnd);
+  adminStart.setHours(9, 0, 0, 0);
+
+  const adminEnd = addBusinessDays(adminStart, 2);
+  adminEnd.setHours(14, 0, 0, 0);
+
+  return {
+    initialStage: {
+      startDate: toDatetimeLocal(initialStart),
+      endDate: toDatetimeLocal(initialEnd),
+    },
+    adminStage: {
+      startDate: toDatetimeLocal(adminStart),
+      endDate: toDatetimeLocal(adminEnd),
+    },
+  };
+}
+
 const STATUS_LABELS: Record<RecruitmentStatus, string> = {
   current: "Current",
   upcoming: "Upcoming",
@@ -78,20 +130,27 @@ export default function AdminDashboardPage() {
   const [archivedOpen, setArchivedOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Recruitment | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [form, setForm] = useState({
+  const defaultEligibleLevels: StudentLevel[] = ["bachelor_2", "master_1"];
+
+  const [form, setForm] = useState(() => ({
     name: "",
     description: "",
     maxDestinationChoices: 3,
-    eligibleLevels: [...STUDENT_LEVELS] as StudentLevel[],
-    initialStage: { startDate: "", endDate: "" },
-    adminStage: { startDate: "", endDate: "" },
-  });
+    eligibleLevels: defaultEligibleLevels,
+    ...getDefaultStageDates(),
+  }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     fetchRecruitments();
   }, []);
+
+  useEffect(() => {
+    if (createOpen) {
+      setForm((f) => ({ ...f, ...getDefaultStageDates() }));
+    }
+  }, [createOpen]);
 
   async function fetchRecruitments() {
     setLoading(true);
@@ -137,7 +196,7 @@ export default function AdminDashboardPage() {
       }
 
       setCreateOpen(false);
-      setForm({ name: "", description: "", maxDestinationChoices: 3, eligibleLevels: [...STUDENT_LEVELS], initialStage: { startDate: "", endDate: "" }, adminStage: { startDate: "", endDate: "" } });
+      setForm({ name: "", description: "", maxDestinationChoices: 3, eligibleLevels: defaultEligibleLevels, ...getDefaultStageDates() });
       await fetchRecruitments();
     } finally {
       setSaving(false);

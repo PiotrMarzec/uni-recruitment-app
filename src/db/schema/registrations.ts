@@ -28,7 +28,6 @@ export const STUDENT_LEVELS = [
   "bachelor_3",
   "master_1",
   "master_2",
-  "master_3",
 ] as const;
 
 export type StudentLevel = (typeof STUDENT_LEVELS)[number];
@@ -37,9 +36,8 @@ export const STUDENT_LEVEL_LABELS: Record<StudentLevel, string> = {
   bachelor_1: "Bachelor (1st year)",
   bachelor_2: "Bachelor (2nd year)",
   bachelor_3: "Bachelor (3rd year)",
-  master_1: "Master (1st year)",
-  master_2: "Master (2nd year)",
-  master_3: "Master (3rd year)",
+  master_1: "Masters (1st year)",
+  master_2: "Masters (2nd year)",
 };
 
 export const registrations = pgTable("registrations", {
