@@ -44,6 +44,7 @@ const BASE_APP: ApplicationRowUpdateEvent["application"] = {
   additionalActivities: 2,
   recommendationLetters: 1,
   score: 16.5,
+  notes: null,
   assignedDestinationId: "dest-aaa",
   assignedDestinationName: "Madrid",
   registrationCompleted: true,

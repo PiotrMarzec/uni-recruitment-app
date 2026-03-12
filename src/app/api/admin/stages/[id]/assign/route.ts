@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { stages, stageEnrollments, registrations, slots, destinations, assignmentResults } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { runAssignmentAlgorithm } from "@/lib/algorithm/assignment";
+import { runAssignmentAlgorithm, type TieInfo } from "@/lib/algorithm/assignment";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { broadcastApplicationAssignmentsUpdate } from "@/lib/websocket/events";
 import { eq, and } from "drizzle-orm";
@@ -56,6 +56,15 @@ export async function POST(
       .onConflictDoNothing();
   }
 
+  // Read optional tiebreaker winner from request body
+  let tiebreakerWinnerId: string | undefined;
+  try {
+    const body = await req.json().catch(() => ({}));
+    tiebreakerWinnerId = typeof body.tiebreakerWinnerId === "string" ? body.tiebreakerWinnerId : undefined;
+  } catch {
+    // no body — fine
+  }
+
   // Clear previous assignments for a clean re-run (reset assignedDestinationId on all enrollments)
   await db
     .update(stageEnrollments)
@@ -63,7 +72,12 @@ export async function POST(
     .where(eq(stageEnrollments.stageId, id));
 
   // Run assignment algorithm (saves results to assignmentResults table)
-  const result = await runAssignmentAlgorithm(id);
+  const result = await runAssignmentAlgorithm(id, tiebreakerWinnerId);
+
+  // If algorithm found a tie that needs admin resolution, return it without saving
+  if ("tie" in result) {
+    return NextResponse.json({ tie: result.tie as TieInfo });
+  }
 
   await logAuditEvent({
     actorType: "admin",

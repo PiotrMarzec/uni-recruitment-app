@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "Keine weiteren Ergänzungsphasen geplant",
       "noSupplementaryDesc": "Das Beenden dieser Phase beendet die gesamte Rekrutierung. Wenn Sie weitere Ergänzungsphasen planen, fügen Sie diese hinzu, bevor Sie diese Verwaltungsphase abschließen.",
       "addSupplementaryStage": "Ergänzungsphase hinzufügen",
-      "endStageAnyway": "Phase trotzdem beenden"
+      "endStageAnyway": "Phase trotzdem beenden",
+      "tiebreaker": {
+        "title": "Gleichstand muss aufgelöst werden",
+        "description": "{studentA} und {studentB} haben die gleiche Punktzahl ({score}) und konkurrieren um den letzten verfügbaren Platz in {destination}.",
+        "studentCard": "Studentendetails",
+        "level": "Niveau",
+        "languages": "Sprachen",
+        "avgResult": "Ø Ergebnis",
+        "activities": "Aktivitäten",
+        "letters": "Briefe",
+        "score": "Punkte",
+        "notes": "Notizen",
+        "preferences": "Präferenzen",
+        "winLabel": "{name} gewinnt den Platz",
+        "loserOutcomeAssigned": "Der andere Student wird {destination} zugewiesen.",
+        "loserOutcomeUnassigned": "Der andere Student bleibt ohne Zuweisung.",
+        "resolving": "Wird aufgelöst..."
+      }
     }
   },
   "registration": {

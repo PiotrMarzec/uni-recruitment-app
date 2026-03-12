@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "Brak zaplanowanych kolejnych etapów uzupełniających",
       "noSupplementaryDesc": "Zakończenie tego etapu zakończy całą rekrutację. Jeśli planujesz kolejne etapy uzupełniające, dodaj je przed zakończeniem tego etapu administracyjnego.",
       "addSupplementaryStage": "Dodaj etap uzupełniający",
-      "endStageAnyway": "Zakończ etap mimo to"
+      "endStageAnyway": "Zakończ etap mimo to",
+      "tiebreaker": {
+        "title": "Wymagane rozstrzygnięcie remisu",
+        "description": "{studentA} i {studentB} mają ten sam wynik ({score}) i oboje rywalizują o ostatnie dostępne miejsce w {destination}.",
+        "studentCard": "Dane studenta",
+        "level": "Poziom",
+        "languages": "Języki",
+        "avgResult": "Śr. wynik",
+        "activities": "Aktywności",
+        "letters": "Listy",
+        "score": "Wynik",
+        "notes": "Notatki",
+        "preferences": "Preferencje",
+        "winLabel": "{name} zdobywa miejsce",
+        "loserOutcomeAssigned": "Drugi student zostanie przypisany do {destination}.",
+        "loserOutcomeUnassigned": "Drugi student pozostanie nieprzypisany.",
+        "resolving": "Rozstrzyganie..."
+      }
     }
   },
   "registration": {

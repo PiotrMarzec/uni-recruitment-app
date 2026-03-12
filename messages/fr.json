@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "Aucune phase complémentaire supplémentaire planifiée",
       "noSupplementaryDesc": "La fin de cette phase mettra fin à l'ensemble du recrutement. Si vous prévoyez d'autres phases complémentaires, ajoutez-les avant de terminer cette phase administrative.",
       "addSupplementaryStage": "Ajouter une phase complémentaire",
-      "endStageAnyway": "Terminer la phase quand même"
+      "endStageAnyway": "Terminer la phase quand même",
+      "tiebreaker": {
+        "title": "Résolution d'égalité requise",
+        "description": "{studentA} et {studentB} ont le même score ({score}) et sont en compétition pour la dernière place disponible à {destination}.",
+        "studentCard": "Détails de l'étudiant",
+        "level": "Niveau",
+        "languages": "Langues",
+        "avgResult": "Moy. résultat",
+        "activities": "Activités",
+        "letters": "Lettres",
+        "score": "Score",
+        "notes": "Notes",
+        "preferences": "Préférences",
+        "winLabel": "{name} remporte la place",
+        "loserOutcomeAssigned": "L'autre étudiant sera affecté à {destination}.",
+        "loserOutcomeUnassigned": "L'autre étudiant restera sans affectation.",
+        "resolving": "Résolution en cours..."
+      }
     }
   },
   "registration": {

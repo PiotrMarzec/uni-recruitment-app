@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "No hay fases complementarias adicionales planificadas",
       "noSupplementaryDesc": "Finalizar esta fase pondrá fin a todo el reclutamiento. Si planea fases complementarias adicionales, agréguelas antes de completar esta fase administrativa.",
       "addSupplementaryStage": "Agregar fase complementaria",
-      "endStageAnyway": "Finalizar fase de todas formas"
+      "endStageAnyway": "Finalizar fase de todas formas",
+      "tiebreaker": {
+        "title": "Se requiere resolución de empate",
+        "description": "{studentA} y {studentB} tienen la misma puntuación ({score}) y compiten por el último lugar disponible en {destination}.",
+        "studentCard": "Detalles del estudiante",
+        "level": "Nivel",
+        "languages": "Idiomas",
+        "avgResult": "Prom. resultado",
+        "activities": "Actividades",
+        "letters": "Cartas",
+        "score": "Puntuación",
+        "notes": "Notas",
+        "preferences": "Preferencias",
+        "winLabel": "{name} gana el lugar",
+        "loserOutcomeAssigned": "El otro estudiante será asignado a {destination}.",
+        "loserOutcomeUnassigned": "El otro estudiante quedará sin asignación.",
+        "resolving": "Resolviendo..."
+      }
     }
   },
   "registration": {

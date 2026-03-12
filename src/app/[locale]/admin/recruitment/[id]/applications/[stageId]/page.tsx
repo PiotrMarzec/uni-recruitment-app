@@ -12,6 +12,7 @@ import { UserCheck, Square } from "lucide-react";
 import { getStageName } from "@/lib/stage-name";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
+import type { TieInfo, TieStudent } from "@/lib/algorithm/assignment";
 
 interface Destination {
   id: string;
@@ -50,10 +51,166 @@ interface EditState {
 
 type Tab = "completed" | "incomplete";
 
+// ── Tiebreaker modal ──────────────────────────────────────────────────────────
+
+function StudentCard({
+  student,
+  tt,
+  tresults,
+  destinations,
+}: {
+  student: TieStudent;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tt: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tresults: any;
+  destinations: Destination[];
+}) {
+  const destMap = new Map(destinations.map((d) => [d.id, d.name]));
+  return (
+    <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
+      <p className="font-semibold text-base">{student.fullName}</p>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        <span className="text-muted-foreground">{tresults("level")}</span>
+        <span>
+          {student.level ? (
+            <Badge variant="secondary">{STUDENT_LEVEL_LABELS[student.level as StudentLevel] ?? student.level}</Badge>
+          ) : "—"}
+        </span>
+        <span className="text-muted-foreground">{tresults("languages")}</span>
+        <span className="flex flex-wrap gap-1">
+          {student.spokenLanguages.length > 0
+            ? student.spokenLanguages.map((l) => <Badge key={l} variant="outline" className="text-xs">{l}</Badge>)
+            : "—"}
+        </span>
+        <span className="text-muted-foreground">{tresults("avgResult")}</span>
+        <span>{student.averageResult.toFixed(1)}</span>
+        <span className="text-muted-foreground">{tresults("activities")}</span>
+        <span>{student.additionalActivities}</span>
+        <span className="text-muted-foreground">{tresults("letters")}</span>
+        <span>{student.recommendationLetters}</span>
+        <span className="text-muted-foreground font-medium">{tresults("score")}</span>
+        <span className="font-semibold">{student.score.toFixed(1)}</span>
+        <span className="text-muted-foreground">{tt("preferences")}</span>
+        <span>
+          <ol className="list-none space-y-0.5">
+            {student.destinationPreferences.map((id, i) => (
+              <li key={id} className="text-xs">
+                <span className="text-muted-foreground mr-1">{i + 1}.</span>
+                {destMap.get(id) ?? id}
+              </li>
+            ))}
+          </ol>
+        </span>
+      </div>
+      {student.notes && (
+        <div>
+          <p className="text-xs text-muted-foreground font-medium mb-0.5">{tt("notes")}</p>
+          <p className="text-sm whitespace-pre-wrap">{student.notes}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TiebreakerModal({
+  tie,
+  tt,
+  tresults,
+  assigning,
+  onChoose,
+  onCancel,
+}: {
+  tie: TieInfo;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tt: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tresults: any;
+  assigning: boolean;
+  onChoose: (winnerId: string) => void;
+  onCancel: () => void;
+}) {
+  // Build a minimal destinations list from both students' preferences
+  const allDestIds = [...new Set([...tie.studentA.destinationPreferences, ...tie.studentB.destinationPreferences])];
+  const destList: Destination[] = allDestIds.map((id) => ({
+    id,
+    name: tie.studentA.destinationNames[tie.studentA.destinationPreferences.indexOf(id)] ??
+          tie.studentB.destinationNames[tie.studentB.destinationPreferences.indexOf(id)] ??
+          id,
+  }));
+
+  function outcomeText(outcome: { destinationId: string | null; destinationName: string | null }) {
+    if (outcome.destinationId && outcome.destinationName) {
+      return tt("loserOutcomeAssigned", { destination: outcome.destinationName });
+    }
+    return tt("loserOutcomeUnassigned");
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-background border rounded-xl max-w-3xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div className="p-6 border-b">
+          <h2 className="text-lg font-bold text-destructive">{tt("title")}</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            {tt("description", {
+              studentA: tie.studentA.fullName,
+              studentB: tie.studentB.fullName,
+              score: tie.studentA.score.toFixed(1),
+              destination: tie.destinationName,
+            })}
+          </p>
+        </div>
+
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StudentCard student={tie.studentA} tt={tt} tresults={tresults} destinations={destList} />
+          <StudentCard student={tie.studentB} tt={tt} tresults={tresults} destinations={destList} />
+        </div>
+
+        <div className="p-6 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Option A wins */}
+          <div className="border rounded-lg p-4 space-y-3">
+            <p className="font-medium text-sm">{tt("winLabel", { name: tie.studentA.fullName })}</p>
+            <p className="text-xs text-muted-foreground">{outcomeText(tie.outcomeIfAWins)}</p>
+            <Button
+              className="w-full"
+              onClick={() => onChoose(tie.studentA.registrationId)}
+              disabled={assigning}
+            >
+              {assigning ? tt("resolving") : tt("winLabel", { name: tie.studentA.fullName })}
+            </Button>
+          </div>
+          {/* Option B wins */}
+          <div className="border rounded-lg p-4 space-y-3">
+            <p className="font-medium text-sm">{tt("winLabel", { name: tie.studentB.fullName })}</p>
+            <p className="text-xs text-muted-foreground">{outcomeText(tie.outcomeIfBWins)}</p>
+            <Button
+              className="w-full"
+              onClick={() => onChoose(tie.studentB.registrationId)}
+              disabled={assigning}
+            >
+              {assigning ? tt("resolving") : tt("winLabel", { name: tie.studentB.fullName })}
+            </Button>
+          </div>
+        </div>
+
+        <div className="px-6 pb-6 flex justify-end">
+          <Button variant="ghost" size="sm" onClick={onCancel} disabled={assigning}>
+            {/* Cancel closes modal without running algorithm */}
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ApplicationsPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations("admin.applications");
+  const tt = useTranslations("admin.applications.tiebreaker");
   const tc = useTranslations("common");
   const td = useTranslations("admin.dashboard");
   const tr = useTranslations("admin.recruitment");
@@ -80,6 +237,7 @@ export default function ApplicationsPage() {
   const [assigning, setAssigning] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [lastAssignResult, setLastAssignResult] = useState<{ assigned: number; unassigned: number } | null>(null);
+  const [pendingTie, setPendingTie] = useState<TieInfo | null>(null);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const mountedRef = useRef(true);
@@ -292,14 +450,23 @@ export default function ApplicationsPage() {
     }
   }
 
-  async function assignStudents() {
+  async function assignStudents(tiebreakerWinnerId?: string) {
     setAssigning(true);
     try {
-      const res = await fetch(`/api/admin/stages/${stageId}/assign`, { method: "POST" });
+      const res = await fetch(`/api/admin/stages/${stageId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tiebreakerWinnerId ? { tiebreakerWinnerId } : {}),
+      });
       if (res.ok) {
         const data = await res.json();
-        setLastAssignResult({ assigned: data.assigned, unassigned: data.unassigned });
-        await fetchApplications();
+        if (data.tie) {
+          setPendingTie(data.tie as TieInfo);
+        } else {
+          setPendingTie(null);
+          setLastAssignResult({ assigned: data.assigned, unassigned: data.unassigned });
+          await fetchApplications();
+        }
       }
     } finally {
       setAssigning(false);
@@ -679,7 +846,7 @@ export default function ApplicationsPage() {
             </p>
           )}
           <Button
-            onClick={assignStudents}
+            onClick={() => assignStudents()}
             disabled={assigning || completing || editingRows.size > 0}
             title={editingRows.size > 0 ? t("editPendingTitle") : undefined}
           >
@@ -739,6 +906,20 @@ export default function ApplicationsPage() {
         renderGrid(applications, t("noCompletedRegistrations"))}
       {activeTab === "incomplete" &&
         renderGrid(incompleteApplications, t("noIncompleteRegistrations"))}
+
+      {pendingTie && (
+        <TiebreakerModal
+          tie={pendingTie}
+          tt={tt}
+          tresults={tresults}
+          assigning={assigning}
+          onChoose={(winnerId) => {
+            setPendingTie(null);
+            assignStudents(winnerId);
+          }}
+          onCancel={() => setPendingTie(null)}
+        />
+      )}
 
       {showNoSupplementaryWarning && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">

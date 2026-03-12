@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "Nessuna ulteriore fase supplementare pianificata",
       "noSupplementaryDesc": "La fine di questa fase porrà fine all'intero reclutamento. Se prevedi ulteriori fasi supplementari, aggiungile prima di completare questa fase amministrativa.",
       "addSupplementaryStage": "Aggiungi fase supplementare",
-      "endStageAnyway": "Termina fase comunque"
+      "endStageAnyway": "Termina fase comunque",
+      "tiebreaker": {
+        "title": "Risoluzione del pareggio richiesta",
+        "description": "{studentA} e {studentB} hanno lo stesso punteggio ({score}) e concorrono per l'ultimo posto disponibile a {destination}.",
+        "studentCard": "Dettagli studente",
+        "level": "Livello",
+        "languages": "Lingue",
+        "avgResult": "Media risultato",
+        "activities": "Attività",
+        "letters": "Lettere",
+        "score": "Punteggio",
+        "notes": "Note",
+        "preferences": "Preferenze",
+        "winLabel": "{name} vince il posto",
+        "loserOutcomeAssigned": "L'altro studente sarà assegnato a {destination}.",
+        "loserOutcomeUnassigned": "L'altro studente rimarrà senza assegnazione.",
+        "resolving": "Risoluzione in corso..."
+      }
     }
   },
   "registration": {

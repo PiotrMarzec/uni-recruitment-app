@@ -263,7 +263,24 @@
       "noSupplementaryTitle": "No further supplementary stages planned",
       "noSupplementaryDesc": "Ending this stage will end the whole recruitment. If you plan any further supplementary stages add them before completing this admin stage.",
       "addSupplementaryStage": "Add Supplementary Stage",
-      "endStageAnyway": "End Stage Anyway"
+      "endStageAnyway": "End Stage Anyway",
+      "tiebreaker": {
+        "title": "Tiebreaker Required",
+        "description": "{studentA} and {studentB} have the same score ({score}) and are both competing for the last available spot at {destination}.",
+        "studentCard": "Student details",
+        "level": "Level",
+        "languages": "Languages",
+        "avgResult": "Avg result",
+        "activities": "Activities",
+        "letters": "Letters",
+        "score": "Score",
+        "notes": "Notes",
+        "preferences": "Preferences",
+        "winLabel": "{name} wins the spot",
+        "loserOutcomeAssigned": "The other student will be assigned to {destination}.",
+        "loserOutcomeUnassigned": "The other student will be left unassigned.",
+        "resolving": "Resolving..."
+      }
     }
   },
   "registration": {
