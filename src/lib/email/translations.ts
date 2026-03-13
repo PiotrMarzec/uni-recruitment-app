@@ -34,6 +34,29 @@ export function getEmailT(locale: string) {
   };
 }
 
+/** Returns a root-level translator for the given locale (not scoped to email). */
+export function getRootT(locale: string) {
+  const msgs: Messages = messages[locale] ?? messages["en"];
+
+  return function t(
+    keyPath: string,
+    vars?: Record<string, string | number>
+  ): string {
+    const parts = keyPath.split(".");
+    let val: unknown = msgs;
+    for (const part of parts) {
+      val = (val as Record<string, unknown>)?.[part];
+    }
+    let str = typeof val === "string" ? val : keyPath;
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        str = str.replaceAll(`{${k}}`, String(v));
+      }
+    }
+    return str;
+  };
+}
+
 /** Returns the locale-specific date locale string for date formatting. */
 export function getDateLocale(locale: string): string {
   const map: Record<string, string> = {

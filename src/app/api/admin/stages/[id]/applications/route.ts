@@ -102,69 +102,106 @@ export async function GET(
     existingAssignments.map((a) => [a.registrationId, a.destinationId ?? null])
   );
 
-  // For a supplementary admin stage that hasn't run the algorithm yet, pre-populate
-  // the Approved column with the guaranteed destinations from the previous admin stage.
-  // This lets admins see locked placements before pressing "Assign Students".
-  if (existingAssignments.length === 0 && stage.order > 1) {
-    const [prevSupplementaryStage] = await db
-      .select()
-      .from(stages)
-      .where(
-        and(
-          eq(stages.recruitmentId, stage.recruitmentId),
-          eq(stages.type, "supplementary"),
-          eq(stages.order, stage.order - 1)
-        )
-      )
-      .limit(1);
-
-    if (prevSupplementaryStage) {
-      // Find the stage immediately before the supplementary (verification or admin)
-      const [prevApprovedStage] = await db
+  // For stages that haven't run the algorithm yet, pre-populate the Approved column
+  // with assignments from the previous stage so admins see current placements.
+  if (existingAssignments.length === 0 && stage.order > 0) {
+    // For verification stages: show approved assignments from the preceding admin stage
+    if (stage.type === "verification") {
+      const [prevAdminStage] = await db
         .select()
         .from(stages)
         .where(
           and(
             eq(stages.recruitmentId, stage.recruitmentId),
-            eq(stages.order, prevSupplementaryStage.order - 1)
+            eq(stages.type, "admin"),
+            eq(stages.status, "completed"),
+            eq(stages.order, stage.order - 1)
           )
         )
         .limit(1);
 
-      if (prevApprovedStage) {
-        const allSuppEnrollments = await db
-          .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
-          .from(stageEnrollments)
-          .where(eq(stageEnrollments.stageId, prevSupplementaryStage.id));
+      if (prevAdminStage) {
+        const prevApproved = await db
+          .select({
+            registrationId: assignmentResults.registrationId,
+            destinationId: assignmentResults.destinationId,
+          })
+          .from(assignmentResults)
+          .where(
+            and(
+              eq(assignmentResults.stageId, prevAdminStage.id),
+              eq(assignmentResults.approved, true)
+            )
+          );
 
-        // If no supplementary enrollments exist (enrollment creation was missed), treat
-        // all students as non-cancelled so their guaranteed destinations are visible.
-        const guaranteedIds = allSuppEnrollments.length === 0
-          ? null // null = fetch for all students
-          : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
+        for (const r of prevApproved) {
+          assignmentMap.set(r.registrationId, r.destinationId ?? null);
+        }
+      }
+    }
 
-        if (guaranteedIds === null || guaranteedIds.length > 0) {
-          const prevApproved = await db
-            .select({
-              registrationId: assignmentResults.registrationId,
-              destinationId: assignmentResults.destinationId,
-            })
-            .from(assignmentResults)
-            .where(
-              guaranteedIds !== null
-                ? and(
-                    eq(assignmentResults.stageId, prevApprovedStage.id),
-                    eq(assignmentResults.approved, true),
-                    inArray(assignmentResults.registrationId, guaranteedIds)
-                  )
-                : and(
-                    eq(assignmentResults.stageId, prevApprovedStage.id),
-                    eq(assignmentResults.approved, true)
-                  )
-            );
+    // For supplementary admin stages: show guaranteed destinations from before the supplementary
+    if (stage.order > 1) {
+      const [prevSupplementaryStage] = await db
+        .select()
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, stage.recruitmentId),
+            eq(stages.type, "supplementary"),
+            eq(stages.order, stage.order - 1)
+          )
+        )
+        .limit(1);
 
-          for (const r of prevApproved) {
-            assignmentMap.set(r.registrationId, r.destinationId ?? null);
+      if (prevSupplementaryStage) {
+        // Find the stage immediately before the supplementary (verification or admin)
+        const [prevApprovedStage] = await db
+          .select()
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, stage.recruitmentId),
+              eq(stages.order, prevSupplementaryStage.order - 1)
+            )
+          )
+          .limit(1);
+
+        if (prevApprovedStage) {
+          const allSuppEnrollments = await db
+            .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
+            .from(stageEnrollments)
+            .where(eq(stageEnrollments.stageId, prevSupplementaryStage.id));
+
+          // If no supplementary enrollments exist (enrollment creation was missed), treat
+          // all students as non-cancelled so their guaranteed destinations are visible.
+          const guaranteedIds = allSuppEnrollments.length === 0
+            ? null // null = fetch for all students
+            : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
+
+          if (guaranteedIds === null || guaranteedIds.length > 0) {
+            const prevApproved = await db
+              .select({
+                registrationId: assignmentResults.registrationId,
+                destinationId: assignmentResults.destinationId,
+              })
+              .from(assignmentResults)
+              .where(
+                guaranteedIds !== null
+                  ? and(
+                      eq(assignmentResults.stageId, prevApprovedStage.id),
+                      eq(assignmentResults.approved, true),
+                      inArray(assignmentResults.registrationId, guaranteedIds)
+                    )
+                  : and(
+                      eq(assignmentResults.stageId, prevApprovedStage.id),
+                      eq(assignmentResults.approved, true)
+                    )
+              );
+
+            for (const r of prevApproved) {
+              assignmentMap.set(r.registrationId, r.destinationId ?? null);
+            }
           }
         }
       }

@@ -17,6 +17,7 @@ import {
   sendSupplementaryStageEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, lt, desc, inArray, isNotNull, ne } from "drizzle-orm";
 
@@ -198,11 +199,13 @@ export async function POST(
     })();
     const registrationLink = result.slotId ? getStudentRegistrationLink(result.slotId) : undefined;
 
+    const studentT = getRootT(result.studentLocale);
+
     if (result.destinationId && result.destinationName) {
       await sendAssignmentApprovedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, studentT),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
         spokenLanguages,
@@ -219,7 +222,7 @@ export async function POST(
       await sendAssignmentUnassignedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, studentT),
         spokenLanguages,
         averageScore: result.averageResult,
         recommendationLetters: result.recommendationLetters,
@@ -247,6 +250,21 @@ export async function POST(
     )
     .orderBy(stages.order)
     .limit(1);
+
+  // For admin stages: activate the next verification stage and enroll students
+  if (stage.type === "admin" && nextStage && nextStage.type === "verification" && nextStage.order > stage.order) {
+    await db
+      .update(stages)
+      .set({ startDate: now, status: "active", updatedAt: now })
+      .where(eq(stages.id, nextStage.id));
+
+    for (const reg of completedRegistrations) {
+      await db
+        .insert(stageEnrollments)
+        .values({ stageId: nextStage.id, registrationId: reg.id })
+        .onConflictDoNothing();
+    }
+  }
 
   // For verification stages: activate the next stage and handle transition
   if (stage.type === "verification" && nextStage && nextStage.order > stage.order) {
@@ -317,7 +335,7 @@ export async function POST(
         await sendSupplementaryStageEmail({
           email: reg.studentEmail,
           fullName: reg.studentName,
-          recruitmentName: getStageName(nextStage),
+          recruitmentName: getStageName(nextStage, getRootT(reg.studentLocale)),
           currentDestination: currentDestinationName,
           registrationLink: getStudentRegistrationLink(reg.slotId),
           stageEndDate: nextStage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

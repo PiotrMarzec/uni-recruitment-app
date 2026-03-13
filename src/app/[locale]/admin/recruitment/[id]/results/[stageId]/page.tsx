@@ -41,6 +41,7 @@ export default function AssignmentResultsPage() {
   const tc = useTranslations("common");
   const td = useTranslations("admin.dashboard");
   const tr = useTranslations("admin.recruitment");
+  const troot = useTranslations();
 
   const [stageName, setStageName] = useState("");
   const [recruitmentName, setRecruitmentName] = useState("");
@@ -70,7 +71,7 @@ export default function AssignmentResultsPage() {
       ]);
       if (appsRes.ok) {
         const data = await appsRes.json();
-        setStageName(data.stage ? getStageName(data.stage) : "");
+        setStageName(data.stage ? getStageName(data.stage, troot) : "");
         setRecruitmentName(data.recruitmentName ?? "");
         setApplications(data.applications ?? []);
       }

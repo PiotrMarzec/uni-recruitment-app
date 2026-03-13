@@ -34,6 +34,7 @@ export default function StageDashboardPage() {
   const tc = useTranslations("common");
   const td = useTranslations("admin.dashboard");
   const tr = useTranslations("admin.recruitment");
+  const troot = useTranslations();
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [connected, setConnected] = useState(false);
@@ -143,7 +144,7 @@ export default function StageDashboardPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">{t("liveDashboard")}</h1>
-          <p className="text-muted-foreground">{getStageName(data.stage)}</p>
+          <p className="text-muted-foreground">{getStageName(data.stage, troot)}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className={`h-2 w-2 rounded-full ${connected ? "bg-green-500" : "bg-red-500"}`} />

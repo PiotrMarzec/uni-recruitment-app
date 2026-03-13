@@ -12,6 +12,7 @@ import {
   sendInitialStageClosedEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 
 export async function processStageTransitions(): Promise<void> {
   const now = new Date();
@@ -150,7 +151,7 @@ async function transitionInitialToAdmin(stage: typeof stages.$inferSelect): Prom
       await sendInitialStageClosedEmail({
         email: student.email,
         fullName: student.fullName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, getRootT(student.locale)),
         adminStageEndDate: nextStage.endDate,
         locale: student.locale,
       });

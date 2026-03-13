@@ -54,6 +54,14 @@
     "active": "Aktywny",
     "completed": "Zakończony"
   },
+  "stageName": {
+    "initial": "Wstępny etap rekrutacji",
+    "admin": "Etap administracyjny",
+    "verification": "Etap weryfikacji",
+    "supplementaryRecruitment": "Uzupełniający etap rekrutacji #{num}",
+    "supplementaryAdmin": "Uzupełniający etap administracyjny #{num}",
+    "supplementaryVerification": "Uzupełniający etap weryfikacji #{num}"
+  },
   "slotStatus": {
     "open": "Wolny",
     "registered": "Zajęty"

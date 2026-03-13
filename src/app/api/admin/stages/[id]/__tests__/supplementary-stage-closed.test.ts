@@ -234,7 +234,7 @@ describe("POST /api/admin/stages/[id]/end — supplementary stage closed notific
         email: "carlos.garcia@student.edu",
         fullName: "Carlos Garcia",
         locale: "es",
-        recruitmentName: "Supplementary recruitment stage #1",
+        recruitmentName: "Fase de reclutamiento complementaria n.º 1",
         adminStageEndDate: ADMIN2_END_DATE,
       }),
     );

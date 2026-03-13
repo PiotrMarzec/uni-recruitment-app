@@ -46,6 +46,27 @@ describe("getStageName", () => {
   it("returns type string for unknown types", () => {
     expect(getStageName({ type: "unknown", order: 0 })).toBe("unknown");
   });
+
+  it("uses translator when provided", () => {
+    const mockT = (key: string, vars?: Record<string, string | number>) => {
+      const translations: Record<string, string> = {
+        "stageName.initial": "Wstępny etap rekrutacji",
+        "stageName.admin": "Etap administracyjny",
+        "stageName.verification": "Etap weryfikacji",
+        "stageName.supplementaryRecruitment": `Uzupełniający etap rekrutacji #${vars?.num ?? ""}`,
+        "stageName.supplementaryAdmin": `Uzupełniający etap administracyjny #${vars?.num ?? ""}`,
+        "stageName.supplementaryVerification": `Uzupełniający etap weryfikacji #${vars?.num ?? ""}`,
+      };
+      return translations[key] ?? key;
+    };
+
+    expect(getStageName({ type: "initial", order: 0 }, mockT)).toBe("Wstępny etap rekrutacji");
+    expect(getStageName({ type: "admin", order: 1 }, mockT)).toBe("Etap administracyjny");
+    expect(getStageName({ type: "verification", order: 2 }, mockT)).toBe("Etap weryfikacji");
+    expect(getStageName({ type: "supplementary", order: 3 }, mockT)).toBe("Uzupełniający etap rekrutacji #1");
+    expect(getStageName({ type: "admin", order: 4 }, mockT)).toBe("Uzupełniający etap administracyjny #1");
+    expect(getStageName({ type: "verification", order: 5 }, mockT)).toBe("Uzupełniający etap weryfikacji #1");
+  });
 });
 
 // ────────────────────────────────────────────────────────

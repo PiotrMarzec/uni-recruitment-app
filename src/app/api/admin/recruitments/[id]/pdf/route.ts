@@ -18,9 +18,10 @@ export async function GET(
     layoutParam === "compact" ? "compact" :
     layoutParam === "triple" ? "triple" :
     "single";
+  const locale = req.nextUrl.searchParams.get("locale") ?? "en";
 
   try {
-    const pdfBuffer = await generateSlotsPdf(id, layout);
+    const pdfBuffer = await generateSlotsPdf(id, layout, locale);
 
     await logAuditEvent({
       actorType: "admin",

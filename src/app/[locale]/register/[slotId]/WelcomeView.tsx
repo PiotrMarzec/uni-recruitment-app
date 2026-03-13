@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CheckCircle2 } from "lucide-react";
 import { computeScore } from "@/lib/algorithm/score";
+import { getStageName } from "@/lib/stage-name";
 
 const STUDENT_LEVEL_LABELS: Record<string, string> = {
   bachelor_1: "Bachelor (1st year)",
@@ -60,6 +61,7 @@ export default function WelcomeView({
   onProceed,
 }: WelcomeViewProps) {
   const t = useTranslations("registration.welcome");
+  const troot = useTranslations();
   const locale = useLocale();
 
   function formatDate(dateStr: string) {
@@ -177,7 +179,7 @@ export default function WelcomeView({
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-sm ${isActive ? "font-bold" : "font-medium"}`}>
-                      {stage.name}
+                      {getStageName(stage, troot)}
                     </span>
                     {isActive && (
                       <Badge variant="default" className="text-xs">

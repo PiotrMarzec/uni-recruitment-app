@@ -54,6 +54,14 @@
     "active": "Aktiv",
     "completed": "Abgeschlossen"
   },
+  "stageName": {
+    "initial": "Erste Bewerbungsphase",
+    "admin": "Verwaltungsphase",
+    "verification": "Überprüfungsphase",
+    "supplementaryRecruitment": "Ergänzende Bewerbungsphase #{num}",
+    "supplementaryAdmin": "Ergänzende Verwaltungsphase #{num}",
+    "supplementaryVerification": "Ergänzende Überprüfungsphase #{num}"
+  },
   "slotStatus": {
     "open": "Offen",
     "registered": "Registriert"

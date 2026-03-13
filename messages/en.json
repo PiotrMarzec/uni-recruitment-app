@@ -54,6 +54,14 @@
     "active": "Active",
     "completed": "Completed"
   },
+  "stageName": {
+    "initial": "Initial recruitment stage",
+    "admin": "Admin stage",
+    "verification": "Verification stage",
+    "supplementaryRecruitment": "Supplementary recruitment stage #{num}",
+    "supplementaryAdmin": "Supplementary admin stage #{num}",
+    "supplementaryVerification": "Supplementary verification stage #{num}"
+  },
   "slotStatus": {
     "open": "Open",
     "registered": "Registered"

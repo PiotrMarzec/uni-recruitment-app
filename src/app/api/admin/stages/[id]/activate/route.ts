@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { sendSupplementaryStageEmail } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -49,6 +50,27 @@ export async function POST(
     details: { activatedManually: true },
     ipAddress: getIpAddress(req),
   });
+
+  // Enroll all completed registrations when a verification stage is manually activated
+  if (stage.type === "verification") {
+    const completedRegistrations = await db
+      .select({ id: registrations.id })
+      .from(registrations)
+      .innerJoin(slots, eq(registrations.slotId, slots.id))
+      .where(
+        and(
+          eq(slots.recruitmentId, stage.recruitmentId),
+          eq(registrations.registrationCompleted, true)
+        )
+      );
+
+    for (const reg of completedRegistrations) {
+      await db
+        .insert(stageEnrollments)
+        .values({ stageId: id, registrationId: reg.id })
+        .onConflictDoNothing();
+    }
+  }
 
   // Send emails to all students when a supplementary stage is activated
   if (stage.type === "supplementary") {
@@ -115,7 +137,7 @@ export async function POST(
       await sendSupplementaryStageEmail({
         email: reg.studentEmail,
         fullName: reg.studentName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, getRootT(reg.studentLocale)),
         currentDestination: currentDestinationName,
         registrationLink: getStudentRegistrationLink(reg.slotId),
         stageEndDate: stage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

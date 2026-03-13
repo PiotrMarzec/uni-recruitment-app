@@ -6,6 +6,7 @@ import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { eq, and, desc } from "drizzle-orm";
 import { sendInitialStageClosedEmail, sendSupplementaryStageClosedEmail, sendSupplementaryStageEmail } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 
 export async function POST(
@@ -96,7 +97,7 @@ export async function POST(
         await sendInitialStageClosedEmail({
           email: student.email,
           fullName: student.fullName,
-          recruitmentName: getStageName(stage),
+          recruitmentName: getStageName(stage, getRootT(student.locale)),
           adminStageEndDate: nextStage.endDate,
           locale: student.locale,
         });
@@ -120,7 +121,7 @@ export async function POST(
         await sendSupplementaryStageClosedEmail({
           email: student.email,
           fullName: student.fullName,
-          recruitmentName: getStageName(stage),
+          recruitmentName: getStageName(stage, getRootT(student.locale)),
           adminStageEndDate: nextStage.endDate,
           locale: student.locale,
         });

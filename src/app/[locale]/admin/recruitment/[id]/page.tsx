@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,8 @@ export default function RecruitmentDetailPage() {
   const t = useTranslations("admin.recruitment");
   const tc = useTranslations("common");
   const td = useTranslations("admin.dashboard");
+  const troot = useTranslations();
+  const locale = useLocale();
 
   const [activeTab, setActiveTab] = useState<Tab>("stages");
   const [recruitment, setRecruitment] = useState<Recruitment | null>(null);
@@ -394,7 +396,7 @@ export default function RecruitmentDetailPage() {
   }
 
   function downloadPdf(layout: "single" | "dual" | "compact" | "triple") {
-    window.open(`/api/admin/recruitments/${id}/pdf?layout=${layout}`, "_blank");
+    window.open(`/api/admin/recruitments/${id}/pdf?layout=${layout}&locale=${locale}`, "_blank");
   }
 
   async function completeStage(stageId: string) {
@@ -441,7 +443,7 @@ export default function RecruitmentDetailPage() {
   }
 
   async function activateStageNow(stage: Stage) {
-    if (!confirm(t("stages.confirmActivateNow", { name: getStageName(stage) }))) return;
+    if (!confirm(t("stages.confirmActivateNow", { name: getStageName(stage, troot) }))) return;
     const sortedStages = [...(recruitment?.stages ?? [])].sort((a, b) => a.order - b.order);
     const prevStage = sortedStages.findLast((s) => s.order < stage.order);
     if (prevStage && prevStage.status === "active") {
@@ -658,7 +660,7 @@ export default function RecruitmentDetailPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-medium">
-                            {getStageName(stage)}
+                            {getStageName(stage, troot)}
                           </span>
                           <Badge variant={stageStatusColors[stage.status] || "default"}>
                             {stage.status}

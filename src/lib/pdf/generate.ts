@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import { SlotPdfDocument, DualPageSlotPdfDocument, CompactSlotPdfDocument, TripleSlotPdfDocument, SlotPdfLayout } from "./slot-pdf";
 import { signTeacherLink, getStudentRegistrationLink, getTeacherLink } from "@/lib/auth/hmac";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 import React from "react";
 
 function formatStageDate(date: Date): string {
@@ -25,7 +26,7 @@ async function generateQrBase64(url: string): Promise<string> {
   return dataUrl.split(",")[1];
 }
 
-export async function generateSlotsPdf(recruitmentId: string, layout: SlotPdfLayout = "single"): Promise<Buffer> {
+export async function generateSlotsPdf(recruitmentId: string, layout: SlotPdfLayout = "single", locale: string = "en"): Promise<Buffer> {
   // Fetch recruitment info
   const [recruitment] = await db
     .select()
@@ -72,7 +73,7 @@ export async function generateSlotsPdf(recruitmentId: string, layout: SlotPdfLay
         recruitmentName: recruitment.name,
         recruitmentDescription: recruitment.description,
         stages: allStages.map((s) => ({
-          name: getStageName(s),
+          name: getStageName(s, getRootT(locale)),
           startDate: formatStageDate(s.startDate),
           endDate: formatStageDate(s.endDate),
         })),

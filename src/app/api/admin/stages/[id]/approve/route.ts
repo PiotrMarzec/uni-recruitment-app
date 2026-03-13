@@ -15,6 +15,7 @@ import {
   sendAssignmentUnassignedEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
+import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, inArray, isNotNull, ne } from "drizzle-orm";
 
@@ -163,12 +164,13 @@ export async function POST(
       try { return JSON.parse(result.spokenLanguages); } catch { return []; }
     })();
     const registrationLink = result.slotId ? getStudentRegistrationLink(result.slotId) : undefined;
+    const studentT = getRootT(result.studentLocale);
 
     if (result.destinationId && result.destinationName) {
       await sendAssignmentApprovedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, studentT),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
         spokenLanguages,
@@ -185,7 +187,7 @@ export async function POST(
       await sendAssignmentUnassignedEmail({
         email: result.studentEmail,
         fullName: result.studentName,
-        recruitmentName: getStageName(stage),
+        recruitmentName: getStageName(stage, studentT),
         spokenLanguages,
         averageScore: result.averageResult,
         recommendationLetters: result.recommendationLetters,

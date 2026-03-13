@@ -226,6 +226,7 @@ export default function ApplicationsPage() {
   const td = useTranslations("admin.dashboard");
   const tr = useTranslations("admin.recruitment");
   const tresults = useTranslations("admin.results");
+  const troot = useTranslations();
 
   const recruitmentId = params.id as string;
   const stageId = params.stageId as string;
@@ -253,7 +254,7 @@ export default function ApplicationsPage() {
   }) {
     setHasAssignments(info.hasAssignments);
     setHasNextSupplementary(info.hasNextSupplementary);
-    if (info.stage) setStageName(getStageName(info.stage));
+    if (info.stage) setStageName(getStageName(info.stage, troot));
     if (info.recruitmentName) setRecruitmentName(info.recruitmentName);
   }
 
@@ -330,6 +331,7 @@ export default function ApplicationsPage() {
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
         { label: recruitmentName || tr("breadcrumb"), href: `/admin/recruitment/${recruitmentId}` },
+        { label: stageName },
         { label: t("title") },
       ]}
     >
