@@ -39,6 +39,46 @@ function redactOtp(html: string): string {
   return html.replace(/\b\d{6}\b/g, "••••••");
 }
 
+/**
+ * Renders email HTML safely inside a sandboxed iframe.
+ * The sandbox attribute blocks scripts, form submissions, popups, and
+ * same-origin access — preventing any XSS from injected email content.
+ */
+function SafeEmailPreview({ html }: { html: string }) {
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+
+  React.useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+    doc.open();
+    doc.write(redactOtp(html));
+    doc.close();
+
+    // Auto-resize to content height
+    const resize = () => {
+      if (iframe.contentDocument?.body) {
+        iframe.style.height = iframe.contentDocument.body.scrollHeight + 16 + "px";
+      }
+    };
+    resize();
+    // Resize again after images/styles load
+    iframe.addEventListener("load", resize);
+    return () => iframe.removeEventListener("load", resize);
+  }, [html]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      sandbox=""
+      className="w-full border rounded bg-white"
+      style={{ minHeight: "100px", maxHeight: "384px" }}
+      title="Email preview"
+    />
+  );
+}
+
 export default function EmailLogPage() {
   const [entries, setEntries] = useState<EmailEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,10 +189,7 @@ export default function EmailLogPage() {
                             Error: {entry.error}
                           </p>
                         )}
-                        <div
-                          className="border rounded overflow-auto max-h-96 bg-white p-2"
-                          dangerouslySetInnerHTML={{ __html: redactOtp(entry.html) }}
-                        />
+                        <SafeEmailPreview html={entry.html} />
                       </td>
                     </tr>
                   )}
