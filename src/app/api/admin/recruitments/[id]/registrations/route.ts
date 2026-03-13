@@ -8,6 +8,7 @@ import {
   destinations,
   recruitments,
   assignmentResults,
+  stageEnrollments,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { eq, and, asc, desc, gt, lt, or, isNotNull } from "drizzle-orm";
@@ -83,7 +84,10 @@ export async function GET(
     // For supplementary stages, look up assignments from the most recently
     // completed admin stage before it (those assignments were approved during
     // the preceding verification stage and should carry over).
+    // Students who re-registered (cancelled: true in the supplementary enrollment)
+    // lose their assignment and should not be shown as assigned.
     let assignmentLookupStageId = stageId;
+    const cancelledRegistrationIds = new Set<string>();
     if (stage && stage.type === "supplementary") {
       const [prevAdminStage] = await db
         .select({ id: stages.id })
@@ -101,6 +105,20 @@ export async function GET(
       if (prevAdminStage) {
         assignmentLookupStageId = prevAdminStage.id;
       }
+
+      // Find students who cancelled (re-registered) during this supplementary stage
+      const cancelledEnrollments = await db
+        .select({ registrationId: stageEnrollments.registrationId })
+        .from(stageEnrollments)
+        .where(
+          and(
+            eq(stageEnrollments.stageId, stageId),
+            eq(stageEnrollments.cancelled, true)
+          )
+        );
+      for (const e of cancelledEnrollments) {
+        cancelledRegistrationIds.add(e.registrationId);
+      }
     }
 
     const existingAssignments = await db
@@ -117,6 +135,8 @@ export async function GET(
       );
 
     for (const a of existingAssignments) {
+      // Skip cancelled students — they forfeited their assignment by re-registering
+      if (cancelledRegistrationIds.has(a.registrationId)) continue;
       assignmentMap.set(a.registrationId, a.destinationId ?? null);
     }
     hasAssignments = existingAssignments.length > 0;

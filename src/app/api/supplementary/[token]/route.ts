@@ -86,41 +86,45 @@ export async function GET(
     )
     .limit(1);
 
-  // Get current assignment from previous approved admin stage
+  // Get current assignment from previous approved admin stage,
+  // but only if the student hasn't cancelled (re-registered) in this supplementary stage.
   let currentDestination = null;
-  // Find previous admin stage
-  const [prevAdminStage] = await db
-    .select()
-    .from(stages)
-    .where(
-      and(
-        eq(stages.recruitmentId, stage.recruitmentId),
-        eq(stages.type, "admin"),
-        eq(stages.status, "completed")
-      )
-    )
-    .orderBy(desc(stages.order))
-    .limit(1);
+  const isCancelled = enrollment?.cancelled === true;
 
-  if (prevAdminStage) {
-    const [prevResult] = await db
-      .select({
-        destinationName: destinations.name,
-        destinationId: assignmentResults.destinationId,
-      })
-      .from(assignmentResults)
-      .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
+  if (!isCancelled) {
+    const [prevAdminStage] = await db
+      .select()
+      .from(stages)
       .where(
         and(
-          eq(assignmentResults.stageId, prevAdminStage.id),
-          eq(assignmentResults.registrationId, tokenRecord.registrationId),
-          eq(assignmentResults.approved, true)
+          eq(stages.recruitmentId, stage.recruitmentId),
+          eq(stages.type, "admin"),
+          eq(stages.status, "completed")
         )
       )
+      .orderBy(desc(stages.order))
       .limit(1);
 
-    if (prevResult?.destinationId) {
-      currentDestination = prevResult;
+    if (prevAdminStage) {
+      const [prevResult] = await db
+        .select({
+          destinationName: destinations.name,
+          destinationId: assignmentResults.destinationId,
+        })
+        .from(assignmentResults)
+        .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
+        .where(
+          and(
+            eq(assignmentResults.stageId, prevAdminStage.id),
+            eq(assignmentResults.registrationId, tokenRecord.registrationId),
+            eq(assignmentResults.approved, true)
+          )
+        )
+        .limit(1);
+
+      if (prevResult?.destinationId) {
+        currentDestination = prevResult;
+      }
     }
   }
 
