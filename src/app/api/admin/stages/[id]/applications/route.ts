@@ -11,7 +11,7 @@ import {
   stageEnrollments,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { eq, and, asc, gt, inArray } from "drizzle-orm";
+import { eq, and, asc, desc, gt, lt, inArray } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -155,16 +155,20 @@ export async function GET(
         .limit(1);
 
       if (prevSupplementaryStage) {
-        // Find the stage immediately before the supplementary (verification or admin)
+        // Find the most recently completed admin stage before the supplementary.
+        // Assignment results are always created on admin stages (the algorithm runs there).
         const [prevApprovedStage] = await db
           .select()
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, stage.recruitmentId),
-              eq(stages.order, prevSupplementaryStage.order - 1)
+              eq(stages.type, "admin"),
+              eq(stages.status, "completed"),
+              lt(stages.order, prevSupplementaryStage.order)
             )
           )
+          .orderBy(desc(stages.order))
           .limit(1);
 
         if (prevApprovedStage) {

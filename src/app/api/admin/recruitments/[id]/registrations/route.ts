@@ -10,7 +10,7 @@ import {
   assignmentResults,
 } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { eq, and, asc, gt, or, isNotNull } from "drizzle-orm";
+import { eq, and, asc, desc, gt, lt, or, isNotNull } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -74,24 +74,52 @@ export async function GET(
   let stageInfo: { type: string; order: number } | null = null;
 
   if (stageId) {
+    const [stage] = await db
+      .select({ type: stages.type, order: stages.order })
+      .from(stages)
+      .where(eq(stages.id, stageId))
+      .limit(1);
+
+    // For supplementary stages, look up assignments from the most recently
+    // completed admin stage before it (those assignments were approved during
+    // the preceding verification stage and should carry over).
+    let assignmentLookupStageId = stageId;
+    if (stage && stage.type === "supplementary") {
+      const [prevAdminStage] = await db
+        .select({ id: stages.id })
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, recruitmentId),
+            eq(stages.type, "admin"),
+            eq(stages.status, "completed"),
+            lt(stages.order, stage.order)
+          )
+        )
+        .orderBy(desc(stages.order))
+        .limit(1);
+      if (prevAdminStage) {
+        assignmentLookupStageId = prevAdminStage.id;
+      }
+    }
+
     const existingAssignments = await db
       .select({
         registrationId: assignmentResults.registrationId,
         destinationId: assignmentResults.destinationId,
       })
       .from(assignmentResults)
-      .where(eq(assignmentResults.stageId, stageId));
+      .where(
+        and(
+          eq(assignmentResults.stageId, assignmentLookupStageId),
+          eq(assignmentResults.approved, true)
+        )
+      );
 
     for (const a of existingAssignments) {
       assignmentMap.set(a.registrationId, a.destinationId ?? null);
     }
     hasAssignments = existingAssignments.length > 0;
-
-    const [stage] = await db
-      .select({ type: stages.type, order: stages.order })
-      .from(stages)
-      .where(eq(stages.id, stageId))
-      .limit(1);
 
     if (stage) {
       stageInfo = { type: stage.type, order: stage.order };

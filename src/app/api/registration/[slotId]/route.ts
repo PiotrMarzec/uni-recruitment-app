@@ -185,24 +185,17 @@ export async function GET(
       student = studentResult;
 
       // Look up the student's current assignment.
-      // During verification stage: show assignment from the most recently completed admin stage
-      // During supplementary stage: show assignment from the most recently completed verification stage
-      // Otherwise: show from most recently completed admin stage
+      // Assignments are always created on admin stages (the algorithm runs there).
+      // During all post-admin stages (verification, supplementary, etc.), look up
+      // the most recently completed admin stage's approved results.
       {
-        // Determine which completed stage to look up assignment from
-        let lookupStageType: "admin" | "verification" = "admin";
-        if (isSupplementaryActive) {
-          // During supplementary: show assignment from previous verification stage
-          lookupStageType = "verification";
-        }
-
         const [completedStage] = await db
           .select()
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, slot.recruitmentId),
-              eq(stages.type, lookupStageType),
+              eq(stages.type, "admin"),
               eq(stages.status, "completed")
             )
           )

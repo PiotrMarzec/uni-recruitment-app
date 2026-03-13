@@ -8,7 +8,7 @@ import {
   users,
   slots,
 } from "@/db/schema";
-import { eq, and, inArray, isNotNull } from "drizzle-orm";
+import { eq, and, desc, lt, inArray, isNotNull } from "drizzle-orm";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 
 interface SlotCounts {
@@ -165,20 +165,24 @@ export async function runAssignmentAlgorithm(
         : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
 
       if (nonCancelledIds.length > 0) {
-        // The verification stage that preceded the supplementary stage holds the approved assignments.
-        // Fall back to the admin stage if no verification stage exists (backwards compatibility).
-        const [prevApprovedStage] = await db
+        // Find the most recently completed admin stage before the supplementary stage.
+        // This is where the canonical assignment results are stored (the algorithm always
+        // runs on admin stages; verification stages only optionally re-run it).
+        const [prevAdminStage] = await db
           .select()
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, stage.recruitmentId),
-              eq(stages.order, prevStage.order - 1)
+              eq(stages.type, "admin"),
+              eq(stages.status, "completed"),
+              lt(stages.order, prevStage.order)
             )
           )
+          .orderBy(desc(stages.order))
           .limit(1);
 
-        if (prevApprovedStage) {
+        if (prevAdminStage) {
           const prevApproved = await db
             .select({
               registrationId: assignmentResults.registrationId,
@@ -188,7 +192,7 @@ export async function runAssignmentAlgorithm(
             .from(assignmentResults)
             .where(
               and(
-                eq(assignmentResults.stageId, prevApprovedStage.id),
+                eq(assignmentResults.stageId, prevAdminStage.id),
                 eq(assignmentResults.approved, true),
                 isNotNull(assignmentResults.destinationId),
                 inArray(assignmentResults.registrationId, nonCancelledIds)

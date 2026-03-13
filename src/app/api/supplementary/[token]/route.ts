@@ -12,7 +12,7 @@ import {
 } from "@/db/schema";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 async function getTokenData(token: string) {
   const [tokenRecord] = await db
@@ -99,7 +99,7 @@ export async function GET(
         eq(stages.status, "completed")
       )
     )
-    .orderBy(stages.order)
+    .orderBy(desc(stages.order))
     .limit(1);
 
   if (prevAdminStage) {
