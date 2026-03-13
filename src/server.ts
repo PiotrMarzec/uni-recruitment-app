@@ -12,8 +12,19 @@ import { getIronSession } from "iron-session";
 import { AdminSessionData } from "./lib/auth/session";
 import path from "path";
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. ` +
+        `Set it in your .env file or environment before starting the application.`
+    );
+  }
+  return value;
+}
+
 const sessionOptions = {
-  password: process.env.SESSION_SECRET || "fallback-dev-secret-32-characters!!",
+  password: requireEnv("SESSION_SECRET"),
   cookieName: "session",
   cookieOptions: {
     secure: process.env.NODE_ENV === "production",
