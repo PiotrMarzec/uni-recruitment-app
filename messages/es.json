@@ -304,7 +304,7 @@
       "startRegistration": "Iniciar inscripción",
       "updateRegistration": "Actualizar mi inscripción",
       "yourRegistration": "Detalles de su inscripción",
-      "registrationNotOpen": "La inscripción no está abierta actualmente.",
+      "registrationNotOpen": "La inscripción está actualmente cerrada. No es posible realizar cambios.",
       "supplementaryPlanned": "Está prevista una fase de inscripción suplementaria: {name} ({startDate} – {endDate}).",
       "fieldName": "Nombre",
       "fieldEmail": "Correo electrónico",

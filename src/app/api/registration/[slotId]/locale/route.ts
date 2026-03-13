@@ -26,6 +26,15 @@ export async function PATCH(
   const { locale } = parsed.data;
 
   const res = NextResponse.json({ success: true });
+
+  // Always set the cookie so the server component respects the explicit locale choice
+  res.cookies.set("NEXT_LOCALE", locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
   const session = await getRegistrationSessionFromRequest(req, res);
 
   if (!session.userId) {
@@ -34,13 +43,6 @@ export async function PATCH(
   }
 
   await db.update(users).set({ locale }).where(eq(users.id, session.userId));
-
-  res.cookies.set("NEXT_LOCALE", locale, {
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-  });
 
   return res;
 }

@@ -304,7 +304,7 @@
       "startRegistration": "Registrierung starten",
       "updateRegistration": "Meine Registrierung aktualisieren",
       "yourRegistration": "Ihre Registrierungsdetails",
-      "registrationNotOpen": "Die Registrierung ist derzeit nicht geöffnet.",
+      "registrationNotOpen": "Die Registrierung ist derzeit geschlossen. Keine Änderungen möglich.",
       "supplementaryPlanned": "Eine ergänzende Registrierungsphase ist geplant: {name} ({startDate} – {endDate}).",
       "fieldName": "Name",
       "fieldEmail": "E-Mail",

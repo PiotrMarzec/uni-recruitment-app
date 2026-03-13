@@ -159,7 +159,10 @@ export default function RegisterPage() {
       const saved = sessionStorage.getItem(sessionKey);
       if (!saved) return;
       const parsed = JSON.parse(saved);
-      if (parsed.currentStep) {
+      if (parsed.showWelcome === false) {
+        setShowWelcome(false);
+      }
+      if (!parsed.showWelcome && parsed.currentStep) {
         setCurrentStep(parsed.currentStep as Step);
         setShowWelcome(false);
       }
@@ -182,6 +185,7 @@ export default function RegisterPage() {
     // Save form state so it survives the component remount on locale navigation
     try {
       sessionStorage.setItem(sessionKey, JSON.stringify({
+        showWelcome,
         currentStep,
         email,
         emailConsent,
