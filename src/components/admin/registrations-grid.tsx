@@ -584,7 +584,7 @@ export function RegistrationsGrid({
               const saving = savingRows.has(row.registrationId);
 
               const statusCell = (
-                <td className="px-2 py-3 align-top">
+                <td className="px-2 py-3 align-middle">
                   {row.registrationCompleted ? (
                     <span title="Completed">
                       <CheckCircle2 className="w-4 h-4 text-green-500" />

@@ -138,7 +138,8 @@ export default function StageDashboardPage() {
       breadcrumbs={[
         { label: td("breadcrumb"), href: "/admin/dashboard" },
         { label: data.recruitmentName || tr("breadcrumb"), href: `/admin/recruitment/${id}` },
-        { label: t("liveDashboard") },
+        { label: getStageName(data.stage, troot) },
+        { label: tr("stages.liveDashboard") },
       ]}
     >
       <div className="flex items-center justify-between mb-6">
