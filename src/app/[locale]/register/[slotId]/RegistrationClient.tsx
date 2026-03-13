@@ -98,6 +98,9 @@ interface SlotInfo {
     destinationPreferences: string[];
     enrollmentId: string | null;
     registrationCompleted: boolean;
+    averageResult?: string | null;
+    additionalActivities?: number | null;
+    recommendationLetters?: number | null;
   } | null;
   student: { fullName: string; email: string } | null;
   destinationNames: string[];
