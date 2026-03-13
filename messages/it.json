@@ -147,6 +147,8 @@
         "slotsBachelor": "Posti triennale",
         "slotsMaster": "Posti magistrale",
         "slotsAny": "Posti aperti",
+        "byLevel": "Per livello (triennale / magistrale)",
+        "openSlots": "Posti aperti (qualsiasi livello)",
         "requiredLanguages": "Lingue richieste",
         "confirmRemoveDestination": "Rimuovere questa destinazione?",
         "editDestination": "Modifica destinazione",

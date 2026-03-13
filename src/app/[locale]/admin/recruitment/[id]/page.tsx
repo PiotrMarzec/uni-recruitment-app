@@ -147,6 +147,7 @@ export default function RecruitmentDetailPage() {
 
   // Add destination form
   const [destDialogOpen, setDestDialogOpen] = useState(false);
+  const [destSlotType, setDestSlotType] = useState<"level" | "open">("level");
   const [destForm, setDestForm] = useState({
     name: "",
     description: "",
@@ -160,6 +161,7 @@ export default function RecruitmentDetailPage() {
   // Edit destination form
   const [editDestDialogOpen, setEditDestDialogOpen] = useState(false);
   const [editingDestId, setEditingDestId] = useState<string | null>(null);
+  const [editDestSlotType, setEditDestSlotType] = useState<"level" | "open">("level");
   const [editDestForm, setEditDestForm] = useState({
     name: "",
     description: "",
@@ -286,6 +288,7 @@ export default function RecruitmentDetailPage() {
       if (res.ok) {
         setDestDialogOpen(false);
         setDestForm({ name: "", description: "", slotsBachelor: 0, slotsMaster: 0, slotsAny: 0, requiredLanguages: [] });
+        setDestSlotType("level");
         await fetchRecruitment();
       }
     } finally {
@@ -301,6 +304,7 @@ export default function RecruitmentDetailPage() {
 
   function openEditDestination(dest: Destination) {
     setEditingDestId(dest.id);
+    setEditDestSlotType(dest.slotsAny > 0 ? "open" : "level");
     setEditDestForm({
       name: dest.name,
       description: dest.description,
@@ -742,19 +746,44 @@ export default function RecruitmentDetailPage() {
                     <Label>{tc("description")}</Label>
                     <Textarea value={destForm.description} onChange={(e) => setDestForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
-                      <Input type="number" min={0} value={destForm.slotsBachelor} onChange={(e) => setDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
+                  <div className="space-y-3">
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="destSlotType"
+                          checked={destSlotType === "level"}
+                          onChange={() => { setDestSlotType("level"); setDestForm(f => ({ ...f, slotsAny: 0 })); }}
+                        />
+                        {t("destinations.byLevel")}
+                      </label>
+                      <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input
+                          type="radio"
+                          name="destSlotType"
+                          checked={destSlotType === "open"}
+                          onChange={() => { setDestSlotType("open"); setDestForm(f => ({ ...f, slotsBachelor: 0, slotsMaster: 0 })); }}
+                        />
+                        {t("destinations.openSlots")}
+                      </label>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
-                      <Input type="number" min={0} value={destForm.slotsMaster} onChange={(e) => setDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{t("destinations.slotsAny")}</Label>
-                      <Input type="number" min={0} value={destForm.slotsAny} onChange={(e) => setDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
-                    </div>
+                    {destSlotType === "level" ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
+                          <Input type="number" min={0} value={destForm.slotsBachelor} onChange={(e) => setDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
+                          <Input type="number" min={0} value={destForm.slotsMaster} onChange={(e) => setDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <Label className="text-xs">{t("destinations.slotsAny")}</Label>
+                        <Input type="number" min={0} value={destForm.slotsAny} onChange={(e) => setDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>{t("destinations.requiredLanguages")}</Label>
@@ -819,9 +848,14 @@ export default function RecruitmentDetailPage() {
                   </CardHeader>
                   <CardContent className="text-sm space-y-1">
                     <div className="flex gap-4">
-                      <span>{t("destinations.bachelor")} <strong>{dest.slotsBachelor}</strong></span>
-                      <span>{t("destinations.master")} <strong>{dest.slotsMaster}</strong></span>
-                      <span>{t("destinations.open")} <strong>{dest.slotsAny}</strong></span>
+                      {dest.slotsAny > 0 ? (
+                        <span>{t("destinations.open")} <strong>{dest.slotsAny}</strong></span>
+                      ) : (
+                        <>
+                          <span>{t("destinations.bachelor")} <strong>{dest.slotsBachelor}</strong></span>
+                          <span>{t("destinations.master")} <strong>{dest.slotsMaster}</strong></span>
+                        </>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-1 mt-2">
                       {dest.requiredLanguages.map((lang) => (
@@ -1028,19 +1062,44 @@ export default function RecruitmentDetailPage() {
               <Label>{tc("description")}</Label>
               <Textarea value={editDestForm.description} onChange={(e) => setEditDestForm(f => ({ ...f, description: e.target.value }))} />
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
-                <Input type="number" min={0} value={editDestForm.slotsBachelor} onChange={(e) => setEditDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
+            <div className="space-y-3">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="editDestSlotType"
+                    checked={editDestSlotType === "level"}
+                    onChange={() => { setEditDestSlotType("level"); setEditDestForm(f => ({ ...f, slotsAny: 0 })); }}
+                  />
+                  {t("destinations.byLevel")}
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="editDestSlotType"
+                    checked={editDestSlotType === "open"}
+                    onChange={() => { setEditDestSlotType("open"); setEditDestForm(f => ({ ...f, slotsBachelor: 0, slotsMaster: 0 })); }}
+                  />
+                  {t("destinations.openSlots")}
+                </label>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
-                <Input type="number" min={0} value={editDestForm.slotsMaster} onChange={(e) => setEditDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">{t("destinations.slotsAny")}</Label>
-                <Input type="number" min={0} value={editDestForm.slotsAny} onChange={(e) => setEditDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
-              </div>
+              {editDestSlotType === "level" ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("destinations.slotsBachelor")}</Label>
+                    <Input type="number" min={0} value={editDestForm.slotsBachelor} onChange={(e) => setEditDestForm(f => ({ ...f, slotsBachelor: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t("destinations.slotsMaster")}</Label>
+                    <Input type="number" min={0} value={editDestForm.slotsMaster} onChange={(e) => setEditDestForm(f => ({ ...f, slotsMaster: parseInt(e.target.value) || 0 }))} />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <Label className="text-xs">{t("destinations.slotsAny")}</Label>
+                  <Input type="number" min={0} value={editDestForm.slotsAny} onChange={(e) => setEditDestForm(f => ({ ...f, slotsAny: parseInt(e.target.value) || 0 }))} />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>{t("destinations.requiredLanguages")}</Label>

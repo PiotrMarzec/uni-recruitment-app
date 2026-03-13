@@ -147,6 +147,8 @@
         "slotsBachelor": "Places licence",
         "slotsMaster": "Places master",
         "slotsAny": "Places ouvertes",
+        "byLevel": "Par niveau (licence / master)",
+        "openSlots": "Places ouvertes (tout niveau)",
         "requiredLanguages": "Langues requises",
         "confirmRemoveDestination": "Supprimer cette destination ?",
         "editDestination": "Modifier la destination",

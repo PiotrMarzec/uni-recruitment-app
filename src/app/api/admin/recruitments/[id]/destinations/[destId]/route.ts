@@ -44,6 +44,19 @@ export async function PATCH(
     );
   }
 
+  // Validate mutual exclusivity of slot types against merged state
+  const mergedBachelor = parsed.data.slotsBachelor ?? existing.slotsBachelor;
+  const mergedMaster = parsed.data.slotsMaster ?? existing.slotsMaster;
+  const mergedAny = parsed.data.slotsAny ?? existing.slotsAny;
+  const hasLevelSlots = mergedBachelor > 0 || mergedMaster > 0;
+  const hasOpenSlots = mergedAny > 0;
+  if (hasLevelSlots && hasOpenSlots) {
+    return NextResponse.json(
+      { error: "Cannot have both level-specific slots (bachelor/master) and open slots" },
+      { status: 400 }
+    );
+  }
+
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.data.name !== undefined) updates.name = parsed.data.name;
   if (parsed.data.description !== undefined) updates.description = parsed.data.description;

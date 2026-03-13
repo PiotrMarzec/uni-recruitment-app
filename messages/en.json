@@ -148,6 +148,8 @@
         "slotsBachelor": "Bachelor Slots",
         "slotsMaster": "Master Slots",
         "slotsAny": "Open Slots",
+        "byLevel": "By level (bachelor / master)",
+        "openSlots": "Open slots (any level)",
         "requiredLanguages": "Required Languages",
         "confirmRemoveDestination": "Remove this destination?",
         "editDestination": "Edit Destination",

@@ -15,7 +15,14 @@ const createSchema = z.object({
   requiredLanguages: z
     .array(z.enum(SUPPORTED_LANGUAGES))
     .min(1, "At least one language is required"),
-});
+}).refine(
+  (data) => {
+    const hasLevelSlots = data.slotsBachelor > 0 || data.slotsMaster > 0;
+    const hasOpenSlots = data.slotsAny > 0;
+    return !(hasLevelSlots && hasOpenSlots);
+  },
+  { message: "Cannot have both level-specific slots (bachelor/master) and open slots" }
+);
 
 export async function GET(
   req: NextRequest,

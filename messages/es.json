@@ -147,6 +147,8 @@
         "slotsBachelor": "Plazas grado",
         "slotsMaster": "Plazas máster",
         "slotsAny": "Plazas abiertas",
+        "byLevel": "Por nivel (grado / máster)",
+        "openSlots": "Plazas abiertas (cualquier nivel)",
         "requiredLanguages": "Idiomas requeridos",
         "confirmRemoveDestination": "¿Eliminar este destino?",
         "editDestination": "Editar destino",

@@ -147,6 +147,8 @@
         "slotsBachelor": "Miejsca licencjat",
         "slotsMaster": "Miejsca magister",
         "slotsAny": "Miejsca ogólne",
+        "byLevel": "Wg poziomu (licencjat / magister)",
+        "openSlots": "Miejsca otwarte (dowolny poziom)",
         "requiredLanguages": "Wymagane języki",
         "confirmRemoveDestination": "Usunąć to miejsce docelowe?",
         "editDestination": "Edytuj miejsce docelowe",

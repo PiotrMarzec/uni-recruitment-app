@@ -147,6 +147,8 @@
         "slotsBachelor": "Bachelor-Plätze",
         "slotsMaster": "Master-Plätze",
         "slotsAny": "Offene Plätze",
+        "byLevel": "Nach Stufe (Bachelor / Master)",
+        "openSlots": "Offene Plätze (alle Stufen)",
         "requiredLanguages": "Erforderliche Sprachen",
         "confirmRemoveDestination": "Dieses Ziel entfernen?",
         "editDestination": "Ziel bearbeiten",
