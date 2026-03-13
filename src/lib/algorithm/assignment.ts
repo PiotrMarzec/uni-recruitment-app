@@ -38,7 +38,7 @@ interface StudentForAssignment {
   notes: string | null;
 }
 
-export interface TieStudent {
+export interface ConflictStudent {
   registrationId: string;
   fullName: string;
   level: string | null;
@@ -52,30 +52,30 @@ export interface TieStudent {
   notes: string | null;
 }
 
-export interface TieInfo {
-  /** Student who goes first by score sort (earlier registration or designated by previous tiebreaker). */
-  studentA: TieStudent;
-  /** Student competing with same score. */
-  studentB: TieStudent;
+export interface ConflictInfo {
   destinationId: string;
   destinationName: string;
-  /** What happens to studentB if studentA wins the spot. */
-  outcomeIfAWins: { destinationId: string | null; destinationName: string | null };
-  /** What happens to studentA if studentB wins the spot. */
-  outcomeIfBWins: { destinationId: string | null; destinationName: string | null };
+  slotType: "bachelor" | "master" | "open";
+  availableSlots: number;
+  students: ConflictStudent[];
+}
+
+export interface ConflictResolution {
+  destinationId: string;
+  slotType: "bachelor" | "master" | "open";
+  winnerIds: string[]; // registration IDs
 }
 
 export type AssignmentResult =
   | { assigned: number; unassigned: number }
-  | { tie: TieInfo };
+  | { conflict: ConflictInfo };
 
 export { computeScore } from "./score";
 import { computeScore } from "./score";
 
 export async function runAssignmentAlgorithm(
   stageId: string,
-  /** Registration ID of the student who wins the tiebreaker, if admin has resolved one. */
-  tiebreakerWinnerId?: string
+  conflictResolutions?: ConflictResolution[]
 ): Promise<AssignmentResult> {
   // 1. Get all enrollments for this stage
   const enrollments = await db
@@ -266,38 +266,71 @@ export async function runAssignmentAlgorithm(
     });
   }
 
-  // 7. Sort: score DESC, winner first within same-score group, then registrationCompletedAt ASC
+  // 7. Sort by score DESC, then registrationCompletedAt ASC (deterministic within same score)
   studentsToAssign.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
-    if (tiebreakerWinnerId) {
-      if (a.registrationId === tiebreakerWinnerId) return -1;
-      if (b.registrationId === tiebreakerWinnerId) return 1;
-    }
     return a.registrationCompletedAt.getTime() - b.registrationCompletedAt.getTime();
   });
 
-  // Helper: find first eligible destination for a student, skipping excludeDestId
-  function findNextEligibleDest(
-    student: StudentForAssignment,
-    counts: Map<string, SlotCounts>,
-    excludeDestId: string
-  ): string | null {
-    const cat = levelCategory(student.level);
-    for (const dId of student.destinationPreferences) {
-      if (dId === excludeDestId) continue;
-      const c = counts.get(dId);
-      if (!c) continue;
-      if (cat === "bachelor" ? c.bachelor > 0 || c.any > 0 : c.master > 0 || c.any > 0) return dId;
-    }
-    return null;
+  // Build conflict resolution lookup
+  const resolutionMap = new Map<string, ConflictResolution>();
+  for (const r of (conflictResolutions ?? [])) {
+    resolutionMap.set(`${r.destinationId}:${r.slotType}`, r);
   }
 
-  // 8. Run assignment algorithm with tie detection
+  // Helper: determine if a destination uses open-style slots
+  function isOpenDest(destId: string): boolean {
+    const d = allDestinations.find((x) => x.id === destId);
+    if (!d) return false;
+    // Pure open: only slotsAny configured. Mixed/level: has bachelor or master slots.
+    return d.slotsAny > 0 && d.slotsBachelor === 0 && d.slotsMaster === 0;
+  }
+
+  // Helper: check if a student lost a conflict resolution at a destination
+  function isConflictLoser(regId: string, destId: string, studentLevel: string | null): boolean {
+    if (isOpenDest(destId)) {
+      const res = resolutionMap.get(`${destId}:open`);
+      if (res && !res.winnerIds.includes(regId)) return true;
+    } else {
+      const cat = levelCategory(studentLevel);
+      const res = resolutionMap.get(`${destId}:${cat}`);
+      if (res && !res.winnerIds.includes(regId)) return true;
+    }
+    return false;
+  }
+
+  // Helper: check if a student has available slots at a destination
+  function hasSlotAt(cat: "bachelor" | "master", counts: SlotCounts, destId: string): boolean {
+    if (isOpenDest(destId)) {
+      return counts.any > 0;
+    }
+    return cat === "bachelor"
+      ? counts.bachelor > 0 || counts.any > 0
+      : counts.master > 0 || counts.any > 0;
+  }
+
+  // Helper: consume a slot at a destination
+  function consumeSlot(cat: "bachelor" | "master", counts: SlotCounts, destId: string): void {
+    if (isOpenDest(destId)) {
+      counts.any--;
+      return;
+    }
+    if (cat === "bachelor") {
+      if (counts.bachelor > 0) counts.bachelor--;
+      else counts.any--;
+    } else {
+      if (counts.master > 0) counts.master--;
+      else counts.any--;
+    }
+  }
+
+  // 8. Run assignment algorithm with group conflict detection
   const availableCounts = new Map(
     Array.from(lockedDestinationCounts.entries()).map(([k, v]) => [k, { ...v }])
   );
   const assignments: Array<{ registrationId: string; destinationId: string | null; score: number }> = [];
 
+  // Record locked assignments
   for (const [regId, locked] of lockedAssignments) {
     assignments.push({
       registrationId: regId,
@@ -315,120 +348,113 @@ export async function runAssignmentAlgorithm(
       );
   }
 
-  for (let i = 0; i < studentsToAssign.length; i++) {
-    const student = studentsToAssign[i];
-    let assigned = false;
+  // Group students by score for batch conflict detection
+  const scoreGroups: StudentForAssignment[][] = [];
+  {
+    let currentGroup: StudentForAssignment[] = [];
+    let currentScore: number | null = null;
+    for (const s of studentsToAssign) {
+      if (currentScore !== null && s.score !== currentScore) {
+        scoreGroups.push(currentGroup);
+        currentGroup = [];
+      }
+      currentGroup.push(s);
+      currentScore = s.score;
+    }
+    if (currentGroup.length > 0) scoreGroups.push(currentGroup);
+  }
 
-    for (const destId of student.destinationPreferences) {
-      const counts = availableCounts.get(destId);
-      if (!counts) continue;
+  for (const group of scoreGroups) {
+    // Compute tentative destination for each student in this score group.
+    // All students see the same slot counts (before any in-group assignment).
+    const tentative = new Map<string, string>(); // regId → destId
 
+    for (const student of group) {
       const cat = levelCategory(student.level);
-      const hasSlot =
-        cat === "bachelor"
-          ? counts.bachelor > 0 || counts.any > 0
-          : counts.master > 0 || counts.any > 0;
+      for (const destId of student.destinationPreferences) {
+        // Skip destinations where this student lost a conflict resolution
+        if (isConflictLoser(student.registrationId, destId, student.level)) continue;
 
-      if (hasSlot) {
-        // --- Tie detection (skip if this student is the designated winner) ---
-        if (student.registrationId !== tiebreakerWinnerId) {
-          // Simulate consuming the slot
-          const hypothetical = { ...counts };
-          if (cat === "bachelor") {
-            if (hypothetical.bachelor > 0) hypothetical.bachelor--;
-            else hypothetical.any--;
-          } else {
-            if (hypothetical.master > 0) hypothetical.master--;
-            else hypothetical.any--;
-          }
+        const counts = availableCounts.get(destId);
+        if (!counts) continue;
 
-          for (let j = i + 1; j < studentsToAssign.length; j++) {
-            const other = studentsToAssign[j];
-            if (other.score !== student.score) break; // sorted, no more ties in this group
-
-            if (!other.destinationPreferences.includes(destId)) continue;
-
-            // Would `other` lose their slot at destId after student takes one?
-            const otherCat = levelCategory(other.level);
-            const otherHasSlotAfter =
-              otherCat === "bachelor"
-                ? hypothetical.bachelor > 0 || hypothetical.any > 0
-                : hypothetical.master > 0 || hypothetical.any > 0;
-
-            if (!otherHasSlotAfter) {
-              // Tie detected — build outcomes and return without saving
-              const countsSnapshotForA = new Map(
-                Array.from(availableCounts.entries()).map(([k, v]) => [k, { ...v }])
-              );
-              // If A wins: consume destId for A, then find B's next
-              const cA = countsSnapshotForA.get(destId)!;
-              if (cat === "bachelor") { if (cA.bachelor > 0) cA.bachelor--; else cA.any--; }
-              else { if (cA.master > 0) cA.master--; else cA.any--; }
-              const bNextDestId = findNextEligibleDest(other, countsSnapshotForA, destId);
-
-              const countsSnapshotForB = new Map(
-                Array.from(availableCounts.entries()).map(([k, v]) => [k, { ...v }])
-              );
-              // If B wins: consume destId for B (using other's category), then find A's next
-              const cB = countsSnapshotForB.get(destId)!;
-              const otherCatConsume = levelCategory(other.level);
-              if (otherCatConsume === "bachelor") { if (cB.bachelor > 0) cB.bachelor--; else cB.any--; }
-              else { if (cB.master > 0) cB.master--; else cB.any--; }
-              const aNextDestId = findNextEligibleDest(student, countsSnapshotForB, destId);
-
-              const tieInfo: TieInfo = {
-                studentA: {
-                  registrationId: student.registrationId,
-                  fullName: student.fullName,
-                  level: student.level,
-                  spokenLanguages: student.spokenLanguages,
-                  averageResult: student.averageResult,
-                  additionalActivities: student.additionalActivities,
-                  recommendationLetters: student.recommendationLetters,
-                  score: student.score,
-                  destinationPreferences: student.destinationPreferences,
-                  destinationNames: student.destinationPreferences.map((id) => destNameMap.get(id) ?? id),
-                  notes: student.notes,
-                },
-                studentB: {
-                  registrationId: other.registrationId,
-                  fullName: other.fullName,
-                  level: other.level,
-                  spokenLanguages: other.spokenLanguages,
-                  averageResult: other.averageResult,
-                  additionalActivities: other.additionalActivities,
-                  recommendationLetters: other.recommendationLetters,
-                  score: other.score,
-                  destinationPreferences: other.destinationPreferences,
-                  destinationNames: other.destinationPreferences.map((id) => destNameMap.get(id) ?? id),
-                  notes: other.notes,
-                },
-                destinationId: destId,
-                destinationName: destNameMap.get(destId) ?? destId,
-                outcomeIfAWins: {
-                  destinationId: bNextDestId,
-                  destinationName: bNextDestId ? (destNameMap.get(bNextDestId) ?? bNextDestId) : null,
-                },
-                outcomeIfBWins: {
-                  destinationId: aNextDestId,
-                  destinationName: aNextDestId ? (destNameMap.get(aNextDestId) ?? aNextDestId) : null,
-                },
-              };
-
-              return { tie: tieInfo };
-            }
-          }
+        if (hasSlotAt(cat, counts, destId)) {
+          tentative.set(student.registrationId, destId);
+          break;
         }
-        // --- End tie detection ---
+      }
+    }
 
-        // Assign: consume slot
-        if (cat === "bachelor") {
-          if (counts.bachelor > 0) counts.bachelor--;
-          else counts.any--;
-        } else {
-          if (counts.master > 0) counts.master--;
-          else counts.any--;
+    // Check for oversubscription at each destination within this score group.
+    // Group tentative assignments by (destination, slotType).
+    const destSlotGroups = new Map<string, StudentForAssignment[]>();
+
+    for (const [regId, destId] of tentative) {
+      const student = group.find((s) => s.registrationId === regId)!;
+      const slotType = isOpenDest(destId) ? "open" : levelCategory(student.level);
+      const key = `${destId}:${slotType}`;
+      const arr = destSlotGroups.get(key) || [];
+      arr.push(student);
+      destSlotGroups.set(key, arr);
+    }
+
+    for (const [key, students] of destSlotGroups) {
+      const [destId, slotType] = key.split(":");
+      const counts = availableCounts.get(destId)!;
+
+      let available: number;
+      if (slotType === "open") {
+        available = counts.any;
+      } else if (slotType === "bachelor") {
+        available = counts.bachelor;
+      } else {
+        available = counts.master;
+      }
+
+      if (students.length > available) {
+        // Check if a resolution already exists for this conflict
+        const resolution = resolutionMap.get(key);
+        if (!resolution) {
+          // Return conflict for teacher resolution
+          return {
+            conflict: {
+              destinationId: destId,
+              destinationName: destNameMap.get(destId) ?? destId,
+              slotType: slotType as "bachelor" | "master" | "open",
+              availableSlots: available,
+              students: students.map((s) => ({
+                registrationId: s.registrationId,
+                fullName: s.fullName,
+                level: s.level,
+                spokenLanguages: s.spokenLanguages,
+                averageResult: s.averageResult,
+                additionalActivities: s.additionalActivities,
+                recommendationLetters: s.recommendationLetters,
+                score: s.score,
+                destinationPreferences: s.destinationPreferences,
+                destinationNames: s.destinationPreferences.map((id) => destNameMap.get(id) ?? id),
+                notes: s.notes,
+              })),
+            },
+          };
         }
+        // Resolution exists — losers were already skipped in tentative computation above.
+        // The remaining students in this group are either winners or non-competitors.
+      }
+    }
+
+    // No conflicts in this score group — assign all tentatively assigned students.
+    // Sort within group by registration time for determinism.
+    const groupSorted = [...group].sort(
+      (a, b) => a.registrationCompletedAt.getTime() - b.registrationCompletedAt.getTime()
+    );
+
+    for (const student of groupSorted) {
+      const destId = tentative.get(student.registrationId);
+      if (destId) {
+        const cat = levelCategory(student.level);
+        const counts = availableCounts.get(destId)!;
+        consumeSlot(cat, counts, destId);
 
         assignments.push({
           registrationId: student.registrationId,
@@ -436,7 +462,6 @@ export async function runAssignmentAlgorithm(
           score: student.score,
         });
 
-        // Update enrollment
         await db
           .update(stageEnrollments)
           .set({ assignedDestinationId: destId })
@@ -446,18 +471,14 @@ export async function runAssignmentAlgorithm(
               eq(stageEnrollments.registrationId, student.registrationId)
             )
           );
-
-        assigned = true;
-        break;
+      } else {
+        // No eligible destination found
+        assignments.push({
+          registrationId: student.registrationId,
+          destinationId: null,
+          score: student.score,
+        });
       }
-    }
-
-    if (!assigned) {
-      assignments.push({
-        registrationId: student.registrationId,
-        destinationId: null,
-        score: student.score,
-      });
     }
   }
 

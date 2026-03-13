@@ -269,22 +269,19 @@
       "noSupplementaryDesc": "La fine di questa fase porrà fine all'intero reclutamento. Se prevedi ulteriori fasi supplementari, aggiungile prima di completare questa fase amministrativa.",
       "addSupplementaryStage": "Aggiungi fase supplementare",
       "endStageAnyway": "Termina fase comunque",
-      "tiebreaker": {
-        "title": "Risoluzione del pareggio richiesta",
-        "description": "{studentA} e {studentB} hanno lo stesso punteggio ({score}) e concorrono per l'ultimo posto disponibile a {destination}.",
-        "studentCard": "Dettagli studente",
-        "level": "Livello",
-        "languages": "Lingue",
-        "avgResult": "Media risultato",
-        "activities": "Attività",
-        "letters": "Lettere",
-        "score": "Punteggio",
+      "conflict": {
+        "title": "Conflitto di posti — Decisione dell'insegnante richiesta",
+        "description": "{count} studenti con lo stesso punteggio competono per {slots} {slotType} a {destination}.",
+        "selectExactly": "Seleziona esattamente {count} studenti per i posti",
+        "selected": "{count} / {total} selezionato/i",
+        "bachelorSlots": "posti triennali",
+        "masterSlots": "posti magistrali",
+        "openSlots": "posti aperti",
         "notes": "Note",
         "preferences": "Preferenze",
-        "winLabel": "{name} vince il posto",
-        "loserOutcomeAssigned": "L'altro studente sarà assegnato a {destination}.",
-        "loserOutcomeUnassigned": "L'altro studente rimarrà senza assegnazione.",
-        "resolving": "Risoluzione in corso..."
+        "confirmSelection": "Conferma selezione",
+        "resolving": "Risoluzione in corso...",
+        "cancel": "Annulla"
       }
     }
   },

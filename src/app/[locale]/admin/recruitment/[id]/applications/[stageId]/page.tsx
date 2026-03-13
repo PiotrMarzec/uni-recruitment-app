@@ -7,12 +7,12 @@ import { useRouter } from "@/i18n/navigation";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserCheck, Square } from "lucide-react";
+import { UserCheck, Square, Check } from "lucide-react";
 import { getStageName } from "@/lib/stage-name";
 import { RegistrationsGrid } from "@/components/admin/registrations-grid";
-import type { TieInfo, TieStudent } from "@/lib/algorithm/assignment";
+import type { ConflictInfo, ConflictStudent, ConflictResolution } from "@/lib/algorithm/assignment";
 
-// ── Tiebreaker modal ──────────────────────────────────────────────────────────
+// ── Conflict modal ──────────────────────────────────────────────────────────
 
 import { STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
 
@@ -26,18 +26,42 @@ function StudentCard({
   tt,
   tresults,
   destinations,
+  selected,
+  onToggle,
+  disabled,
 }: {
-  student: TieStudent;
+  student: ConflictStudent;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tt: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tresults: any;
   destinations: Destination[];
+  selected: boolean;
+  onToggle: () => void;
+  disabled: boolean;
 }) {
   const destMap = new Map(destinations.map((d) => [d.id, d.name]));
   return (
-    <div className="border rounded-lg p-4 space-y-2 bg-muted/30">
-      <p className="font-semibold text-base">{student.fullName}</p>
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled && !selected}
+      className={`relative border border-muted rounded-lg p-4 space-y-2 text-left w-full transition-colors ${
+        selected
+          ? "bg-green-50 outline outline-2 outline-green-500"
+          : disabled
+            ? "bg-muted/20 opacity-60 cursor-not-allowed"
+            : "bg-muted/30 hover:bg-muted/50 cursor-pointer"
+      }`}
+    >
+      <div className={`absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center ${
+        selected ? "bg-green-500" : "bg-transparent"
+      }`}>
+        {selected && <Check className="w-4 h-4 text-white" />}
+      </div>
+      <div>
+        <p className="font-semibold text-base pr-8">{student.fullName}</p>
+      </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
         <span className="text-muted-foreground">{tresults("level")}</span>
         <span>
@@ -85,96 +109,105 @@ function StudentCard({
           <p className="text-sm whitespace-pre-wrap">{student.notes}</p>
         </div>
       )}
-    </div>
+    </button>
   );
 }
 
-function TiebreakerModal({
-  tie,
+function ConflictModal({
+  conflict,
   tt,
   tresults,
   assigning,
-  onChoose,
+  onResolve,
   onCancel,
 }: {
-  tie: TieInfo;
+  conflict: ConflictInfo;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tt: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tresults: any;
   assigning: boolean;
-  onChoose: (winnerId: string) => void;
+  onResolve: (winnerIds: string[]) => void;
   onCancel: () => void;
 }) {
-  const allDestIds = [
-    ...new Set([
-      ...tie.studentA.destinationPreferences,
-      ...tie.studentB.destinationPreferences,
-    ]),
-  ];
-  const destList: Destination[] = allDestIds.map((id) => ({
-    id,
-    name:
-      tie.studentA.destinationNames[tie.studentA.destinationPreferences.indexOf(id)] ??
-      tie.studentB.destinationNames[tie.studentB.destinationPreferences.indexOf(id)] ??
-      id,
-  }));
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  function outcomeText(outcome: {
-    destinationId: string | null;
-    destinationName: string | null;
-  }) {
-    if (outcome.destinationId && outcome.destinationName) {
-      return tt("loserOutcomeAssigned", { destination: outcome.destinationName });
+  const allDestIds = [
+    ...new Set(conflict.students.flatMap((s) => s.destinationPreferences)),
+  ];
+  const destList: Destination[] = allDestIds.map((id) => {
+    for (const s of conflict.students) {
+      const idx = s.destinationPreferences.indexOf(id);
+      if (idx !== -1) return { id, name: s.destinationNames[idx] };
     }
-    return tt("loserOutcomeUnassigned");
+    return { id, name: id };
+  });
+
+  function toggleStudent(regId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(regId)) {
+        next.delete(regId);
+      } else if (next.size < conflict.availableSlots) {
+        next.add(regId);
+      }
+      return next;
+    });
   }
+
+  const canConfirm = selectedIds.size === conflict.availableSlots;
+
+  const slotTypeLabel =
+    conflict.slotType === "bachelor"
+      ? tt("bachelorSlots")
+      : conflict.slotType === "master"
+        ? tt("masterSlots")
+        : tt("openSlots");
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-background border rounded-xl max-w-3xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
+      <div className="bg-background border rounded-xl max-w-4xl w-full shadow-2xl overflow-y-auto max-h-[90vh]">
         <div className="p-6 border-b">
           <h2 className="text-lg font-bold text-destructive">{tt("title")}</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {tt("description", {
-              studentA: tie.studentA.fullName,
-              studentB: tie.studentB.fullName,
-              score: tie.studentA.score.toFixed(1),
-              destination: tie.destinationName,
+              count: conflict.students.length,
+              slots: conflict.availableSlots,
+              slotType: slotTypeLabel,
+              destination: conflict.destinationName,
             })}
           </p>
+          <p className="text-sm font-medium mt-2">
+            {tt("selectExactly", { count: conflict.availableSlots })}
+            {" — "}
+            <span className={canConfirm ? "text-green-600" : "text-amber-600"}>
+              {tt("selected", { count: selectedIds.size, total: conflict.availableSlots })}
+            </span>
+          </p>
         </div>
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <StudentCard student={tie.studentA} tt={tt} tresults={tresults} destinations={destList} />
-          <StudentCard student={tie.studentB} tt={tt} tresults={tresults} destinations={destList} />
+        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+          {conflict.students.map((student) => (
+            <StudentCard
+              key={student.registrationId}
+              student={student}
+              tt={tt}
+              tresults={tresults}
+              destinations={destList}
+              selected={selectedIds.has(student.registrationId)}
+              onToggle={() => toggleStudent(student.registrationId)}
+              disabled={!selectedIds.has(student.registrationId) && selectedIds.size >= conflict.availableSlots}
+            />
+          ))}
         </div>
-        <div className="p-6 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 space-y-3">
-            <p className="font-medium text-sm">{tt("winLabel", { name: tie.studentA.fullName })}</p>
-            <p className="text-xs text-muted-foreground">{outcomeText(tie.outcomeIfAWins)}</p>
-            <Button
-              className="w-full"
-              onClick={() => onChoose(tie.studentA.registrationId)}
-              disabled={assigning}
-            >
-              {assigning ? tt("resolving") : tt("winLabel", { name: tie.studentA.fullName })}
-            </Button>
-          </div>
-          <div className="border rounded-lg p-4 space-y-3">
-            <p className="font-medium text-sm">{tt("winLabel", { name: tie.studentB.fullName })}</p>
-            <p className="text-xs text-muted-foreground">{outcomeText(tie.outcomeIfBWins)}</p>
-            <Button
-              className="w-full"
-              onClick={() => onChoose(tie.studentB.registrationId)}
-              disabled={assigning}
-            >
-              {assigning ? tt("resolving") : tt("winLabel", { name: tie.studentB.fullName })}
-            </Button>
-          </div>
-        </div>
-        <div className="px-6 pb-6 flex justify-end">
+        <div className="p-6 border-t flex justify-between items-center">
           <Button variant="ghost" size="sm" onClick={onCancel} disabled={assigning}>
-            Cancel
+            {tt("cancel")}
+          </Button>
+          <Button
+            onClick={() => onResolve([...selectedIds])}
+            disabled={!canConfirm || assigning}
+          >
+            {assigning ? tt("resolving") : tt("confirmSelection")}
           </Button>
         </div>
       </div>
@@ -188,7 +221,7 @@ export default function ApplicationsPage() {
   const params = useParams();
   const router = useRouter();
   const t = useTranslations("admin.applications");
-  const tt = useTranslations("admin.applications.tiebreaker");
+  const tt = useTranslations("admin.applications.conflict");
   const tc = useTranslations("common");
   const td = useTranslations("admin.dashboard");
   const tr = useTranslations("admin.recruitment");
@@ -208,7 +241,8 @@ export default function ApplicationsPage() {
     assigned: number;
     unassigned: number;
   } | null>(null);
-  const [pendingTie, setPendingTie] = useState<TieInfo | null>(null);
+  const [pendingConflict, setPendingConflict] = useState<ConflictInfo | null>(null);
+  const [accumulatedResolutions, setAccumulatedResolutions] = useState<ConflictResolution[]>([]);
   const [hasEditing, setHasEditing] = useState(false);
 
   function handleDataLoad(info: {
@@ -229,20 +263,25 @@ export default function ApplicationsPage() {
     }
   }, [recruitmentName, t]);
 
-  async function assignStudents(tiebreakerWinnerId?: string) {
+  async function assignStudents(resolutions?: ConflictResolution[]) {
     setAssigning(true);
     try {
+      const body: Record<string, unknown> = {};
+      if (resolutions && resolutions.length > 0) {
+        body.conflictResolutions = resolutions;
+      }
       const res = await fetch(`/api/admin/stages/${stageId}/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tiebreakerWinnerId ? { tiebreakerWinnerId } : {}),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.tie) {
-          setPendingTie(data.tie as TieInfo);
+        if (data.conflict) {
+          setPendingConflict(data.conflict as ConflictInfo);
         } else {
-          setPendingTie(null);
+          setPendingConflict(null);
+          setAccumulatedResolutions([]);
           setHasAssignments(true);
           setLastAssignResult({ assigned: data.assigned, unassigned: data.unassigned });
         }
@@ -250,6 +289,19 @@ export default function ApplicationsPage() {
     } finally {
       setAssigning(false);
     }
+  }
+
+  function handleConflictResolve(winnerIds: string[]) {
+    if (!pendingConflict) return;
+    const newResolution: ConflictResolution = {
+      destinationId: pendingConflict.destinationId,
+      slotType: pendingConflict.slotType,
+      winnerIds,
+    };
+    const updatedResolutions = [...accumulatedResolutions, newResolution];
+    setAccumulatedResolutions(updatedResolutions);
+    setPendingConflict(null);
+    assignStudents(updatedResolutions);
   }
 
   async function completeStage() {
@@ -302,7 +354,7 @@ export default function ApplicationsPage() {
             </p>
           )}
           <Button
-            onClick={() => assignStudents()}
+            onClick={() => { setAccumulatedResolutions([]); assignStudents(); }}
             disabled={assigning || completing || hasEditing}
             title={hasEditing ? t("editPendingTitle") : undefined}
           >
@@ -335,18 +387,15 @@ export default function ApplicationsPage() {
         onAssignmentsUpdate={(ha) => setHasAssignments(ha)}
       />
 
-      {/* Tiebreaker modal */}
-      {pendingTie && (
-        <TiebreakerModal
-          tie={pendingTie}
+      {/* Conflict resolution modal */}
+      {pendingConflict && (
+        <ConflictModal
+          conflict={pendingConflict}
           tt={tt}
           tresults={tresults}
           assigning={assigning}
-          onChoose={(winnerId) => {
-            setPendingTie(null);
-            assignStudents(winnerId);
-          }}
-          onCancel={() => setPendingTie(null)}
+          onResolve={handleConflictResolve}
+          onCancel={() => { setPendingConflict(null); setAccumulatedResolutions([]); }}
         />
       )}
 

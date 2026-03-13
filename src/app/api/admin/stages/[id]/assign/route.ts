@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { stages, stageEnrollments, registrations, slots, destinations, assignmentResults } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { runAssignmentAlgorithm, type TieInfo } from "@/lib/algorithm/assignment";
+import { runAssignmentAlgorithm, type ConflictInfo, type ConflictResolution } from "@/lib/algorithm/assignment";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { broadcastApplicationAssignmentsUpdate } from "@/lib/websocket/events";
 import { eq, and } from "drizzle-orm";
@@ -56,11 +56,13 @@ export async function POST(
       .onConflictDoNothing();
   }
 
-  // Read optional tiebreaker winner from request body
-  let tiebreakerWinnerId: string | undefined;
+  // Read optional conflict resolutions from request body
+  let conflictResolutions: ConflictResolution[] | undefined;
   try {
     const body = await req.json().catch(() => ({}));
-    tiebreakerWinnerId = typeof body.tiebreakerWinnerId === "string" ? body.tiebreakerWinnerId : undefined;
+    if (Array.isArray(body.conflictResolutions)) {
+      conflictResolutions = body.conflictResolutions;
+    }
   } catch {
     // no body — fine
   }
@@ -72,11 +74,11 @@ export async function POST(
     .where(eq(stageEnrollments.stageId, id));
 
   // Run assignment algorithm (saves results to assignmentResults table)
-  const result = await runAssignmentAlgorithm(id, tiebreakerWinnerId);
+  const result = await runAssignmentAlgorithm(id, conflictResolutions);
 
-  // If algorithm found a tie that needs admin resolution, return it without saving
-  if ("tie" in result) {
-    return NextResponse.json({ tie: result.tie as TieInfo });
+  // If algorithm found a conflict that needs admin resolution, return it without saving
+  if ("conflict" in result) {
+    return NextResponse.json({ conflict: result.conflict as ConflictInfo });
   }
 
   await logAuditEvent({
