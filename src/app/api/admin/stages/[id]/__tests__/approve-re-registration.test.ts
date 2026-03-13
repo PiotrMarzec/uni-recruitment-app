@@ -131,8 +131,9 @@ const RE_REGISTRATION_DATE = new Date("2026-02-15T09:00:00.000Z");
  *   3. update stages              (set status = "completed", endDate = now)
  *   4. select next pending stage  (look for pending stage with higher order)
  *   5. select next supplementary  (look for supplementary stage for email content)
- *   6. select results             (assignment results + student + destination info)
- *   7. select previousAssignments (check for prior approved assignments)
+ *   6. select verification stage  (nearest verification stage end date)
+ *   7. select results             (assignment results + student + destination info)
+ *   8. select previousAssignments (check for prior approved assignments)
  *      The route joins registrations + stages and returns registrationCompletedAt
  *      / stageEndDate so it can detect re-registrations in application code.
  */
@@ -155,19 +156,26 @@ function queueApproveStage2WithReRegisteredStudent() {
     [],
     // 5. No next supplementary stage
     [],
-    // 6. Assignment results for this stage: Emma → Berlin
+    // 6. No verification stage
+    [],
+    // 7. Assignment results for this stage: Emma → Berlin
     [{
       id: "result-uuid-0000-0000-0000-000000000001",
       registrationId: REG_ID,
       destinationId: WINTER_DEST_BERLIN_ID,
+      score: "85.0",
       studentName: "Emma Johnson",
       studentEmail: "emma.johnson@student.edu",
       studentLocale: "en",
       destinationName: "Berlin University",
       destinationDescription: "A great university in Berlin",
       slotId: WINTER_SLOT_IDS[0],
+      spokenLanguages: '["English","German"]',
+      averageResult: "4.5",
+      recommendationLetters: 2,
+      additionalActivities: 3,
     }],
-    // 7. Previous approved assignments query.
+    // 8. Previous approved assignments query.
     //    Emma had an approved result in Admin Stage 1 (destinationId set).
     //    The route reads registrationCompletedAt and stageEndDate from the joined
     //    rows to determine whether the student re-registered.

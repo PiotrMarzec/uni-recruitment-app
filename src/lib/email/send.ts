@@ -228,26 +228,51 @@ export async function sendAssignmentApprovedEmail(params: {
   recruitmentName: string;
   destinationName: string;
   destinationDescription: string;
-  supplementaryStage?: { startDate: Date; endDate: Date };
+  spokenLanguages: string[];
+  averageScore: string | null;
+  recommendationLetters: number | null;
+  additionalActivities: number | null;
+  finalScore: string;
+  verificationEndDate: Date | null;
+  supplementaryStage?: { startDate: Date; endDate: Date; isActive: boolean };
+  registrationLink?: string;
   locale?: string;
 }): Promise<EmailResult> {
   const locale = params.locale ?? "en";
   const t = getEmailT(locale);
   const dateLocale = getDateLocale(locale);
 
+  const formatDateTime = (date: Date) =>
+    date.toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+
+  const verificationSection = params.verificationEndDate
+    ? `<p>${t("assignmentApproved.verificationNote", { date: `<strong>${formatDateTime(params.verificationEndDate)}</strong>` })}</p>`
+    : "";
+
   const supplementarySection = params.supplementaryStage
     ? (() => {
-        const startStr = params.supplementaryStage!.startDate.toLocaleDateString(dateLocale, {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        });
-        const endStr = params.supplementaryStage!.endDate.toLocaleDateString(dateLocale, {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        });
-        return `<p style="color: #374151;">${t("assignmentApproved.supplementaryInfo", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>`;
+        const startStr = formatDate(params.supplementaryStage!.startDate);
+        const endStr = formatDate(params.supplementaryStage!.endDate);
+        const infoKey = params.supplementaryStage!.isActive
+          ? "assignmentApproved.supplementaryActive"
+          : "assignmentApproved.supplementaryPlanned";
+        const linkSection = params.registrationLink
+          ? `<div style="margin: 16px 0;"><a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("assignmentApproved.registrationButton")}</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("assignmentApproved.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p></div>`
+          : "";
+        return `<p style="color: #374151;">${t(infoKey, { startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>${linkSection}`;
       })()
     : "";
 
@@ -255,7 +280,7 @@ export async function sendAssignmentApprovedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("assignmentApproved.subject", { recruitmentName: esc(params.recruitmentName) }),
+      subject: t("assignmentApproved.subject"),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("assignmentApproved.title")}</h2>
@@ -265,7 +290,15 @@ export async function sendAssignmentApprovedEmail(params: {
             <h3 style="margin: 0 0 8px 0;">${esc(params.destinationName)}</h3>
             <p style="margin: 0; color: #374151;">${esc(params.destinationDescription)}</p>
           </div>
-          <p style="color: #71717a; font-size: 14px;">${t("assignmentApproved.congratulations")}</p>
+          <h3>${t("assignmentApproved.detailsTitle")}</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentApproved.spokenLanguages")}</td><td>${params.spokenLanguages.length > 0 ? params.spokenLanguages.map(esc).join(", ") : "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentApproved.averageScore")}</td><td>${params.averageScore ? esc(params.averageScore) : "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentApproved.recommendationLetters")}</td><td>${params.recommendationLetters ?? "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentApproved.additionalActivities")}</td><td>${params.additionalActivities ?? "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a; font-weight: bold;">${t("assignmentApproved.finalScore")}</td><td style="font-weight: bold;">${esc(params.finalScore)}</td></tr>
+          </table>
+          ${verificationSection}
           ${supplementarySection}
         </div>
       `,
@@ -291,7 +324,13 @@ export async function sendAssignmentUnassignedEmail(params: {
   email: string;
   fullName: string;
   recruitmentName: string;
-  supplementaryStage?: { startDate: Date; endDate: Date };
+  spokenLanguages: string[];
+  averageScore: string | null;
+  recommendationLetters: number | null;
+  additionalActivities: number | null;
+  finalScore: string;
+  verificationEndDate: Date | null;
+  supplementaryStage?: { startDate: Date; endDate: Date; isActive: boolean };
   registrationLink?: string;
   locale?: string;
 }): Promise<EmailResult> {
@@ -299,22 +338,37 @@ export async function sendAssignmentUnassignedEmail(params: {
   const t = getEmailT(locale);
   const dateLocale = getDateLocale(locale);
 
+  const formatDateTime = (date: Date) =>
+    date.toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString(dateLocale, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+
+  const verificationSection = params.verificationEndDate
+    ? `<p>${t("assignmentUnassigned.verificationNote", { date: `<strong>${formatDateTime(params.verificationEndDate)}</strong>` })}</p>`
+    : "";
+
   const supplementarySection = params.supplementaryStage
     ? (() => {
-        const startStr = params.supplementaryStage!.startDate.toLocaleDateString(dateLocale, {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        });
-        const endStr = params.supplementaryStage!.endDate.toLocaleDateString(dateLocale, {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        });
-        return `
-          <p>${t("assignmentUnassigned.supplementaryInfo", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>
-          ${params.registrationLink ? `<div style="margin: 24px 0;"><a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("assignmentUnassigned.applyButton")}</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("assignmentUnassigned.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p></div>` : ""}
-        `;
+        const startStr = formatDate(params.supplementaryStage!.startDate);
+        const endStr = formatDate(params.supplementaryStage!.endDate);
+        const infoKey = params.supplementaryStage!.isActive
+          ? "assignmentUnassigned.supplementaryActive"
+          : "assignmentUnassigned.supplementaryPlanned";
+        const linkSection = params.registrationLink
+          ? `<div style="margin: 24px 0;"><a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("assignmentUnassigned.applyButton")}</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("assignmentUnassigned.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p></div>`
+          : "";
+        return `<p>${t(infoKey, { startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>${linkSection}`;
       })()
     : `<p style="color: #71717a; font-size: 14px;">${t("assignmentUnassigned.noSupplementary")}</p>`;
 
@@ -322,12 +376,21 @@ export async function sendAssignmentUnassignedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("assignmentUnassigned.subject", { recruitmentName: esc(params.recruitmentName) }),
+      subject: t("assignmentUnassigned.subject"),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("assignmentUnassigned.title")}</h2>
           <p>${t("assignmentUnassigned.greeting", { fullName: esc(params.fullName) })}</p>
           <p>${t("assignmentUnassigned.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
+          <h3>${t("assignmentUnassigned.detailsTitle")}</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentUnassigned.spokenLanguages")}</td><td>${params.spokenLanguages.length > 0 ? params.spokenLanguages.map(esc).join(", ") : "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentUnassigned.averageScore")}</td><td>${params.averageScore ? esc(params.averageScore) : "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentUnassigned.recommendationLetters")}</td><td>${params.recommendationLetters ?? "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("assignmentUnassigned.additionalActivities")}</td><td>${params.additionalActivities ?? "—"}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a; font-weight: bold;">${t("assignmentUnassigned.finalScore")}</td><td style="font-weight: bold;">${esc(params.finalScore)}</td></tr>
+          </table>
+          ${verificationSection}
           ${supplementarySection}
         </div>
       `,

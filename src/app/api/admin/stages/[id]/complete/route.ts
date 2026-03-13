@@ -86,18 +86,23 @@ export async function POST(
     .set({ approved: true })
     .where(eq(assignmentResults.stageId, id));
 
-  // Fetch results with student and destination info for emails
+  // Fetch results with student, registration, and destination info for emails
   const results = await db
     .select({
       id: assignmentResults.id,
       registrationId: assignmentResults.registrationId,
       destinationId: assignmentResults.destinationId,
+      score: assignmentResults.score,
       studentName: users.fullName,
       studentEmail: users.email,
       studentLocale: users.locale,
       destinationName: destinations.name,
       destinationDescription: destinations.description,
       slotId: slots.id,
+      spokenLanguages: registrations.spokenLanguages,
+      averageResult: registrations.averageResult,
+      recommendationLetters: registrations.recommendationLetters,
+      additionalActivities: registrations.additionalActivities,
     })
     .from(assignmentResults)
     .innerJoin(registrations, eq(assignmentResults.registrationId, registrations.id))
@@ -123,12 +128,26 @@ export async function POST(
 
   // Find the next supplementary stage (if any) to include in unassigned emails
   const [supplementaryStage] = await db
-    .select({ startDate: stages.startDate, endDate: stages.endDate })
+    .select({ startDate: stages.startDate, endDate: stages.endDate, status: stages.status })
     .from(stages)
     .where(
       and(
         eq(stages.recruitmentId, stage.recruitmentId),
         eq(stages.type, "supplementary"),
+        gt(stages.order, stage.order)
+      )
+    )
+    .orderBy(stages.order)
+    .limit(1);
+
+  // Find the nearest verification stage end date
+  const [verificationStage] = await db
+    .select({ endDate: stages.endDate })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, stage.recruitmentId),
+        eq(stages.type, "verification"),
         gt(stages.order, stage.order)
       )
     )
@@ -167,8 +186,18 @@ export async function POST(
 
   // Send emails to newly assigned/unassigned students
   let emailsSent = 0;
+  const suppStageData = supplementaryStage
+    ? { startDate: supplementaryStage.startDate, endDate: supplementaryStage.endDate, isActive: supplementaryStage.status === "active" }
+    : undefined;
+
   for (const result of results) {
     if (previouslyAssigned.has(result.registrationId)) continue;
+
+    const spokenLanguages: string[] = (() => {
+      try { return JSON.parse(result.spokenLanguages); } catch { return []; }
+    })();
+    const registrationLink = result.slotId ? getStudentRegistrationLink(result.slotId) : undefined;
+
     if (result.destinationId && result.destinationName) {
       await sendAssignmentApprovedEmail({
         email: result.studentEmail,
@@ -176,7 +205,14 @@ export async function POST(
         recruitmentName: getStageName(stage),
         destinationName: result.destinationName,
         destinationDescription: result.destinationDescription || "",
-        supplementaryStage: supplementaryStage ?? undefined,
+        spokenLanguages,
+        averageScore: result.averageResult,
+        recommendationLetters: result.recommendationLetters,
+        additionalActivities: result.additionalActivities,
+        finalScore: result.score,
+        verificationEndDate: verificationStage?.endDate ?? null,
+        supplementaryStage: suppStageData,
+        registrationLink,
         locale: result.studentLocale,
       });
     } else {
@@ -184,8 +220,14 @@ export async function POST(
         email: result.studentEmail,
         fullName: result.studentName,
         recruitmentName: getStageName(stage),
-        supplementaryStage: supplementaryStage ?? undefined,
-        registrationLink: result.slotId ? getStudentRegistrationLink(result.slotId) : undefined,
+        spokenLanguages,
+        averageScore: result.averageResult,
+        recommendationLetters: result.recommendationLetters,
+        additionalActivities: result.additionalActivities,
+        finalScore: result.score,
+        verificationEndDate: verificationStage?.endDate ?? null,
+        supplementaryStage: suppStageData,
+        registrationLink,
         locale: result.studentLocale,
       });
     }
