@@ -165,8 +165,9 @@ export async function runAssignmentAlgorithm(
         : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
 
       if (nonCancelledIds.length > 0) {
-        // Admin stage that preceded the supplementary stage holds the approved assignments
-        const [prevAdminStage] = await db
+        // The verification stage that preceded the supplementary stage holds the approved assignments.
+        // Fall back to the admin stage if no verification stage exists (backwards compatibility).
+        const [prevApprovedStage] = await db
           .select()
           .from(stages)
           .where(
@@ -177,7 +178,7 @@ export async function runAssignmentAlgorithm(
           )
           .limit(1);
 
-        if (prevAdminStage) {
+        if (prevApprovedStage) {
           const prevApproved = await db
             .select({
               registrationId: assignmentResults.registrationId,
@@ -187,7 +188,7 @@ export async function runAssignmentAlgorithm(
             .from(assignmentResults)
             .where(
               and(
-                eq(assignmentResults.stageId, prevAdminStage.id),
+                eq(assignmentResults.stageId, prevApprovedStage.id),
                 eq(assignmentResults.approved, true),
                 isNotNull(assignmentResults.destinationId),
                 inArray(assignmentResults.registrationId, nonCancelledIds)

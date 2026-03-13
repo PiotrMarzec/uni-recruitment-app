@@ -85,7 +85,9 @@
       "maxDestinations": "Max {count} destinazioni",
       "eligibleLevels": "Livelli di studenti ammissibili",
       "initialStage": "Fase iniziale",
-      "adminStage": "Fase amministrativa"
+      "adminStage": "Fase amministrativa",
+      "verificationStage": "Verification Stage",
+      "verificationEndDateHelper": "The verification stage can only be ended manually by an admin, regardless of this date."
     },
     "recruitment": {
       "title": "Dettagli reclutamento",
@@ -113,8 +115,11 @@
         "liveDashboard": "Dashboard live",
         "supplementaryStage": "Fase supplementare",
         "adminStage": "Fase amministrativa",
+        "verificationStage": "Verification Stage",
         "endDateHelper": "La data di fine del reclutamento verrà aggiornata per corrispondere alla data di fine di questa fase.",
+        "verificationEndDateHelper": "The verification stage can only be ended manually by an admin.",
         "addStages": "Aggiungi fasi",
+        "completeVerification": "End Verification",
         "activateNow": "Attiva ora",
         "endStage": "Termina fase",
         "reviewApplications": "Esamina candidature",

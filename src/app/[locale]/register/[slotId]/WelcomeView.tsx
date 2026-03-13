@@ -22,7 +22,7 @@ interface Stage {
   description: string;
   startDate: string;
   endDate: string;
-  type: "initial" | "admin" | "supplementary";
+  type: "initial" | "admin" | "supplementary" | "verification";
   status: "pending" | "active" | "completed";
   order: number;
 }
@@ -31,6 +31,7 @@ interface WelcomeViewProps {
   recruitment: { name: string; description: string | null };
   allStages: Stage[];
   isRegistrationOpen: boolean;
+  isVerificationStageActive?: boolean;
   registration: {
     level: string | null;
     spokenLanguages: string[];
@@ -51,6 +52,7 @@ export default function WelcomeView({
   recruitment,
   allStages,
   isRegistrationOpen,
+  isVerificationStageActive = false,
   registration,
   student,
   destinationNames,
@@ -75,7 +77,26 @@ export default function WelcomeView({
     (s) => s.type === "supplementary" && s.status === "pending"
   );
 
+  // Determine which stage is currently active
+  const activeStage = allStages.find((s) => s.status === "active");
+  const isInitialActive = activeStage?.type === "initial";
+  const isAdminActive = activeStage?.type === "admin";
+  const isSupplementaryActive = activeStage?.type === "supplementary";
+
+  // Determine score visibility based on current stage context
+  // Show scores during: verification, supplementary, and when no stage is active (recruitment over)
+  // Hide scores during: before recruitment, initial stage, admin stage
+  const shouldShowScores = (() => {
+    if (!registration) return false;
+    if (isVerificationStageActive) return true;
+    if (isSupplementaryActive) return true;
+    if (isAdminActive) return true; // supplementary admin shows scores from prev verification
+    if (!activeStage) return true; // recruitment over
+    return false;
+  })();
+
   const hasScores =
+    shouldShowScores &&
     registration &&
     (registration.averageResult != null ||
       registration.additionalActivities != null ||
@@ -88,6 +109,19 @@ export default function WelcomeView({
         registration!.recommendationLetters ?? null
       )
     : null;
+
+  // Show assignment based on stage:
+  // - verification: show assignment from previous admin stage
+  // - supplementary: show assignment from previous verification stage
+  // - supplementary admin: show current assignment if approved previously
+  // - no active stage: show from last verification stage
+  const shouldShowAssignment = (() => {
+    if (isVerificationStageActive) return true;
+    if (isSupplementaryActive) return true;
+    if (isAdminActive) return true;
+    if (!activeStage && !isInitialActive) return true; // recruitment over
+    return false;
+  })();
 
   const hasExistingRegistration = !!registration && !!student;
 
@@ -114,7 +148,7 @@ export default function WelcomeView({
       )}
 
       {/* Assigned destination */}
-      {currentAssignment && (
+      {shouldShowAssignment && currentAssignment && (
         <Card className="border-green-300 bg-green-50">
           <CardHeader className="pb-2">
             <CardTitle className="text-base text-green-800">{t("assignedDestination")}</CardTitle>

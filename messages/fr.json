@@ -85,7 +85,9 @@
       "maxDestinations": "Max {count} destinations",
       "eligibleLevels": "Niveaux d'étudiants éligibles",
       "initialStage": "Phase initiale",
-      "adminStage": "Phase administrative"
+      "adminStage": "Phase administrative",
+      "verificationStage": "Verification Stage",
+      "verificationEndDateHelper": "The verification stage can only be ended manually by an admin, regardless of this date."
     },
     "recruitment": {
       "title": "Détails du recrutement",
@@ -113,8 +115,11 @@
         "liveDashboard": "Tableau de bord en direct",
         "supplementaryStage": "Étape supplémentaire",
         "adminStage": "Étape administrative",
+        "verificationStage": "Verification Stage",
         "endDateHelper": "La date de fin du recrutement sera mise à jour pour correspondre à la date de fin de cette étape.",
+        "verificationEndDateHelper": "The verification stage can only be ended manually by an admin.",
         "addStages": "Ajouter des étapes",
+        "completeVerification": "End Verification",
         "activateNow": "Activer maintenant",
         "endStage": "Terminer l'étape",
         "reviewApplications": "Examiner les candidatures",

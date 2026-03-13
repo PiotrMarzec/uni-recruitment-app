@@ -14,10 +14,11 @@ import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import {
   sendAssignmentApprovedEmail,
   sendAssignmentUnassignedEmail,
+  sendSupplementaryStageEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
-import { eq, and, gt, lt, inArray, isNotNull, ne } from "drizzle-orm";
+import { eq, and, gt, lt, desc, inArray, isNotNull, ne } from "drizzle-orm";
 
 export async function POST(
   req: NextRequest,
@@ -38,9 +39,9 @@ export async function POST(
     return NextResponse.json({ error: "Stage not found" }, { status: 404 });
   }
 
-  if (stage.type !== "admin") {
+  if (stage.type !== "admin" && stage.type !== "verification") {
     return NextResponse.json(
-      { error: "Only admin stages can be manually completed" },
+      { error: "Only admin and verification stages can be manually completed" },
       { status: 400 }
     );
   }
@@ -193,7 +194,7 @@ export async function POST(
 
   // Find the next pending stage
   const [nextStage] = await db
-    .select({ id: stages.id, name: stages.name })
+    .select()
     .from(stages)
     .where(
       and(
@@ -204,6 +205,85 @@ export async function POST(
     )
     .orderBy(stages.order)
     .limit(1);
+
+  // For verification stages: activate the next stage and handle transition
+  if (stage.type === "verification" && nextStage && nextStage.order > stage.order) {
+    await db
+      .update(stages)
+      .set({ startDate: now, status: "active", updatedAt: now })
+      .where(eq(stages.id, nextStage.id));
+
+    // If next stage is supplementary, enroll all students and send supplementary emails
+    if (nextStage.type === "supplementary") {
+      const allCompletedRegistrations = await db
+        .select({
+          id: registrations.id,
+          slotId: registrations.slotId,
+          studentEmail: users.email,
+          studentName: users.fullName,
+          studentLocale: users.locale,
+        })
+        .from(registrations)
+        .innerJoin(slots, eq(registrations.slotId, slots.id))
+        .innerJoin(users, eq(registrations.studentId, users.id))
+        .where(
+          and(
+            eq(slots.recruitmentId, stage.recruitmentId),
+            eq(registrations.registrationCompleted, true)
+          )
+        );
+
+      for (const reg of allCompletedRegistrations) {
+        await db
+          .insert(stageEnrollments)
+          .values({ stageId: nextStage.id, registrationId: reg.id })
+          .onConflictDoNothing();
+      }
+
+      // Find most recently completed admin stage to get current assignment
+      const [prevAdminStage] = await db
+        .select()
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, stage.recruitmentId),
+            eq(stages.type, "admin"),
+            eq(stages.status, "completed")
+          )
+        )
+        .orderBy(desc(stages.order))
+        .limit(1);
+
+      for (const reg of allCompletedRegistrations) {
+        let currentDestinationName: string | null = null;
+        if (prevAdminStage) {
+          const [result] = await db
+            .select({ destinationName: destinations.name })
+            .from(assignmentResults)
+            .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
+            .where(
+              and(
+                eq(assignmentResults.stageId, prevAdminStage.id),
+                eq(assignmentResults.registrationId, reg.id),
+                eq(assignmentResults.approved, true)
+              )
+            )
+            .limit(1);
+          currentDestinationName = result?.destinationName ?? null;
+        }
+
+        await sendSupplementaryStageEmail({
+          email: reg.studentEmail,
+          fullName: reg.studentName,
+          recruitmentName: getStageName(nextStage),
+          currentDestination: currentDestinationName,
+          registrationLink: getStudentRegistrationLink(reg.slotId),
+          stageEndDate: nextStage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          locale: reg.studentLocale,
+        });
+      }
+    }
+  }
 
   await logAuditEvent({
     actorType: "admin",
@@ -217,5 +297,5 @@ export async function POST(
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({ success: true, emailsSent, nextStage: nextStage ?? null });
+  return NextResponse.json({ success: true, emailsSent, nextStage: nextStage ? { id: nextStage.id, name: nextStage.name } : null });
 }

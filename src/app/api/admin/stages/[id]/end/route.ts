@@ -128,32 +128,13 @@ export async function POST(
     }
   }
 
-  // When an admin stage ends and the next activated stage is supplementary, email all students
-  if (stage.type === "admin" && nextStage && nextStage.type === "supplementary" && nextStage.order > stage.order) {
-    const [prevAdminStage] = await db
-      .select()
-      .from(stages)
-      .where(
-        and(
-          eq(stages.recruitmentId, stage.recruitmentId),
-          eq(stages.type, "admin"),
-          eq(stages.status, "completed")
-        )
-      )
-      .orderBy(desc(stages.order))
-      .limit(1);
-
+  // When an admin stage ends and the next activated stage is verification,
+  // enroll all students into the verification stage
+  if (stage.type === "admin" && nextStage && nextStage.type === "verification" && nextStage.order > stage.order) {
     const completedRegistrations = await db
-      .select({
-        id: registrations.id,
-        slotId: registrations.slotId,
-        studentEmail: users.email,
-        studentName: users.fullName,
-        studentLocale: users.locale,
-      })
+      .select({ id: registrations.id })
       .from(registrations)
       .innerJoin(slots, eq(registrations.slotId, slots.id))
-      .innerJoin(users, eq(registrations.studentId, users.id))
       .where(
         and(
           eq(slots.recruitmentId, stage.recruitmentId),
@@ -161,42 +142,11 @@ export async function POST(
         )
       );
 
-    // Enroll all completed registrations in the supplementary stage so the
-    // assignment algorithm can track which students keep their guaranteed placement
     for (const reg of completedRegistrations) {
       await db
         .insert(stageEnrollments)
         .values({ stageId: nextStage.id, registrationId: reg.id })
         .onConflictDoNothing();
-    }
-
-    for (const reg of completedRegistrations) {
-      let currentDestinationName: string | null = null;
-      if (prevAdminStage) {
-        const [result] = await db
-          .select({ destinationName: destinations.name })
-          .from(assignmentResults)
-          .leftJoin(destinations, eq(assignmentResults.destinationId, destinations.id))
-          .where(
-            and(
-              eq(assignmentResults.stageId, prevAdminStage.id),
-              eq(assignmentResults.registrationId, reg.id),
-              eq(assignmentResults.approved, true)
-            )
-          )
-          .limit(1);
-        currentDestinationName = result?.destinationName ?? null;
-      }
-
-      await sendSupplementaryStageEmail({
-        email: reg.studentEmail,
-        fullName: reg.studentName,
-        recruitmentName: getStageName(nextStage),
-        currentDestination: currentDestinationName,
-        registrationLink: getStudentRegistrationLink(reg.slotId),
-        stageEndDate: nextStage.endDate ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        locale: reg.studentLocale,
-      });
     }
   }
 

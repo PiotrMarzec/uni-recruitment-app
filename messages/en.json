@@ -85,7 +85,9 @@
       "maxDestinations": "Max {count} destinations",
       "eligibleLevels": "Eligible Student Levels",
       "initialStage": "Initial Stage",
-      "adminStage": "Admin Stage"
+      "adminStage": "Admin Stage",
+      "verificationStage": "Verification Stage",
+      "verificationEndDateHelper": "The verification stage can only be ended manually by an admin, regardless of this date."
     },
     "recruitment": {
       "title": "Recruitment Details",
@@ -114,8 +116,11 @@
         "liveDashboard": "Live Dashboard",
         "supplementaryStage": "Supplementary Stage",
         "adminStage": "Admin Stage",
-        "endDateHelper": "The recruitment end date will be updated to match this stage's end date.",
+        "verificationStage": "Verification Stage",
+        "endDateHelper": "The recruitment end date will be updated to match the verification stage's end date.",
+        "verificationEndDateHelper": "The verification stage can only be ended manually by an admin.",
         "addStages": "Add Stages",
+        "completeVerification": "End Verification",
         "activateNow": "Activate Now",
         "endStage": "End Stage",
         "reviewApplications": "Review Applications",

@@ -33,6 +33,7 @@ const createSchema = z.object({
   eligibleLevels: z.array(z.enum([...STUDENT_LEVELS] as [StudentLevel, ...StudentLevel[]])).optional(),
   initialStage: stageSchema,
   adminStage: stageSchema,
+  verificationStage: stageSchema,
 });
 
 export async function GET(req: NextRequest) {
@@ -109,11 +110,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { initialStage: initialStageData, adminStage: adminStageData } = parsed.data;
+  const { initialStage: initialStageData, adminStage: adminStageData, verificationStage: verificationStageData } = parsed.data;
   const startDate = new Date(initialStageData.startDate);
-  const endDate = new Date(adminStageData.endDate);
+  const endDate = new Date(verificationStageData.endDate);
 
-  const { recruitment, initialStage, adminStage } = await db.transaction(async (tx) => {
+  const { recruitment, initialStage, adminStage, verificationStage } = await db.transaction(async (tx) => {
     const eligibleLevels = parsed.data.eligibleLevels ?? [...STUDENT_LEVELS];
     const [recruitment] = await tx
       .insert(recruitments)
@@ -155,7 +156,21 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
-    return { recruitment, initialStage, adminStage };
+    const [verificationStage] = await tx
+      .insert(stages)
+      .values({
+        recruitmentId: recruitment.id,
+        name: getStageName({ type: "verification", order: 2 }),
+        description: verificationStageData.description,
+        startDate: new Date(verificationStageData.startDate),
+        endDate: new Date(verificationStageData.endDate),
+        order: 2,
+        type: "verification",
+        status: "pending",
+      })
+      .returning();
+
+    return { recruitment, initialStage, adminStage, verificationStage };
   });
 
   await logAuditEvent({
@@ -170,5 +185,5 @@ export async function POST(req: NextRequest) {
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({ ...recruitment, stages: [initialStage, adminStage] }, { status: 201 });
+  return NextResponse.json({ ...recruitment, stages: [initialStage, adminStage, verificationStage] }, { status: 201 });
 }

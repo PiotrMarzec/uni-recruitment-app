@@ -26,9 +26,9 @@ export async function POST(
     return NextResponse.json({ error: "Stage not found" }, { status: 404 });
   }
 
-  if (stage.type !== "admin") {
+  if (stage.type !== "admin" && stage.type !== "verification") {
     return NextResponse.json(
-      { error: "Only admin stages support assignment" },
+      { error: "Only admin and verification stages support assignment" },
       { status: 400 }
     );
   }

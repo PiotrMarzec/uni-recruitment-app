@@ -13,6 +13,7 @@ export const stageTypeEnum = pgEnum("stage_type", [
   "initial",
   "admin",
   "supplementary",
+  "verification",
 ]);
 
 export const stageStatusEnum = pgEnum("stage_status", [

@@ -111,6 +111,10 @@ function getDefaultStageDates() {
   const adminEnd = new Date(adminStart);
   adminEnd.setHours(16, 0, 0, 0);
 
+  const verificationStart = new Date(adminEnd);
+  const verificationEnd = addBusinessDays(verificationStart, 3);
+  verificationEnd.setHours(18, 0, 0, 0);
+
   return {
     supplementaryStage: {
       startDate: toDatetimeLocal(suppStart),
@@ -119,6 +123,10 @@ function getDefaultStageDates() {
     adminStage: {
       startDate: toDatetimeLocal(adminStart),
       endDate: toDatetimeLocal(adminEnd),
+    },
+    verificationStage: {
+      startDate: toDatetimeLocal(verificationStart),
+      endDate: toDatetimeLocal(verificationEnd),
     },
   };
 }
@@ -353,6 +361,10 @@ export default function RecruitmentDetailPage() {
             startDate: new Date(stageForm.adminStage.startDate).toISOString(),
             endDate: new Date(stageForm.adminStage.endDate).toISOString(),
           },
+          verificationStage: {
+            startDate: new Date(stageForm.verificationStage.startDate).toISOString(),
+            endDate: new Date(stageForm.verificationStage.endDate).toISOString(),
+          },
         }),
       });
       if (res.ok) {
@@ -386,9 +398,21 @@ export default function RecruitmentDetailPage() {
   }
 
   async function completeStage(stageId: string) {
-    // Check if there are any subsequent supplementary stages planned
     const stage = recruitment?.stages.find((s) => s.id === stageId);
-    if (stage) {
+    if (stage && stage.type === "admin") {
+      // Check if there's a verification stage following this admin stage
+      const hasNextVerification = recruitment!.stages.some(
+        (s) => s.type === "verification" && s.order > stage.order && s.status === "pending"
+      );
+      if (!hasNextVerification) {
+        // No verification stage after this admin stage - warn about ending recruitment
+        setPendingCompleteStageId(stageId);
+        setShowNoSupplementaryWarning(true);
+        return;
+      }
+    }
+    if (stage && stage.type === "verification") {
+      // Check if there are any subsequent supplementary stages planned
       const hasNextSupplementary = recruitment!.stages.some(
         (s) => s.type === "supplementary" && s.order > stage.order && s.status === "pending"
       );
@@ -584,6 +608,31 @@ export default function RecruitmentDetailPage() {
                         />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-sm font-semibold">{t("stages.verificationStage")}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>{t("fields.startDate")}</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.verificationStage.startDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, verificationStage: { ...f.verificationStage, startDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("fields.endDate")}</Label>
+                        <Input
+                          type="datetime-local"
+                          value={stageForm.verificationStage.endDate}
+                          onChange={(e) => setStageForm(f => ({ ...f, verificationStage: { ...f.verificationStage, endDate: e.target.value } }))}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{t("stages.verificationEndDateHelper")}</p>
                     <p className="text-xs text-muted-foreground">{t("stages.endDateHelper")}</p>
                   </div>
 
@@ -649,7 +698,19 @@ export default function RecruitmentDetailPage() {
                             </Button>
                           </>
                         )}
-                        {stage.type === "admin" && stage.status === "completed" && (
+                        {stage.type === "verification" && stage.status === "active" && (
+                          <>
+                            <Link href={`/admin/recruitment/${id}/applications/${stage.id}`}>
+                              <Button size="sm">
+                                <ClipboardList className="w-3.5 h-3.5 mr-1" />{t("stages.reviewApplications")}
+                              </Button>
+                            </Link>
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => completeStage(stage.id)}>
+                              <Square className="w-3.5 h-3.5 mr-1" />{t("stages.completeVerification")}
+                            </Button>
+                          </>
+                        )}
+                        {(stage.type === "admin" || stage.type === "verification") && stage.status === "completed" && (
                           <Link href={`/admin/recruitment/${id}/results/${stage.id}`}>
                             <Button size="sm" variant="outline">{t("stages.viewResults")}</Button>
                           </Link>

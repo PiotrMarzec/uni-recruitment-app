@@ -76,7 +76,7 @@ interface StageInfo {
   description: string;
   startDate: string;
   endDate: string;
-  type: "initial" | "admin" | "supplementary";
+  type: "initial" | "admin" | "supplementary" | "verification";
   status: "pending" | "active" | "completed";
   order: number;
 }
@@ -88,6 +88,7 @@ interface SlotInfo {
   initialStage: { id: string; status: string; endDate: string } | null;
   isInitialActive: boolean;
   isSupplementaryActive: boolean;
+  isVerificationStageActive: boolean;
   currentAssignment: { destinationId: string; destinationName: string } | null;
   registration: {
     emailConsent: boolean;
@@ -465,6 +466,7 @@ export default function RegisterPage() {
             recruitment={slotInfo.recruitment}
             allStages={slotInfo.allStages}
             isRegistrationOpen={registrationOpen}
+            isVerificationStageActive={slotInfo.isVerificationStageActive}
             registration={slotInfo.registration}
             student={slotInfo.student}
             destinationNames={slotInfo.destinationNames}

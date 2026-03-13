@@ -8,6 +8,7 @@ import {
   users,
   destinations,
   stageEnrollments,
+  assignmentResults,
 } from "@/db/schema";
 import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
@@ -92,6 +93,21 @@ export async function GET(
 
   const isAdminStageActive = !!activeAdminStage;
 
+  // Find active verification stage
+  const [activeVerificationStage] = await db
+    .select({ id: stages.id, order: stages.order })
+    .from(stages)
+    .where(
+      and(
+        eq(stages.recruitmentId, slot.recruitmentId),
+        eq(stages.type, "verification"),
+        eq(stages.status, "active")
+      )
+    )
+    .limit(1);
+
+  const isVerificationStageActive = !!activeVerificationStage;
+
   // Mark slot as registration_started when the link is opened.
   // Handles both first-time opens ("open") and re-edits of completed registrations ("registered").
   if ((isInitialActive || isSupplementaryActive) && (slot.status === "open" || slot.status === "registered")) {
@@ -147,13 +163,14 @@ export async function GET(
     if (regResult.length > 0) {
       // Exclude admin-only fields before returning to the student-facing client.
       // Scoring fields (averageResult, additionalActivities, recommendationLetters) are
-      // only revealed when no admin stage is currently active.
+      // hidden during active admin stage, but shown during verification and other stages.
       const { notes: _notes, averageResult, additionalActivities, recommendationLetters, ...regPublic } = regResult[0];
+      const hideScores = isAdminStageActive && !isVerificationStageActive;
       registration = {
         ...regPublic,
         spokenLanguages: JSON.parse(regResult[0].spokenLanguages || "[]"),
         destinationPreferences: JSON.parse(regResult[0].destinationPreferences || "[]"),
-        ...(!isAdminStageActive ? {
+        ...(!hideScores ? {
           averageResult,
           additionalActivities,
           recommendationLetters,
@@ -167,28 +184,39 @@ export async function GET(
         .limit(1);
       student = studentResult;
 
-      // Look up the student's current assignment from the most recently completed admin stage.
+      // Look up the student's current assignment.
+      // During verification stage: show assignment from the most recently completed admin stage
+      // During supplementary stage: show assignment from the most recently completed verification stage
+      // Otherwise: show from most recently completed admin stage
       {
-        const [adminStage] = await db
+        // Determine which completed stage to look up assignment from
+        let lookupStageType: "admin" | "verification" = "admin";
+        if (isSupplementaryActive) {
+          // During supplementary: show assignment from previous verification stage
+          lookupStageType = "verification";
+        }
+
+        const [completedStage] = await db
           .select()
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, slot.recruitmentId),
-              eq(stages.type, "admin"),
+              eq(stages.type, lookupStageType),
               eq(stages.status, "completed")
             )
           )
           .orderBy(desc(stages.order))
           .limit(1);
 
-        if (adminStage) {
+        if (completedStage) {
+          // For admin stages, check stage enrollments
           const [enrollment] = await db
             .select({ assignedDestinationId: stageEnrollments.assignedDestinationId })
             .from(stageEnrollments)
             .where(
               and(
-                eq(stageEnrollments.stageId, adminStage.id),
+                eq(stageEnrollments.stageId, completedStage.id),
                 eq(stageEnrollments.registrationId, regResult[0].id),
                 eq(stageEnrollments.cancelled, false)
               )
@@ -206,6 +234,34 @@ export async function GET(
               destinationId: enrollment.assignedDestinationId,
               destinationName: dest?.name ?? enrollment.assignedDestinationId,
             };
+          } else {
+            // Also check assignment results for approved assignments
+            const [result] = await db
+              .select({
+                destinationId: assignmentResults.destinationId,
+              })
+              .from(assignmentResults)
+              .where(
+                and(
+                  eq(assignmentResults.stageId, completedStage.id),
+                  eq(assignmentResults.registrationId, regResult[0].id),
+                  eq(assignmentResults.approved, true)
+                )
+              )
+              .limit(1);
+
+            if (result?.destinationId) {
+              const [dest] = await db
+                .select({ name: destinations.name })
+                .from(destinations)
+                .where(eq(destinations.id, result.destinationId))
+                .limit(1);
+
+              currentAssignment = {
+                destinationId: result.destinationId,
+                destinationName: dest?.name ?? result.destinationId,
+              };
+            }
           }
         }
       }
@@ -254,6 +310,7 @@ export async function GET(
       : null,
     isInitialActive,
     isSupplementaryActive,
+    isVerificationStageActive,
     currentAssignment,
     registration,
     student,

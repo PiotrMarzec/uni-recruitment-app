@@ -26,7 +26,7 @@ interface StageInfo {
   name: string;
   startDate: string;
   endDate: string;
-  type: "initial" | "admin" | "supplementary";
+  type: "initial" | "admin" | "supplementary" | "verification";
 }
 
 interface Recruitment {
@@ -86,6 +86,10 @@ function getDefaultStageDates() {
   const adminEnd = addBusinessDays(adminStart, 2);
   adminEnd.setHours(14, 0, 0, 0);
 
+  const verificationStart = new Date(adminEnd);
+  const verificationEnd = addBusinessDays(verificationStart, 3);
+  verificationEnd.setHours(18, 0, 0, 0);
+
   return {
     initialStage: {
       startDate: toDatetimeLocal(initialStart),
@@ -94,6 +98,10 @@ function getDefaultStageDates() {
     adminStage: {
       startDate: toDatetimeLocal(adminStart),
       endDate: toDatetimeLocal(adminEnd),
+    },
+    verificationStage: {
+      startDate: toDatetimeLocal(verificationStart),
+      endDate: toDatetimeLocal(verificationEnd),
     },
   };
 }
@@ -185,6 +193,10 @@ export default function AdminDashboardPage() {
           adminStage: {
             startDate: new Date(form.adminStage.startDate).toISOString(),
             endDate: new Date(form.adminStage.endDate).toISOString(),
+          },
+          verificationStage: {
+            startDate: new Date(form.verificationStage.startDate).toISOString(),
+            endDate: new Date(form.verificationStage.endDate).toISOString(),
           },
         }),
       });
@@ -441,6 +453,35 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-lg border p-4">
+                <p className="text-sm font-medium">{t("verificationStage")}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>{tr("fields.startDate")}</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.verificationStage.startDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, verificationStage: { ...f.verificationStage, startDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{tr("fields.endDate")}</Label>
+                    <Input
+                      type="datetime-local"
+                      value={form.verificationStage.endDate}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, verificationStage: { ...f.verificationStage, endDate: e.target.value } }))
+                      }
+                      required
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("verificationEndDateHelper")}</p>
               </div>
 
               {error && <p className="text-sm text-destructive">{error}</p>}

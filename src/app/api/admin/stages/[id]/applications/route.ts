@@ -119,19 +119,19 @@ export async function GET(
       .limit(1);
 
     if (prevSupplementaryStage) {
-      const [prevAdminStage] = await db
+      // Find the stage immediately before the supplementary (verification or admin)
+      const [prevApprovedStage] = await db
         .select()
         .from(stages)
         .where(
           and(
             eq(stages.recruitmentId, stage.recruitmentId),
-            eq(stages.type, "admin"),
             eq(stages.order, prevSupplementaryStage.order - 1)
           )
         )
         .limit(1);
 
-      if (prevAdminStage) {
+      if (prevApprovedStage) {
         const allSuppEnrollments = await db
           .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
           .from(stageEnrollments)
@@ -153,12 +153,12 @@ export async function GET(
             .where(
               guaranteedIds !== null
                 ? and(
-                    eq(assignmentResults.stageId, prevAdminStage.id),
+                    eq(assignmentResults.stageId, prevApprovedStage.id),
                     eq(assignmentResults.approved, true),
                     inArray(assignmentResults.registrationId, guaranteedIds)
                   )
                 : and(
-                    eq(assignmentResults.stageId, prevAdminStage.id),
+                    eq(assignmentResults.stageId, prevApprovedStage.id),
                     eq(assignmentResults.approved, true)
                   )
             );

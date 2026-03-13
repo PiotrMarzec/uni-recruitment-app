@@ -80,14 +80,15 @@ Only archived recruitments can be deleted (hard delete with cascade).
 | start_date | datetime | |
 | end_date | datetime | |
 | order | integer | Auto-increment starting from 0, per recruitment |
-| type | enum | `initial`, `admin`, `supplementary` |
+| type | enum | `initial`, `admin`, `supplementary`, `verification` |
 | status | enum | `pending`, `active`, `completed` |
 
 **Stage ordering rules:**
 - Exactly one `initial` stage (always order 0)
-- At least one `admin` stage immediately after the initial stage
-- Zero or more `supplementary` stages, each followed by an `admin` stage
-- Valid sequence example: `initial → admin → supplementary → admin → supplementary → admin`
+- One `admin` stage immediately after the initial stage (order 1)
+- One `verification` stage immediately after the admin stage (order 2)
+- Zero or more supplementary rounds, each consisting of: `supplementary` → `admin` → `verification`
+- Valid sequence example: `initial → admin → verification → supplementary → admin → verification → supplementary → admin → verification`
 
 ### 3.3 Slot
 | Field | Type | Notes |
@@ -262,31 +263,63 @@ Run when an admin manually triggers assignment for an admin stage:
 │  ├─ Admin manually marks stage as complete                          │
 │  └─ Results saved + assigned/unassigned emails sent to students     │
 │         │                                                           │
+│         ▼                                                           │
+│  VERIFICATION STAGE (auto-starts when admin stage completes)        │
+│  ├─ Teachers can still edit student registration data               │
+│  ├─ Admin can run the assignment algorithm (separate assignments)   │
+│  ├─ Students cannot update their registration                       │
+│  ├─ Students see their assignment from previous admin stage         │
+│  ├─ Students see their score values from previous admin stage       │
+│  ├─ Does NOT auto-complete at end_date (manual action only)         │
+│  ├─ Admin manually ends verification (approves current results)     │
+│  └─ Ending activates next supplementary stage (if exists)           │
+│         │                                                           │
 │         ▼  (optional, admin-initiated)                              │
 │  SUPPLEMENTARY STAGE                                                │
 │  ├─ Email sent to all enrolled students with supplementary link     │
 │  ├─ Students can cancel their assignment (slot freed)               │
 │  ├─ Students can optionally update destination preferences          │
+│  ├─ Students cannot update spoken languages or study level          │
 │  ├─ Closes at end_date (triggers transition to next admin stage)    │
 │  └─ Subsequent admin stage auto-activates                           │
 │         │                                                           │
 │         ▼                                                           │
 │  ADMIN STAGE (repeat)                                               │
-│  ├─ Locked assignments preserved                                    │
+│  ├─ Locked assignments preserved (from previous verification)       │
 │  ├─ Re-run assignment for freed/remaining slots only                │
-│  └─ Admin approves → emails → done (or another supplementary)      │
+│  └─ Admin approves → emails → verification → done (or another      │
+│     supplementary round)                                            │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Automated transitions
 - Initial → Admin: triggered automatically when initial stage `end_date` passes; completion email sent to students
+- Admin → Verification: triggered when admin stage is completed; enrolls all students
 - Supplementary → Admin: triggered automatically when supplementary stage `end_date` passes
 
 ### Manual transitions
-- Admin stage completion: admin clicks "Complete Stage" in admin panel (sends assigned/unassigned emails)
+- Admin stage completion: admin clicks "Complete Stage" in admin panel (sends assigned/unassigned emails, activates verification)
+- Verification stage completion: admin clicks "End Verification" (approves results, activates next supplementary if exists)
 - Starting a supplementary stage: admin initiates from admin panel (sends supplementary emails with token links)
 - Admin can also manually activate a `pending` stage before its scheduled start date
+
+### Verification stage default dates
+- Start date: equal to the admin stage end date
+- End date: 3 business days after start date at 18:00
+
+### Student Registration Welcome Page — Stage-based visibility
+
+| Stage | Can Register | Assignment Shown | Score Shown |
+|---|---|---|---|
+| Before recruitment starts | No | No | No |
+| Initial registration | Yes (start/update) | No | No |
+| Initial admin | No | No | No |
+| Initial verification | No | From previous admin stage | From previous admin stage |
+| Supplementary registration | Yes (update destinations only) | From previous verification stage | From previous verification stage |
+| Supplementary admin | No | Current if approved previously; none if re-registered | From previous verification stage |
+| Supplementary verification | No | From previous admin stage | From previous admin stage |
+| Recruitment over / no active stage | No | From last verification stage | From last verification stage |
 
 ---
 

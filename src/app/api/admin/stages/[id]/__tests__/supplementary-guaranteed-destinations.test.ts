@@ -22,11 +22,13 @@
  *   guaranteed students, then pre-populate assignmentMap from the previous admin
  *   stage's approved results.
  *
- * Scenario (Winter recruitment — orders 1 → 2 → 3 → 4):
- *   order 1  Initial stage       (completed)
- *   order 2  Admin stage 1       (completed)  — 3 students assigned to destinations
+ * Scenario (Winter recruitment — orders 0 → 1 → 2 → 3 → 4 → 5):
+ *   order 0  Initial stage       (completed)
+ *   order 1  Admin stage 1       (completed)  — 3 students assigned to destinations
+ *   order 2  Verification stage  (completed)  — approves admin results
  *   order 3  Supplementary stage (completed)  — 2 students cancelled, 1 kept place
  *   order 4  Admin stage 2       (active)     — algorithm not run yet
+ *   order 5  Verification stage 2 (pending)
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -153,106 +155,68 @@ beforeEach(() => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Suite 1 — end/route.ts: stageEnrollments created when admin stage ends
+//           and transitions to verification stage
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Queues the DB calls made by POST /api/admin/stages/[id]/end when the stage
- * being ended is Admin Stage 1 (order 2) and the next pending stage is the
- * Supplementary stage (order 3).
+ * being ended is Admin Stage 1 (order 1) and the next pending stage is the
+ * Verification stage (order 2).
  *
- * DB call order in end/route.ts (admin → supplementary path):
+ * DB call order in end/route.ts (admin → verification path):
  *   1.  select stage                    — fetch admin stage 1
  *   2.  update stages                   — set status = "completed"
- *   3.  select next pending stage       — finds supplementary stage (order 3)
- *   4.  update stages                   — activate supplementary stage
- *   5.  select prevAdminStage           — most recently completed admin stage
- *   6.  select completedRegistrations   — 3 students with completed registrations
- *   7.  insert stageEnrollments         — enroll Emma (reg 0)
- *   8.  insert stageEnrollments         — enroll Carlos (reg 1)
- *   9.  insert stageEnrollments         — enroll Hans (reg 2)
- *   10. select assignmentResult         — Emma's destination (London) for email
- *   11. select assignmentResult         — Carlos's destination (Barcelona) for email
- *   12. select assignmentResult         — Hans's destination (Berlin) for email
+ *   3.  select next pending stage       — finds verification stage (order 2)
+ *   4.  update stages                   — activate verification stage
+ *   5.  select completedRegistrations   — 3 students with completed registrations
+ *   6.  insert stageEnrollments         — enroll Emma (reg 0)
+ *   7.  insert stageEnrollments         — enroll Carlos (reg 1)
+ *   8.  insert stageEnrollments         — enroll Hans (reg 2)
  */
-function queueAdminStageEndsWithSupplementaryNext() {
+const WINTER_STAGE_VERIFICATION_ID = "veri-0000-0000-0000-000000000001";
+
+function queueAdminStageEndsWithVerificationNext() {
   dbQueue.push(
-    // 1. Current stage — Admin Stage 1, order 2
+    // 1. Current stage — Admin Stage 1, order 1
     [{
       id: WINTER_STAGE_ADMIN1_ID,
       recruitmentId: WINTER_RECRUITMENT_ID,
       name: "Winter Admin Stage 1",
       type: "admin",
       status: "active",
-      order: 2,
+      order: 1,
     }],
     // 2. update stages → completed
     [],
-    // 3. Next pending stage — Supplementary, order 3
+    // 3. Next pending stage — Verification, order 2
     [{
-      id: WINTER_STAGE_SUPP_ID,
+      id: WINTER_STAGE_VERIFICATION_ID,
       recruitmentId: WINTER_RECRUITMENT_ID,
-      name: "Winter Supplementary Stage",
-      type: "supplementary",
+      name: "Winter Verification Stage",
+      type: "verification",
       status: "pending",
-      order: 3,
-      endDate: SUPP_END_DATE,
-    }],
-    // 4. update supplementary stage → active
-    [],
-    // 5. Previous completed admin stage (for email destination lookup)
-    [{
-      id: WINTER_STAGE_ADMIN1_ID,
-      recruitmentId: WINTER_RECRUITMENT_ID,
-      type: "admin",
-      status: "completed",
       order: 2,
     }],
-    // 6. Completed registrations — 3 students
+    // 4. update verification stage → active
+    [],
+    // 5. Completed registrations — 3 students
     [
-      {
-        id: REG_EMMA,
-        slotId: WINTER_SLOT_IDS[0],
-        studentEmail: "emma.johnson@student.edu",
-        studentName: "Emma Johnson",
-        studentLocale: "en",
-      },
-      {
-        id: REG_CARLOS,
-        slotId: WINTER_SLOT_IDS[1],
-        studentEmail: "carlos.garcia@student.edu",
-        studentName: "Carlos Garcia",
-        studentLocale: "es",
-      },
-      {
-        id: REG_HANS,
-        slotId: WINTER_SLOT_IDS[2],
-        studentEmail: "hans.weber@student.edu",
-        studentName: "Hans Weber",
-        studentLocale: "de",
-      },
+      { id: REG_EMMA },
+      { id: REG_CARLOS },
+      { id: REG_HANS },
     ],
-    // 7. Insert stageEnrollments for Emma
+    // 6. Insert stageEnrollments for Emma
     [],
-    // 8. Insert stageEnrollments for Carlos
+    // 7. Insert stageEnrollments for Carlos
     [],
-    // 9. Insert stageEnrollments for Hans
+    // 8. Insert stageEnrollments for Hans
     [],
-    // 10. Destination for Emma's email — London
-    [{ destinationName: "London University" }],
-    // 11. Destination for Carlos's email — Barcelona
-    [{ destinationName: "Barcelona University" }],
-    // 12. Destination for Hans's email — Berlin
-    [{ destinationName: "Berlin University" }],
   );
 }
 
-describe("POST /api/admin/stages/[id]/end — admin stage → supplementary stage", () => {
+describe("POST /api/admin/stages/[id]/end — admin stage → verification stage", () => {
   it("inserts a stageEnrollments row for every completed registration", async () => {
-    queueAdminStageEndsWithSupplementaryNext();
-
-    // Record which insert calls hit the DB so we can verify enrollment inserts
-    const insertCalls: any[] = [];
-    const originalShift = dbQueue.shift.bind(dbQueue);
+    queueAdminStageEndsWithVerificationNext();
 
     const req = new NextRequest(
       `http://localhost/api/admin/stages/${WINTER_STAGE_ADMIN1_ID}/end`,
@@ -268,8 +232,8 @@ describe("POST /api/admin/stages/[id]/end — admin stage → supplementary stag
     expect(dbQueue.length).toBe(0);
   });
 
-  it("sends sendSupplementaryStageEmail to all 3 students with their current destination", async () => {
-    queueAdminStageEndsWithSupplementaryNext();
+  it("does not send supplementary stage emails (verification has no student emails)", async () => {
+    queueAdminStageEndsWithVerificationNext();
 
     const req = new NextRequest(
       `http://localhost/api/admin/stages/${WINTER_STAGE_ADMIN1_ID}/end`,
@@ -277,32 +241,7 @@ describe("POST /api/admin/stages/[id]/end — admin stage → supplementary stag
     );
     await endPOST(req, { params: Promise.resolve({ id: WINTER_STAGE_ADMIN1_ID }) });
 
-    expect(mockSendSupplementaryStageEmail).toHaveBeenCalledTimes(3);
-
-    expect(mockSendSupplementaryStageEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: "emma.johnson@student.edu",
-        fullName: "Emma Johnson",
-        currentDestination: "London University",
-        locale: "en",
-      }),
-    );
-    expect(mockSendSupplementaryStageEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: "carlos.garcia@student.edu",
-        fullName: "Carlos Garcia",
-        currentDestination: "Barcelona University",
-        locale: "es",
-      }),
-    );
-    expect(mockSendSupplementaryStageEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        email: "hans.weber@student.edu",
-        fullName: "Hans Weber",
-        currentDestination: "Berlin University",
-        locale: "de",
-      }),
-    );
+    expect(mockSendSupplementaryStageEmail).not.toHaveBeenCalled();
   });
 });
 

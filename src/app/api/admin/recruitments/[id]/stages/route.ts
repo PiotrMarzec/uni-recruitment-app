@@ -15,6 +15,7 @@ const stageInputSchema = z.object({
 const createSchema = z.object({
   supplementaryStage: stageInputSchema,
   adminStage: stageInputSchema,
+  verificationStage: stageInputSchema,
   description: z.string().default(""),
 });
 
@@ -79,9 +80,9 @@ export async function POST(
   }
 
   const nextOrder = existingStages.length;
-  const { supplementaryStage, adminStage, description } = parsed.data;
+  const { supplementaryStage, adminStage, verificationStage, description } = parsed.data;
 
-  const [suppStage, admStage] = await db.transaction(async (tx) => {
+  const [suppStage, admStage, verifStage] = await db.transaction(async (tx) => {
     const [supp] = await tx
       .insert(stages)
       .values({
@@ -110,13 +111,27 @@ export async function POST(
       })
       .returning();
 
-    // Update recruitment endDate to match admin stage endDate
+    const [verif] = await tx
+      .insert(stages)
+      .values({
+        recruitmentId: id,
+        name: getStageName({ type: "verification", order: nextOrder + 2 }),
+        description: "",
+        startDate: new Date(verificationStage.startDate),
+        endDate: new Date(verificationStage.endDate),
+        order: nextOrder + 2,
+        type: "verification",
+        status: "pending",
+      })
+      .returning();
+
+    // Update recruitment endDate to match verification stage endDate
     await tx
       .update(recruitments)
-      .set({ endDate: new Date(adminStage.endDate) })
+      .set({ endDate: new Date(verificationStage.endDate) })
       .where(eq(recruitments.id, id));
 
-    return [supp, adm];
+    return [supp, adm, verif];
   });
 
   await logAuditEvent({
@@ -127,23 +142,23 @@ export async function POST(
     resourceType: "stage",
     resourceId: suppStage.id,
     recruitmentId: id,
-    details: { type: "supplementary", order: suppStage.order, pairedAdminStageId: admStage.id },
+    details: { type: "supplementary", order: suppStage.order, pairedAdminStageId: admStage.id, pairedVerificationStageId: verifStage.id },
     ipAddress: getIpAddress(req),
   });
 
-  return NextResponse.json({ supplementaryStage: suppStage, adminStage: admStage }, { status: 201 });
+  return NextResponse.json({ supplementaryStage: suppStage, adminStage: admStage, verificationStage: verifStage }, { status: 201 });
 }
 
 function validateSupplementaryAddition(
   existingStages: typeof stages.$inferSelect[]
 ): string | null {
   if (existingStages.length === 0) {
-    return "Cannot add a supplementary stage before the initial and admin stages exist";
+    return "Cannot add a supplementary stage before the initial, admin, and verification stages exist";
   }
 
   const lastStage = existingStages[existingStages.length - 1];
-  if (lastStage.type !== "admin") {
-    return "A supplementary stage must follow an admin stage";
+  if (lastStage.type !== "verification" && lastStage.type !== "admin") {
+    return "A supplementary stage must follow a verification or admin stage";
   }
 
   return null;
