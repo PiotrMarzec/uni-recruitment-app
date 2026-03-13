@@ -3,6 +3,16 @@ import { logAuditEvent, ACTIONS } from "@/lib/audit";
 import { getEmailT, getDateLocale } from "./translations";
 import { logger } from "@/lib/logger";
 
+/** Escape HTML special characters to prevent injection in email templates. */
+function esc(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface EmailResult {
   success: boolean;
   error?: string;
@@ -72,22 +82,22 @@ export async function sendRegistrationCompletedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("registrationCompleted.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("registrationCompleted.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("registrationCompleted.title")}</h2>
-          <p>${t("registrationCompleted.greeting", { fullName: params.fullName })}</p>
-          <p>${t("registrationCompleted.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("registrationCompleted.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("registrationCompleted.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           <h3>${t("registrationCompleted.summaryTitle")}</h3>
           <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.enrollmentId")}</td><td>${params.enrollmentId}</td></tr>
-            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.studyLevel")}</td><td>${levelLabel}</td></tr>
-            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.spokenLanguages")}</td><td>${params.spokenLanguages.join(", ")}</td></tr>
-            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.destinationPreferences")}</td><td>${params.destinationPreferences.map((d, i) => `${i + 1}. ${d}`).join("<br>")}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.enrollmentId")}</td><td>${esc(params.enrollmentId)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.studyLevel")}</td><td>${esc(levelLabel)}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.spokenLanguages")}</td><td>${params.spokenLanguages.map(esc).join(", ")}</td></tr>
+            <tr><td style="padding: 8px 0; color: #71717a;">${t("registrationCompleted.destinationPreferences")}</td><td>${params.destinationPreferences.map((d, i) => `${i + 1}. ${esc(d)}`).join("<br>")}</td></tr>
           </table>
           <div style="margin: 32px 0;">
-            <a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("registrationCompleted.updateButton")}</a>
-            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("registrationCompleted.copyLink")} <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p>
+            <a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("registrationCompleted.updateButton")}</a>
+            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("registrationCompleted.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p>
           </div>
           <p style="color: #71717a; font-size: 14px; margin-top: 32px;">${t("registrationCompleted.updateNote")}</p>
         </div>
@@ -133,12 +143,12 @@ export async function sendInitialStageClosedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("initialStageClosed.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("initialStageClosed.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("initialStageClosed.title")}</h2>
-          <p>${t("initialStageClosed.greeting", { fullName: params.fullName })}</p>
-          <p>${t("initialStageClosed.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("initialStageClosed.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("initialStageClosed.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           <p>${t("initialStageClosed.reviewNote", { date: `<strong>${endDateStr}</strong>` })}</p>
           <p style="color: #71717a; font-size: 14px;">${t("initialStageClosed.thanks")}</p>
         </div>
@@ -184,12 +194,12 @@ export async function sendSupplementaryStageClosedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("supplementaryStageClosed.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("supplementaryStageClosed.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("supplementaryStageClosed.title")}</h2>
-          <p>${t("supplementaryStageClosed.greeting", { fullName: params.fullName })}</p>
-          <p>${t("supplementaryStageClosed.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("supplementaryStageClosed.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("supplementaryStageClosed.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           <p>${t("supplementaryStageClosed.reviewNote", { date: `<strong>${endDateStr}</strong>` })}</p>
           <p style="color: #71717a; font-size: 14px;">${t("supplementaryStageClosed.thanks")}</p>
         </div>
@@ -237,7 +247,7 @@ export async function sendAssignmentApprovedEmail(params: {
           month: "long",
           year: "numeric",
         });
-        return `<p style="color: #374151;">${t("assignmentApproved.supplementaryInfo", { recruitmentName: `<strong>${params.recruitmentName}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>`;
+        return `<p style="color: #374151;">${t("assignmentApproved.supplementaryInfo", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>`;
       })()
     : "";
 
@@ -245,15 +255,15 @@ export async function sendAssignmentApprovedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("assignmentApproved.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("assignmentApproved.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("assignmentApproved.title")}</h2>
-          <p>${t("assignmentApproved.greeting", { fullName: params.fullName })}</p>
-          <p>${t("assignmentApproved.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("assignmentApproved.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("assignmentApproved.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px 24px; margin: 24px 0; border-radius: 4px;">
-            <h3 style="margin: 0 0 8px 0;">${params.destinationName}</h3>
-            <p style="margin: 0; color: #374151;">${params.destinationDescription}</p>
+            <h3 style="margin: 0 0 8px 0;">${esc(params.destinationName)}</h3>
+            <p style="margin: 0; color: #374151;">${esc(params.destinationDescription)}</p>
           </div>
           <p style="color: #71717a; font-size: 14px;">${t("assignmentApproved.congratulations")}</p>
           ${supplementarySection}
@@ -302,8 +312,8 @@ export async function sendAssignmentUnassignedEmail(params: {
           year: "numeric",
         });
         return `
-          <p>${t("assignmentUnassigned.supplementaryInfo", { recruitmentName: `<strong>${params.recruitmentName}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>
-          ${params.registrationLink ? `<div style="margin: 24px 0;"><a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("assignmentUnassigned.applyButton")}</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("assignmentUnassigned.copyLink")} <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p></div>` : ""}
+          <p>${t("assignmentUnassigned.supplementaryInfo", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>`, startDate: `<strong>${startStr}</strong>`, endDate: `<strong>${endStr}</strong>` })}</p>
+          ${params.registrationLink ? `<div style="margin: 24px 0;"><a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("assignmentUnassigned.applyButton")}</a><p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("assignmentUnassigned.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p></div>` : ""}
         `;
       })()
     : `<p style="color: #71717a; font-size: 14px;">${t("assignmentUnassigned.noSupplementary")}</p>`;
@@ -312,12 +322,12 @@ export async function sendAssignmentUnassignedEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("assignmentUnassigned.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("assignmentUnassigned.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("assignmentUnassigned.title")}</h2>
-          <p>${t("assignmentUnassigned.greeting", { fullName: params.fullName })}</p>
-          <p>${t("assignmentUnassigned.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("assignmentUnassigned.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("assignmentUnassigned.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           ${supplementarySection}
         </div>
       `,
@@ -353,10 +363,10 @@ export async function sendAdminInviteEmail(params: {
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
           <h2>Admin Panel Invitation</h2>
-          <p>Dear ${params.fullName},</p>
-          <p>${params.invitedByName} has granted you admin access to the Regie platform.</p>
+          <p>Dear ${esc(params.fullName)},</p>
+          <p>${esc(params.invitedByName)} has granted you admin access to the Regie platform.</p>
           <div style="margin: 32px 0;">
-            <a href="${params.adminUrl}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Access Admin Panel</a>
+            <a href="${esc(params.adminUrl)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">Access Admin Panel</a>
           </div>
           <p style="color: #71717a; font-size: 14px;">You can log in using this email address. A one-time code will be sent to you when you sign in.</p>
         </div>
@@ -403,12 +413,12 @@ export async function sendSupplementaryStageEmail(params: {
   const assignedSection = params.currentDestination
     ? `
       <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px 24px; margin: 24px 0; border-radius: 4px;">
-        <p style="margin: 0 0 4px 0; font-weight: bold;">${t("supplementaryStage.currentAssignment", { destination: params.currentDestination })}</p>
+        <p style="margin: 0 0 4px 0; font-weight: bold;">${t("supplementaryStage.currentAssignment", { destination: esc(params.currentDestination!) })}</p>
         <p style="margin: 0; color: #374151;">${t("supplementaryStage.guaranteed")}</p>
       </div>
       <p>${t("supplementaryStage.changeNote")}</p>
       <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
-        <p style="margin: 0; color: #991b1b; font-weight: bold;">${t("supplementaryStage.warning", { destination: params.currentDestination })}</p>
+        <p style="margin: 0; color: #991b1b; font-weight: bold;">${t("supplementaryStage.warning", { destination: esc(params.currentDestination!) })}</p>
       </div>
     `
     : `<p>${t("supplementaryStage.noAssignment")}</p>`;
@@ -417,16 +427,16 @@ export async function sendSupplementaryStageEmail(params: {
     await sendEmail({
       from: EMAIL_FROM,
       to: params.email,
-      subject: t("supplementaryStage.subject", { recruitmentName: params.recruitmentName }),
+      subject: t("supplementaryStage.subject", { recruitmentName: esc(params.recruitmentName) }),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 32px;">
           <h2>${t("supplementaryStage.title")}</h2>
-          <p>${t("supplementaryStage.greeting", { fullName: params.fullName })}</p>
-          <p>${t("supplementaryStage.body", { recruitmentName: `<strong>${params.recruitmentName}</strong>` })}</p>
+          <p>${t("supplementaryStage.greeting", { fullName: esc(params.fullName) })}</p>
+          <p>${t("supplementaryStage.body", { recruitmentName: `<strong>${esc(params.recruitmentName)}</strong>` })}</p>
           ${assignedSection}
           <div style="margin: 24px 0;">
-            <a href="${params.registrationLink}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("supplementaryStage.openButton")}</a>
-            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("supplementaryStage.copyLink")} <a href="${params.registrationLink}" style="color: #3b82f6;">${params.registrationLink}</a></p>
+            <a href="${esc(params.registrationLink)}" style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">${t("supplementaryStage.openButton")}</a>
+            <p style="margin-top: 8px; font-size: 13px; color: #71717a;">${t("supplementaryStage.copyLink")} <a href="${esc(params.registrationLink)}" style="color: #3b82f6;">${esc(params.registrationLink)}</a></p>
           </div>
           <p style="color: #71717a; font-size: 14px;">${t("supplementaryStage.closesNote", { date: `<strong>${endDateStr}</strong>` })}</p>
         </div>
