@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { verifyOtp } from "@/lib/auth/otp";
 import { getSessionFromRequest } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { otpVerifyIpLimiter, otpVerifyEmailLimiter } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -22,6 +23,25 @@ export async function POST(req: NextRequest) {
   }
 
   const { email, code, role } = parsed.data;
+  const ip = getIpAddress(req) ?? "unknown";
+
+  // Rate limit by IP
+  const ipCheck = otpVerifyIpLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(ipCheck.retryAfterMs / 1000)) } }
+    );
+  }
+
+  // Rate limit by email
+  const emailCheck = otpVerifyEmailLimiter.check(email.toLowerCase());
+  if (!emailCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(emailCheck.retryAfterMs / 1000)) } }
+    );
+  }
 
   const isValid = await verifyOtp(email, code);
 

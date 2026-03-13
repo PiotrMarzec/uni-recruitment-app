@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { issueOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email/send";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
+import { otpSendIpLimiter, otpSendEmailLimiter } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const schema = z.object({
@@ -21,6 +22,25 @@ export async function POST(req: NextRequest) {
   }
 
   const { email, role } = parsed.data;
+  const ip = getIpAddress(req) ?? "unknown";
+
+  // Rate limit by IP
+  const ipCheck = otpSendIpLimiter.check(ip);
+  if (!ipCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(ipCheck.retryAfterMs / 1000)) } }
+    );
+  }
+
+  // Rate limit by email
+  const emailCheck = otpSendEmailLimiter.check(email.toLowerCase());
+  if (!emailCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(emailCheck.retryAfterMs / 1000)) } }
+    );
+  }
 
   // For admin role: verify email is in admins table
   if (role === "admin") {
@@ -46,7 +66,7 @@ export async function POST(req: NextRequest) {
     resourceType: "otp",
     resourceId: otpId,
     details: { role },
-    ipAddress: getIpAddress(req),
+    ipAddress: ip,
   });
 
   return NextResponse.json({ success: true });
