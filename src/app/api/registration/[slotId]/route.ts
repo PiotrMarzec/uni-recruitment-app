@@ -208,70 +208,103 @@ export async function GET(
         }
 
         if (!studentCancelledInSupplementary) {
-          const [completedStage] = await db
-            .select()
-            .from(stages)
-            .where(
-              and(
-                eq(stages.recruitmentId, slot.recruitmentId),
-                eq(stages.type, "admin"),
-                eq(stages.status, "completed")
-              )
-            )
-            .orderBy(desc(stages.order))
-            .limit(1);
-
-          if (completedStage) {
-            // Check stage enrollments for assigned destination
-            const [enrollment] = await db
+          // During an active verification stage, check its enrollments first.
+          // The algorithm may have been run on the verification stage itself
+          // (e.g. supplementary verification after a supplementary admin stage
+          // that was completed without running the algorithm).
+          if (activeVerificationStage) {
+            const [verEnrollment] = await db
               .select({ assignedDestinationId: stageEnrollments.assignedDestinationId })
               .from(stageEnrollments)
               .where(
                 and(
-                  eq(stageEnrollments.stageId, completedStage.id),
+                  eq(stageEnrollments.stageId, activeVerificationStage.id),
                   eq(stageEnrollments.registrationId, regResult[0].id)
                 )
               )
               .limit(1);
 
-            if (enrollment?.assignedDestinationId) {
+            if (verEnrollment?.assignedDestinationId) {
               const [dest] = await db
                 .select({ name: destinations.name })
                 .from(destinations)
-                .where(eq(destinations.id, enrollment.assignedDestinationId))
+                .where(eq(destinations.id, verEnrollment.assignedDestinationId))
                 .limit(1);
 
               currentAssignment = {
-                destinationId: enrollment.assignedDestinationId,
-                destinationName: dest?.name ?? enrollment.assignedDestinationId,
+                destinationId: verEnrollment.assignedDestinationId,
+                destinationName: dest?.name ?? verEnrollment.assignedDestinationId,
               };
-            } else {
-              // Also check assignment results for approved assignments
-              const [result] = await db
-                .select({
-                  destinationId: assignmentResults.destinationId,
-                })
-                .from(assignmentResults)
+            }
+          }
+
+          // Fall back to the most recent completed admin stage
+          if (!currentAssignment) {
+            const [completedStage] = await db
+              .select()
+              .from(stages)
+              .where(
+                and(
+                  eq(stages.recruitmentId, slot.recruitmentId),
+                  eq(stages.type, "admin"),
+                  eq(stages.status, "completed")
+                )
+              )
+              .orderBy(desc(stages.order))
+              .limit(1);
+
+            if (completedStage) {
+              // Check stage enrollments for assigned destination
+              const [enrollment] = await db
+                .select({ assignedDestinationId: stageEnrollments.assignedDestinationId })
+                .from(stageEnrollments)
                 .where(
                   and(
-                    eq(assignmentResults.stageId, completedStage.id),
-                    eq(assignmentResults.registrationId, regResult[0].id),
-                    eq(assignmentResults.approved, true)
+                    eq(stageEnrollments.stageId, completedStage.id),
+                    eq(stageEnrollments.registrationId, regResult[0].id)
                   )
                 )
                 .limit(1);
 
-              if (result?.destinationId) {
+              if (enrollment?.assignedDestinationId) {
                 const [dest] = await db
                   .select({ name: destinations.name })
                   .from(destinations)
-                  .where(eq(destinations.id, result.destinationId))
+                  .where(eq(destinations.id, enrollment.assignedDestinationId))
                   .limit(1);
 
                 currentAssignment = {
-                  destinationId: result.destinationId,
-                  destinationName: dest?.name ?? result.destinationId,
+                  destinationId: enrollment.assignedDestinationId,
+                  destinationName: dest?.name ?? enrollment.assignedDestinationId,
                 };
+              } else {
+                // Also check assignment results for approved assignments
+                const [result] = await db
+                  .select({
+                    destinationId: assignmentResults.destinationId,
+                  })
+                  .from(assignmentResults)
+                  .where(
+                    and(
+                      eq(assignmentResults.stageId, completedStage.id),
+                      eq(assignmentResults.registrationId, regResult[0].id),
+                      eq(assignmentResults.approved, true)
+                    )
+                  )
+                  .limit(1);
+
+                if (result?.destinationId) {
+                  const [dest] = await db
+                    .select({ name: destinations.name })
+                    .from(destinations)
+                    .where(eq(destinations.id, result.destinationId))
+                    .limit(1);
+
+                  currentAssignment = {
+                    destinationId: result.destinationId,
+                    destinationName: dest?.name ?? result.destinationId,
+                  };
+                }
               }
             }
           }

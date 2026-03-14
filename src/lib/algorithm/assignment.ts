@@ -133,29 +133,34 @@ export async function runAssignmentAlgorithm(
 
   const destNameMap = new Map(allDestinations.map((d) => [d.id, d.name]));
 
-  // 5. Determine locked assignments from the previous supplementary stage (if any).
+  // 5. Determine locked assignments from the most recent supplementary stage (if any).
   // Students who did NOT cancel during the supplementary stage retain their approved
   // assignment from the admin stage that preceded it — they are excluded from re-run.
+  // This applies to any stage after the supplementary (admin or verification),
+  // not just the immediately following one.
   const lockedAssignments = new Map<string, { destinationId: string; score: number }>();
 
   if (stage.order > 1) {
-    const [prevStage] = await db
+    // Find the most recent supplementary stage before the current one
+    const [suppStage] = await db
       .select()
       .from(stages)
       .where(
         and(
           eq(stages.recruitmentId, stage.recruitmentId),
-          eq(stages.order, stage.order - 1)
+          eq(stages.type, "supplementary"),
+          lt(stages.order, stage.order)
         )
       )
+      .orderBy(desc(stages.order))
       .limit(1);
 
-    if (prevStage?.type === "supplementary") {
+    if (suppStage) {
       // Non-cancelled supplementary enrollments = students keeping their placement
       const allSuppEnrollments = await db
         .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
         .from(stageEnrollments)
-        .where(eq(stageEnrollments.stageId, prevStage.id));
+        .where(eq(stageEnrollments.stageId, suppStage.id));
 
       // If the supplementary stage has no enrollments at all (enrollment creation was missed),
       // treat every student in this stage as non-cancelled (guaranteed) so their previous
@@ -176,7 +181,7 @@ export async function runAssignmentAlgorithm(
               eq(stages.recruitmentId, stage.recruitmentId),
               eq(stages.type, "admin"),
               eq(stages.status, "completed"),
-              lt(stages.order, prevStage.order)
+              lt(stages.order, suppStage.order)
             )
           )
           .orderBy(desc(stages.order))

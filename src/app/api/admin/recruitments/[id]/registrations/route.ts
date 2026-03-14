@@ -81,65 +81,88 @@ export async function GET(
       .where(eq(stages.id, stageId))
       .limit(1);
 
-    // For supplementary stages, look up assignments from the most recently
-    // completed admin stage before it (those assignments were approved during
-    // the preceding verification stage and should carry over).
-    // Students who re-registered (cancelled: true in the supplementary enrollment)
-    // lose their assignment and should not be shown as assigned.
+    // Determine where to look up assignments. Stages that don't have their own
+    // assignment results yet should pre-populate from previous stages so admins
+    // see the current placements.
     let assignmentLookupStageId = stageId;
     const cancelledRegistrationIds = new Set<string>();
-    if (stage && stage.type === "supplementary") {
-      const [prevAdminStage] = await db
-        .select({ id: stages.id })
-        .from(stages)
-        .where(
-          and(
-            eq(stages.recruitmentId, recruitmentId),
-            eq(stages.type, "admin"),
-            eq(stages.status, "completed"),
-            lt(stages.order, stage.order)
-          )
-        )
-        .orderBy(desc(stages.order))
-        .limit(1);
-      if (prevAdminStage) {
-        assignmentLookupStageId = prevAdminStage.id;
+    let isPrePopulated = false;
+
+    if (stage && stage.order > 0) {
+      // Helper: apply supplementary cancellation filter
+      async function applyCancelledFilter(supplementaryStageId: string) {
+        const suppEnrollments = await db
+          .select({
+            registrationId: stageEnrollments.registrationId,
+            cancelled: stageEnrollments.cancelled,
+          })
+          .from(stageEnrollments)
+          .where(eq(stageEnrollments.stageId, supplementaryStageId));
+        for (const e of suppEnrollments) {
+          if (e.cancelled) cancelledRegistrationIds.add(e.registrationId);
+        }
       }
 
-      // Find students who cancelled (re-registered) during this supplementary stage
-      const cancelledEnrollments = await db
-        .select({ registrationId: stageEnrollments.registrationId })
-        .from(stageEnrollments)
-        .where(
-          and(
-            eq(stageEnrollments.stageId, stageId),
-            eq(stageEnrollments.cancelled, true)
+      // Helper: find the most recent supplementary stage in the chain before a
+      // given order, and use the admin stage before it as the assignment source.
+      async function traceBackThroughSupplementary(beforeOrder: number): Promise<boolean> {
+        const [suppStage] = await db
+          .select({ id: stages.id, order: stages.order })
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, recruitmentId),
+              eq(stages.type, "supplementary"),
+              lt(stages.order, beforeOrder)
+            )
           )
-        );
-      for (const e of cancelledEnrollments) {
-        cancelledRegistrationIds.add(e.registrationId);
+          .orderBy(desc(stages.order))
+          .limit(1);
+        if (!suppStage) return false;
+
+        const [prevAdmin] = await db
+          .select({ id: stages.id })
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, recruitmentId),
+              eq(stages.type, "admin"),
+              eq(stages.status, "completed"),
+              lt(stages.order, suppStage.order)
+            )
+          )
+          .orderBy(desc(stages.order))
+          .limit(1);
+        if (!prevAdmin) return false;
+
+        assignmentLookupStageId = prevAdmin.id;
+        await applyCancelledFilter(suppStage.id);
+        return true;
       }
-    }
 
-    // For admin stages that follow a supplementary stage and have no assignment
-    // results yet, pre-populate from the admin stage before the supplementary.
-    // Non-cancelled supplementary enrollments keep their approved assignments.
-    let prePopulateFromSupplementary = false;
-    if (stage && stage.type === "admin" && stage.order > 1) {
-      const [prevSupplementaryStage] = await db
-        .select({ id: stages.id, order: stages.order })
-        .from(stages)
-        .where(
-          and(
-            eq(stages.recruitmentId, recruitmentId),
-            eq(stages.type, "supplementary"),
-            eq(stages.order, stage.order - 1)
+      if (stage.type === "supplementary") {
+        // Supplementary stages: show assignments from the admin stage before it
+        const [prevAdminStage] = await db
+          .select({ id: stages.id })
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, recruitmentId),
+              eq(stages.type, "admin"),
+              eq(stages.status, "completed"),
+              lt(stages.order, stage.order)
+            )
           )
-        )
-        .limit(1);
+          .orderBy(desc(stages.order))
+          .limit(1);
+        if (prevAdminStage) {
+          assignmentLookupStageId = prevAdminStage.id;
+        }
 
-      if (prevSupplementaryStage) {
-        // Check if the current stage already has its own assignment results
+        // Find students who cancelled during this supplementary stage
+        await applyCancelledFilter(stageId);
+      } else {
+        // Admin or verification stages: check if we have our own results first
         const [existingResult] = await db
           .select({ id: assignmentResults.id })
           .from(assignmentResults)
@@ -147,44 +170,72 @@ export async function GET(
           .limit(1);
 
         if (!existingResult) {
-          prePopulateFromSupplementary = true;
+          // No results on this stage yet — try to pre-populate from previous stages.
 
-          // Find the admin stage before the supplementary
-          const [prevAdminStage] = await db
-            .select({ id: stages.id })
-            .from(stages)
-            .where(
-              and(
-                eq(stages.recruitmentId, recruitmentId),
-                eq(stages.type, "admin"),
-                eq(stages.status, "completed"),
-                lt(stages.order, prevSupplementaryStage.order)
+          if (stage.type === "verification") {
+            // Verification: look at the preceding admin stage first
+            const [prevAdminStage] = await db
+              .select({ id: stages.id, order: stages.order })
+              .from(stages)
+              .where(
+                and(
+                  eq(stages.recruitmentId, recruitmentId),
+                  eq(stages.type, "admin"),
+                  eq(stages.status, "completed"),
+                  eq(stages.order, stage.order - 1)
+                )
               )
-            )
-            .orderBy(desc(stages.order))
-            .limit(1);
-          if (prevAdminStage) {
-            assignmentLookupStageId = prevAdminStage.id;
+              .limit(1);
+
+            if (prevAdminStage) {
+              // Check if the preceding admin stage has approved results
+              const [adminResult] = await db
+                .select({ id: assignmentResults.id })
+                .from(assignmentResults)
+                .where(
+                  and(
+                    eq(assignmentResults.stageId, prevAdminStage.id),
+                    eq(assignmentResults.approved, true)
+                  )
+                )
+                .limit(1);
+
+              if (adminResult) {
+                assignmentLookupStageId = prevAdminStage.id;
+                isPrePopulated = true;
+              } else {
+                // Admin stage has no results — trace back through supplementary chain
+                isPrePopulated = await traceBackThroughSupplementary(prevAdminStage.order);
+              }
+            }
           }
 
-          // Find students who cancelled during the supplementary stage
-          const suppEnrollments = await db
-            .select({
-              registrationId: stageEnrollments.registrationId,
-              cancelled: stageEnrollments.cancelled,
-            })
-            .from(stageEnrollments)
-            .where(eq(stageEnrollments.stageId, prevSupplementaryStage.id));
+          if (stage.type === "admin") {
+            // Admin stage after supplementary: trace back through the supplementary
+            const [prevSuppStage] = await db
+              .select({ id: stages.id })
+              .from(stages)
+              .where(
+                and(
+                  eq(stages.recruitmentId, recruitmentId),
+                  eq(stages.type, "supplementary"),
+                  eq(stages.order, stage.order - 1)
+                )
+              )
+              .limit(1);
 
-          for (const e of suppEnrollments) {
-            if (e.cancelled) {
-              cancelledRegistrationIds.add(e.registrationId);
+            if (prevSuppStage) {
+              isPrePopulated = await traceBackThroughSupplementary(stage.order);
             }
           }
         }
       }
     }
 
+    // When showing results from the current stage, include unapproved results
+    // (the algorithm creates results with approved=false until the admin approves).
+    // When pre-populating from a previous stage, only show approved results.
+    const lookingAtOwnResults = assignmentLookupStageId === stageId;
     const existingAssignments = await db
       .select({
         registrationId: assignmentResults.registrationId,
@@ -192,10 +243,12 @@ export async function GET(
       })
       .from(assignmentResults)
       .where(
-        and(
-          eq(assignmentResults.stageId, assignmentLookupStageId),
-          eq(assignmentResults.approved, true)
-        )
+        lookingAtOwnResults
+          ? eq(assignmentResults.stageId, assignmentLookupStageId)
+          : and(
+              eq(assignmentResults.stageId, assignmentLookupStageId),
+              eq(assignmentResults.approved, true)
+            )
       );
 
     for (const a of existingAssignments) {
@@ -203,7 +256,7 @@ export async function GET(
       if (cancelledRegistrationIds.has(a.registrationId)) continue;
       assignmentMap.set(a.registrationId, a.destinationId ?? null);
     }
-    hasAssignments = prePopulateFromSupplementary
+    hasAssignments = isPrePopulated
       ? assignmentMap.size > 0
       : existingAssignments.length > 0;
 
