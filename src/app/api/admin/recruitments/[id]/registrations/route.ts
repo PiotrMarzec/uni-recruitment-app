@@ -121,6 +121,70 @@ export async function GET(
       }
     }
 
+    // For admin stages that follow a supplementary stage and have no assignment
+    // results yet, pre-populate from the admin stage before the supplementary.
+    // Non-cancelled supplementary enrollments keep their approved assignments.
+    let prePopulateFromSupplementary = false;
+    if (stage && stage.type === "admin" && stage.order > 1) {
+      const [prevSupplementaryStage] = await db
+        .select({ id: stages.id, order: stages.order })
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, recruitmentId),
+            eq(stages.type, "supplementary"),
+            eq(stages.order, stage.order - 1)
+          )
+        )
+        .limit(1);
+
+      if (prevSupplementaryStage) {
+        // Check if the current stage already has its own assignment results
+        const [existingResult] = await db
+          .select({ id: assignmentResults.id })
+          .from(assignmentResults)
+          .where(eq(assignmentResults.stageId, stageId))
+          .limit(1);
+
+        if (!existingResult) {
+          prePopulateFromSupplementary = true;
+
+          // Find the admin stage before the supplementary
+          const [prevAdminStage] = await db
+            .select({ id: stages.id })
+            .from(stages)
+            .where(
+              and(
+                eq(stages.recruitmentId, recruitmentId),
+                eq(stages.type, "admin"),
+                eq(stages.status, "completed"),
+                lt(stages.order, prevSupplementaryStage.order)
+              )
+            )
+            .orderBy(desc(stages.order))
+            .limit(1);
+          if (prevAdminStage) {
+            assignmentLookupStageId = prevAdminStage.id;
+          }
+
+          // Find students who cancelled during the supplementary stage
+          const suppEnrollments = await db
+            .select({
+              registrationId: stageEnrollments.registrationId,
+              cancelled: stageEnrollments.cancelled,
+            })
+            .from(stageEnrollments)
+            .where(eq(stageEnrollments.stageId, prevSupplementaryStage.id));
+
+          for (const e of suppEnrollments) {
+            if (e.cancelled) {
+              cancelledRegistrationIds.add(e.registrationId);
+            }
+          }
+        }
+      }
+    }
+
     const existingAssignments = await db
       .select({
         registrationId: assignmentResults.registrationId,
@@ -139,7 +203,9 @@ export async function GET(
       if (cancelledRegistrationIds.has(a.registrationId)) continue;
       assignmentMap.set(a.registrationId, a.destinationId ?? null);
     }
-    hasAssignments = existingAssignments.length > 0;
+    hasAssignments = prePopulateFromSupplementary
+      ? assignmentMap.size > 0
+      : existingAssignments.length > 0;
 
     if (stage) {
       stageInfo = { type: stage.type, order: stage.order };
