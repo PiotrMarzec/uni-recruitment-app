@@ -293,6 +293,20 @@ Run when an admin manually triggers assignment for an admin stage:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+### Stage start/end rules
+
+**Automatic start:** All stage types (initial, admin, supplementary, verification) start automatically when their defined `start_date` is reached, provided the previous stage (by order) is completed and no other stage in the same recruitment is currently active. A background cron job checks every minute for pending stages whose start date has passed.
+
+**Automatic end:** Only `initial` and `supplementary` stages end automatically when their `end_date` passes. This triggers an automatic transition to the next stage (admin).
+
+**Manual-only end:** `admin` and `verification` stages do NOT end automatically when their `end_date` passes. The `end_date` on these stages is informational only — they require explicit admin action to complete.
+
+### Date adjustments
+
+- **Manual start:** When an admin manually activates a pending stage, its `start_date` is adjusted to the current date/time.
+- **Manual end:** When an admin manually ends or completes a stage, its `end_date` is adjusted to the current date/time. The next stage (if any) is automatically activated with its `start_date` also set to the current date/time.
+- **Recruitment date sync:** The recruitment's `start_date` and `end_date` are always kept in sync with the initial stage's `start_date` and the last verification stage's `end_date`, respectively. This synchronization happens automatically whenever any stage date changes.
+
 ### Automated transitions
 - Initial → Admin: triggered automatically when initial stage `end_date` passes; completion email sent to students
 - Admin → Verification: triggered when admin stage is completed; enrolls all students
@@ -310,16 +324,22 @@ Run when an admin manually triggers assignment for an admin stage:
 
 ### Student Registration Welcome Page — Stage-based visibility
 
-| Stage | Can Register | Assignment Shown | Score Shown |
-|---|---|---|---|
-| Before recruitment starts | No | No | No |
-| Initial registration | Yes (start/update) | No | No |
-| Initial admin | No | No | No |
-| Initial verification | No | From previous admin stage | From previous admin stage |
-| Supplementary registration | Yes (update destinations only) | From previous verification stage | From previous verification stage |
-| Supplementary admin | No | Current if approved previously; none if re-registered | From previous verification stage |
-| Supplementary verification | No | From previous admin stage | From previous admin stage |
-| Recruitment over / no active stage | No | From last verification stage | From last verification stage |
+| Stage | Registration Status | Can Register/Update | Assignment Shown | Score Shown |
+|---|---|---|---|---|
+| Before recruitment starts | — | No | No | No |
+| Initial registration | New or Completed | Yes (start/update) | No | No |
+| Initial admin | Completed | No | No | No |
+| Initial verification | Completed | No | From previous admin stage (or "No assignment") | From previous admin stage |
+| Supplementary registration | New or Completed | Yes (update destinations only) | From previous verification stage (or "No assignment"); shows "Assignment cancelled" if student updated preferences | From previous verification stage |
+| Supplementary admin | New or Completed | No | From previous verification stage (or "No assignment"); shows "Assignment cancelled" if student updated preferences during supplementary | From previous verification stage |
+| Supplementary verification | Completed | No | From previous admin stage (or "No assignment") | From previous admin stage |
+| Recruitment over / no active stage | Completed | No | From last verification stage (or "No assignment") | From last verification stage |
+
+### Supplementary stage — preference update rules
+
+- Students who update their preferred destinations during a supplementary stage **lose their current assignment** and see an "Assignment cancelled" indicator on the welcome screen.
+- This cancelled status persists through the subsequent admin stage until the next assignment algorithm run.
+- Students who do **not** update their preferred destinations are **guaranteed to keep their current assignment** in the next admin stage — their assignments are locked and excluded from the algorithm re-run.
 
 ---
 

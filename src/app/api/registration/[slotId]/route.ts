@@ -80,7 +80,7 @@ export async function GET(
 
   // Find active admin stage
   const [activeAdminStage] = await db
-    .select({ id: stages.id })
+    .select({ id: stages.id, order: stages.order })
     .from(stages)
     .where(
       and(
@@ -92,6 +92,8 @@ export async function GET(
     .limit(1);
 
   const isAdminStageActive = !!activeAdminStage;
+  // Initial admin stage is order 1; supplementary admin stages are order > 2
+  const isInitialAdminActive = isAdminStageActive && (activeAdminStage?.order ?? 0) <= 1;
 
   // Find active verification stage
   const [activeVerificationStage] = await db
@@ -149,6 +151,7 @@ export async function GET(
   let registration = null;
   let student = null;
   let currentAssignment: { destinationId: string; destinationName: string } | null = null;
+  let assignmentCancelled = false;
 
   // Fetch existing registration when the slot has an assigned student.
   // Use studentId rather than slot status because the status may have just been
@@ -165,7 +168,9 @@ export async function GET(
       // Scoring fields (averageResult, additionalActivities, recommendationLetters) are
       // hidden during active admin stage, but shown during verification and other stages.
       const { notes: _notes, averageResult, additionalActivities, recommendationLetters, ...regPublic } = regResult[0];
-      const hideScores = isAdminStageActive && !isVerificationStageActive;
+      // Hide scores only during initial admin stage. Supplementary admin stages
+      // show scores from the previous verification stage.
+      const hideScores = isInitialAdminActive && !isVerificationStageActive;
       registration = {
         ...regPublic,
         spokenLanguages: JSON.parse(regResult[0].spokenLanguages || "[]"),
@@ -191,8 +196,11 @@ export async function GET(
       // If the student re-registered during a supplementary stage (cancelled: true),
       // they lose their assignment and should see no destination.
       {
-        // During supplementary, check if the student cancelled (re-registered)
+        // Check if the student cancelled (re-registered) in the most recent supplementary stage.
+        // This applies during supplementary stage itself AND during the subsequent admin stage.
         let studentCancelledInSupplementary = false;
+
+        // During an active supplementary stage, check its enrollment
         if (isSupplementaryActive && supplementaryStage) {
           const [suppEnrollment] = await db
             .select({ cancelled: stageEnrollments.cancelled })
@@ -206,6 +214,39 @@ export async function GET(
             .limit(1);
           studentCancelledInSupplementary = suppEnrollment?.cancelled === true;
         }
+
+        // During an active admin stage (supplementary admin), check the preceding
+        // supplementary stage for cancellation
+        if (isAdminStageActive && !isInitialAdminActive) {
+          const [prevSuppStage] = await db
+            .select({ id: stages.id })
+            .from(stages)
+            .where(
+              and(
+                eq(stages.recruitmentId, slot.recruitmentId),
+                eq(stages.type, "supplementary"),
+                eq(stages.status, "completed")
+              )
+            )
+            .orderBy(desc(stages.order))
+            .limit(1);
+
+          if (prevSuppStage) {
+            const [suppEnrollment] = await db
+              .select({ cancelled: stageEnrollments.cancelled })
+              .from(stageEnrollments)
+              .where(
+                and(
+                  eq(stageEnrollments.stageId, prevSuppStage.id),
+                  eq(stageEnrollments.registrationId, regResult[0].id)
+                )
+              )
+              .limit(1);
+            studentCancelledInSupplementary = suppEnrollment?.cancelled === true;
+          }
+        }
+
+        assignmentCancelled = studentCancelledInSupplementary;
 
         if (!studentCancelledInSupplementary) {
           // During an active verification stage, check its enrollments first.
@@ -356,7 +397,9 @@ export async function GET(
     isInitialActive,
     isSupplementaryActive,
     isVerificationStageActive,
+    isAdminStageActive,
     currentAssignment,
+    assignmentCancelled,
     registration,
     student,
     destinationNames,

@@ -20,6 +20,7 @@ import { getStageName } from "@/lib/stage-name";
 import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, gt, lt, desc, inArray, isNotNull, ne } from "drizzle-orm";
+import { syncRecruitmentDates } from "@/lib/recruitment-dates";
 
 export async function POST(
   req: NextRequest,
@@ -356,6 +357,9 @@ export async function POST(
     details: { emailsSent, totalResults: results.length },
     ipAddress: getIpAddress(req),
   });
+
+  // Sync recruitment dates after changing this stage's endDate (and possibly the next stage's startDate)
+  await syncRecruitmentDates(stage.recruitmentId);
 
   return NextResponse.json({ success: true, emailsSent, nextStage: nextStage ? { id: nextStage.id, name: nextStage.name } : null });
 }

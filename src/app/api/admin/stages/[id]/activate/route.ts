@@ -8,6 +8,7 @@ import { getStageName } from "@/lib/stage-name";
 import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
 import { eq, and, desc } from "drizzle-orm";
+import { syncRecruitmentDates } from "@/lib/recruitment-dates";
 
 export async function POST(
   req: NextRequest,
@@ -145,6 +146,9 @@ export async function POST(
       });
     }
   }
+
+  // Sync recruitment dates after changing this stage's startDate
+  await syncRecruitmentDates(stage.recruitmentId);
 
   return NextResponse.json({ success: true });
 }

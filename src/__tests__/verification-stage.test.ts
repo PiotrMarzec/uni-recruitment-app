@@ -275,11 +275,14 @@ describe("Student Registration Welcome Page visibility rules", () => {
   describe("initial admin stage", () => {
     const ctx: StageVisibilityContext = { activeStageType: "admin", isVerificationStageActive: false };
 
-    it("shows score section (admin stage shows scores from previous stage)", () => {
+    it("WelcomeView would show scores but API hides them during initial admin", () => {
+      // shouldShowScores returns true for admin stages in WelcomeView,
+      // but the API filters out score data during initial admin (order <= 1).
+      // Net effect: students do NOT see scores during initial admin.
       expect(shouldShowScores(ctx, true)).toBe(true);
     });
 
-    it("shows assignment section", () => {
+    it("shows assignment section (but currentAssignment is null during initial admin)", () => {
       expect(shouldShowAssignment(ctx)).toBe(true);
     });
 

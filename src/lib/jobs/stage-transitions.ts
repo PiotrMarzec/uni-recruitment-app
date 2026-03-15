@@ -1,21 +1,111 @@
 import { db } from "@/db";
 import {
   stages,
+  recruitments,
   registrations,
   stageEnrollments,
   users,
   slots,
 } from "@/db/schema";
-import { eq, and, lt, inArray } from "drizzle-orm";
+import { eq, and, lt, inArray, asc, desc } from "drizzle-orm";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 import {
   sendInitialStageClosedEmail,
 } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
 import { getRootT } from "@/lib/email/translations";
+import { syncRecruitmentDates } from "@/lib/recruitment-dates";
 
 export async function processStageTransitions(): Promise<void> {
   const now = new Date();
+
+  // 0. Auto-start pending stages whose startDate has passed.
+  // Only activate if the previous stage (by order) is completed or doesn't exist.
+  // Admin and verification stages auto-start on date but don't auto-end.
+  const pendingStages = await db
+    .select()
+    .from(stages)
+    .where(
+      and(
+        eq(stages.status, "pending"),
+        lt(stages.startDate, now)
+      )
+    )
+    .orderBy(asc(stages.order));
+
+  for (const stage of pendingStages) {
+    try {
+      // Check that no other stage in the same recruitment is currently active
+      const [activeStage] = await db
+        .select({ id: stages.id })
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, stage.recruitmentId),
+            eq(stages.status, "active")
+          )
+        )
+        .limit(1);
+
+      if (activeStage) continue; // another stage is already active
+
+      // Check that the previous stage (by order) is completed
+      if (stage.order > 0) {
+        const [prevStage] = await db
+          .select({ status: stages.status })
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, stage.recruitmentId),
+              eq(stages.order, stage.order - 1)
+            )
+          )
+          .limit(1);
+
+        if (prevStage && prevStage.status !== "completed") continue;
+      }
+
+      console.log(`[Stage Transitions] Auto-starting pending stage ${stage.id} (type: ${stage.type})`);
+
+      await db
+        .update(stages)
+        .set({ status: "active", updatedAt: now })
+        .where(eq(stages.id, stage.id));
+
+      // Enroll completed registrations for verification and supplementary stages
+      if (stage.type === "verification" || stage.type === "supplementary") {
+        const completedRegs = await db
+          .select({ id: registrations.id })
+          .from(registrations)
+          .innerJoin(slots, eq(registrations.slotId, slots.id))
+          .where(
+            and(
+              eq(slots.recruitmentId, stage.recruitmentId),
+              eq(registrations.registrationCompleted, true)
+            )
+          );
+
+        for (const reg of completedRegs) {
+          await db
+            .insert(stageEnrollments)
+            .values({ stageId: stage.id, registrationId: reg.id })
+            .onConflictDoNothing();
+        }
+      }
+
+      await logAuditEvent({
+        actorType: "system",
+        actorLabel: "System",
+        action: ACTIONS.STAGE_TRANSITIONED,
+        resourceType: "stage",
+        resourceId: stage.id,
+        recruitmentId: stage.recruitmentId,
+        details: { autoStarted: true, type: stage.type },
+      });
+    } catch (err) {
+      console.error(`[Stage Transitions] Error auto-starting stage ${stage.id}:`, err);
+    }
+  }
 
   // 1. Find active initial stages that have passed their end_date
   const expiredInitialStages = await db

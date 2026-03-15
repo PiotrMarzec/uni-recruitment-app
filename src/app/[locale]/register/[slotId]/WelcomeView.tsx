@@ -33,6 +33,7 @@ interface WelcomeViewProps {
   allStages: Stage[];
   isRegistrationOpen: boolean;
   isVerificationStageActive?: boolean;
+  isAdminStageActive?: boolean;
   registration: {
     level: string | null;
     spokenLanguages: string[];
@@ -46,6 +47,7 @@ interface WelcomeViewProps {
   student: { fullName: string; email: string } | null;
   destinationNames: string[];
   currentAssignment?: { destinationId: string; destinationName: string } | null;
+  assignmentCancelled?: boolean;
   onProceed: () => void;
 }
 
@@ -54,10 +56,12 @@ export default function WelcomeView({
   allStages,
   isRegistrationOpen,
   isVerificationStageActive = false,
+  isAdminStageActive = false,
   registration,
   student,
   destinationNames,
   currentAssignment,
+  assignmentCancelled = false,
   onProceed,
 }: WelcomeViewProps) {
   const t = useTranslations("registration.welcome");
@@ -157,6 +161,30 @@ export default function WelcomeView({
           </CardHeader>
           <CardContent>
             <p className="text-sm font-semibold text-green-900">{currentAssignment.destinationName}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Assignment cancelled (student updated preferences during supplementary) */}
+      {shouldShowAssignment && !currentAssignment && assignmentCancelled && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-amber-800">{t("assignmentCancelled")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-amber-700">{t("assignmentCancelledDesc")}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No assignment (student was not assigned to any destination) */}
+      {shouldShowAssignment && !currentAssignment && !assignmentCancelled && registration?.registrationCompleted && (
+        <Card className="border-muted bg-muted/30">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base text-muted-foreground">{t("noAssignment")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{t("noAssignmentDesc")}</p>
           </CardContent>
         </Card>
       )}

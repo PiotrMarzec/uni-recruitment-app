@@ -4,6 +4,7 @@ import { stages, stageEnrollments, registrations, slots, users, assignmentResult
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { eq, and, desc } from "drizzle-orm";
+import { syncRecruitmentDates } from "@/lib/recruitment-dates";
 import { sendInitialStageClosedEmail, sendSupplementaryStageClosedEmail, sendSupplementaryStageEmail } from "@/lib/email/send";
 import { getStageName } from "@/lib/stage-name";
 import { getRootT } from "@/lib/email/translations";
@@ -165,6 +166,9 @@ export async function POST(
     },
     ipAddress: getIpAddress(req),
   });
+
+  // Sync recruitment dates after changing this stage's endDate (and possibly the next stage's startDate)
+  await syncRecruitmentDates(stage.recruitmentId);
 
   return NextResponse.json({ success: true, nextStageId: nextStage?.id ?? null });
 }

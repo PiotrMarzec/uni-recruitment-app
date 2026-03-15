@@ -89,7 +89,9 @@ interface SlotInfo {
   isInitialActive: boolean;
   isSupplementaryActive: boolean;
   isVerificationStageActive: boolean;
+  isAdminStageActive: boolean;
   currentAssignment: { destinationId: string; destinationName: string } | null;
+  assignmentCancelled: boolean;
   registration: {
     emailConsent: boolean;
     privacyConsent: boolean;
@@ -474,10 +476,12 @@ export default function RegisterPage() {
             allStages={slotInfo.allStages}
             isRegistrationOpen={registrationOpen}
             isVerificationStageActive={slotInfo.isVerificationStageActive}
+            isAdminStageActive={slotInfo.isAdminStageActive}
             registration={slotInfo.registration}
             student={slotInfo.student}
             destinationNames={slotInfo.destinationNames}
             currentAssignment={slotInfo.currentAssignment}
+            assignmentCancelled={slotInfo.assignmentCancelled}
             onProceed={() => setShowWelcome(false)}
           />
         </div>
