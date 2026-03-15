@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Square, Play, Circle, ClipboardList, ChevronDown, Printer, FileText, Files, LayoutTemplate } from "lucide-react";
+import { Plus, Square, Play, Circle, ClipboardList, ChevronDown, Printer, FileText, Files, LayoutTemplate, Pencil, Check, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { formatDate, formatDateShort } from "@/lib/utils";
 import { getStageName } from "@/lib/stage-name";
@@ -202,6 +202,11 @@ export default function RecruitmentDetailPage() {
     ...getDefaultStageDates(),
   }));
   const [savingStage, setSavingStage] = useState(false);
+
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [savingStageDate, setSavingStageDate] = useState(false);
 
   useEffect(() => {
     fetchRecruitment();
@@ -457,6 +462,38 @@ export default function RecruitmentDetailPage() {
     }
   }
 
+  function startEditingStage(stage: Stage) {
+    setEditingStageId(stage.id);
+    setEditStartDate(toDatetimeLocal(new Date(stage.startDate)));
+    setEditEndDate(toDatetimeLocal(new Date(stage.endDate)));
+  }
+
+  function cancelEditingStage() {
+    setEditingStageId(null);
+    setEditStartDate("");
+    setEditEndDate("");
+  }
+
+  async function saveStageDates(stageId: string) {
+    setSavingStageDate(true);
+    try {
+      const res = await fetch(`/api/admin/stages/${stageId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          startDate: new Date(editStartDate).toISOString(),
+          endDate: new Date(editEndDate).toISOString(),
+        }),
+      });
+      if (res.ok) {
+        await fetchRecruitment();
+        cancelEditingStage();
+      }
+    } finally {
+      setSavingStageDate(false);
+    }
+  }
+
   if (loading || !recruitment) {
     return <AdminLayout><p>{tc("loading")}</p></AdminLayout>;
   }
@@ -655,7 +692,7 @@ export default function RecruitmentDetailPage() {
                 const sorted = [...recruitment.stages].sort((a, b) => a.order - b.order);
                 const firstPendingId = sorted.find((s) => s.status === "pending")?.id;
                 return sorted.map((stage) => (
-                  <Card key={stage.id}>
+                  <Card key={stage.id} className="group">
                     <CardContent className="pt-4 flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -666,9 +703,57 @@ export default function RecruitmentDetailPage() {
                             {stage.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
-                        </p>
+                        {editingStageId === stage.id ? (
+                          <div className="flex items-center gap-3 mt-1">
+                            <div className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1">
+                              <input
+                                type="datetime-local"
+                                value={editStartDate}
+                                onChange={(e) => setEditStartDate(e.target.value)}
+                                className="bg-transparent text-sm border-none outline-none focus:ring-0 h-6"
+                              />
+                              <span className="text-xs text-muted-foreground font-medium">—</span>
+                              <input
+                                type="datetime-local"
+                                value={editEndDate}
+                                onChange={(e) => setEditEndDate(e.target.value)}
+                                className="bg-transparent text-sm border-none outline-none focus:ring-0 h-6"
+                              />
+                            </div>
+                            <div className="flex gap-1">
+                              <Button
+                                size="sm"
+                                className="h-7 px-2 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => saveStageDates(stage.id)}
+                                disabled={savingStageDate}
+                              >
+                                <Check className="w-3.5 h-3.5 mr-1" />{tc("save")}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2"
+                                onClick={cancelEditingStage}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <p className="text-sm text-muted-foreground">
+                              {formatDate(stage.startDate)} — {formatDate(stage.endDate)}
+                            </p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                              onClick={() => startEditingStage(stage)}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         {stage.id === firstPendingId && (
