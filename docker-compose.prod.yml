@@ -30,4 +30,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    ports:
+      - 5432:5490
 
