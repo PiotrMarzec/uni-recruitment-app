@@ -7,6 +7,13 @@ const nextConfig: NextConfig = {
   // Allow access from local network devices (phones, other machines) during dev
   allowedDevOrigins: ["192.168.0.*", "192.168.1.*", "10.0.0.*"],
   // Don't use standalone for Docker — we run with custom server + tsx
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-icons",
+      "@react-pdf/renderer",
+    ],
+  },
   webpack: (config) => {
     // Fix for @react-pdf/renderer
     config.resolve.alias.canvas = false;
