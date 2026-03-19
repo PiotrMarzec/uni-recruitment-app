@@ -36,8 +36,10 @@ services:
     restart: unless-stopped
     networks:
       - internal
+      - default
 
 networks:
+  default:
   proxy:
     external: true
     name: proxy
