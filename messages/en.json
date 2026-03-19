@@ -330,7 +330,15 @@
       "fieldAvgResult": "Avg Result",
       "fieldActivities": "Activities",
       "fieldLetters": "Letters",
-      "fieldScore": "Total Score"
+      "fieldScore": "Total Score",
+      "availableSpots": "Destinations with Available Spots",
+      "noAvailableSpots": "There are currently no destinations with available spots.",
+      "slotsBachelor": "{count} bachelor",
+      "slotsBachelorPlural": "{count} bachelors",
+      "slotsMaster": "{count} master",
+      "slotsMasterPlural": "{count} masters",
+      "slotsOpen": "{count} open slot",
+      "slotsOpenPlural": "{count} open slots"
     },
     "steps": {
       "step1": "Contact & Consent",

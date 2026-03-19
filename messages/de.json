@@ -330,7 +330,15 @@
       "fieldAvgResult": "Ø Ergebnis",
       "fieldActivities": "Aktivitäten",
       "fieldLetters": "Briefe",
-      "fieldScore": "Gesamtpunktzahl"
+      "fieldScore": "Gesamtpunktzahl",
+      "availableSpots": "Ziele mit verfügbaren Plätzen",
+      "noAvailableSpots": "Derzeit gibt es keine Ziele mit verfügbaren Plätzen.",
+      "slotsBachelor": "{count} Bachelor-Platz",
+      "slotsBachelorPlural": "{count} Bachelor-Plätze",
+      "slotsMaster": "{count} Master-Platz",
+      "slotsMasterPlural": "{count} Master-Plätze",
+      "slotsOpen": "{count} offener Platz",
+      "slotsOpenPlural": "{count} offene Plätze"
     },
     "steps": {
       "step1": "Kontakt & Einwilligung",

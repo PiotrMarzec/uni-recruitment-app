@@ -621,79 +621,6 @@ export function CompactSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   );
 }
 
-export function TripleSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
-  // Group slots three per page
-  const pages: [SlotPageData, SlotPageData | null, SlotPageData | null][] = [];
-  for (let i = 0; i < slots.length; i += 3) {
-    pages.push([slots[i], slots[i + 1] ?? null, slots[i + 2] ?? null]);
-  }
-
-  function renderStudentSection(slot: SlotPageData) {
-    return (
-      <View style={tripleStyles.studentSection}>
-        <Text style={styles.studentHeaderBar}>Student Registration</Text>
-
-        <View style={tripleStyles.studentTitleBlock}>
-          <Text style={tripleStyles.recruitmentName}>{slot.recruitmentName}</Text>
-          {slot.recruitmentDescription ? (
-            <Text style={tripleStyles.description}>{slot.recruitmentDescription}</Text>
-          ) : null}
-        </View>
-
-        <View style={tripleStyles.studentContentRow}>
-          <View style={tripleStyles.studentLeft}>
-            {slot.stages.length > 0 && (
-              <View>
-                <Text style={tripleStyles.stagesTitle}>Recruitment Stages</Text>
-                <View style={tripleStyles.stagesHeaderRow}>
-                  <Text style={tripleStyles.stagesHeaderName}>Stage</Text>
-                  <Text style={tripleStyles.stagesHeaderDate}>From</Text>
-                  <Text style={tripleStyles.stagesHeaderDate}>To</Text>
-                </View>
-                {slot.stages.map((stage, i) => (
-                  <View key={i} style={tripleStyles.stageRow}>
-                    <Text style={tripleStyles.stageName}>{stage.name}</Text>
-                    <Text style={tripleStyles.stageDateColumn}>{stage.startDate}</Text>
-                    <Text style={tripleStyles.stageDateColumn}>{stage.endDate}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-            <RegistrationInstructions />
-          </View>
-
-          <View style={tripleStyles.studentRight}>
-            <Image
-              src={`data:image/png;base64,${slot.registrationQrBase64}`}
-              style={tripleStyles.qrImage}
-            />
-          </View>
-        </View>
-
-        <View style={tripleStyles.studentBottomStrip}>
-          <Text style={tripleStyles.registrationLink}>{slot.registrationLink}</Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={tripleStyles.studentSlotLabel}>Slot</Text>
-            <Text style={tripleStyles.studentSlotNumber}>#{slot.slotNumber}</Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <Document title="Slot Registration Cards" author="Regie">
-      {pages.map(([s1, s2, s3], pageIndex) => (
-        <Page key={pageIndex} size="A4" style={styles.page}>
-          {renderStudentSection(s1)}
-          {s2 ? renderStudentSection(s2) : null}
-          {s3 ? renderStudentSection(s3) : null}
-        </Page>
-      ))}
-    </Document>
-  );
-}
-
 const tripleStyles = StyleSheet.create({
   studentSection: {
     height: "33.333%",
@@ -807,6 +734,79 @@ const tripleStyles = StyleSheet.create({
     textAlign: "right",
   },
 });
+
+export function TripleSlotPdfDocument({ slots }: SlotPdfDocumentProps) {
+  // Group slots three per page
+  const pages: [SlotPageData, SlotPageData | null, SlotPageData | null][] = [];
+  for (let i = 0; i < slots.length; i += 3) {
+    pages.push([slots[i], slots[i + 1] ?? null, slots[i + 2] ?? null]);
+  }
+
+  function renderStudentSection(slot: SlotPageData) {
+    return (
+      <View style={tripleStyles.studentSection}>
+        <Text style={styles.studentHeaderBar}>Student Registration</Text>
+
+        <View style={tripleStyles.studentTitleBlock}>
+          <Text style={tripleStyles.recruitmentName}>{slot.recruitmentName}</Text>
+          {slot.recruitmentDescription ? (
+            <Text style={tripleStyles.description}>{slot.recruitmentDescription}</Text>
+          ) : null}
+        </View>
+
+        <View style={tripleStyles.studentContentRow}>
+          <View style={tripleStyles.studentLeft}>
+            {slot.stages.length > 0 && (
+              <View>
+                <Text style={tripleStyles.stagesTitle}>Recruitment Stages</Text>
+                <View style={tripleStyles.stagesHeaderRow}>
+                  <Text style={tripleStyles.stagesHeaderName}>Stage</Text>
+                  <Text style={tripleStyles.stagesHeaderDate}>From</Text>
+                  <Text style={tripleStyles.stagesHeaderDate}>To</Text>
+                </View>
+                {slot.stages.map((stage, i) => (
+                  <View key={i} style={tripleStyles.stageRow}>
+                    <Text style={tripleStyles.stageName}>{stage.name}</Text>
+                    <Text style={tripleStyles.stageDateColumn}>{stage.startDate}</Text>
+                    <Text style={tripleStyles.stageDateColumn}>{stage.endDate}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <RegistrationInstructions />
+          </View>
+
+          <View style={tripleStyles.studentRight}>
+            <Image
+              src={`data:image/png;base64,${slot.registrationQrBase64}`}
+              style={tripleStyles.qrImage}
+            />
+          </View>
+        </View>
+
+        <View style={tripleStyles.studentBottomStrip}>
+          <Text style={tripleStyles.registrationLink}>{slot.registrationLink}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={tripleStyles.studentSlotLabel}>Slot</Text>
+            <Text style={tripleStyles.studentSlotNumber}>#{slot.slotNumber}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <Document title="Slot Registration Cards" author="Regie">
+      {pages.map(([s1, s2, s3], pageIndex) => (
+        <Page key={pageIndex} size="A4" style={styles.page}>
+          {renderStudentSection(s1)}
+          {s2 ? renderStudentSection(s2) : null}
+          {s3 ? renderStudentSection(s3) : null}
+        </Page>
+      ))}
+    </Document>
+  );
+}
 
 export function SlotPdfDocument({ slots }: SlotPdfDocumentProps) {
   return (

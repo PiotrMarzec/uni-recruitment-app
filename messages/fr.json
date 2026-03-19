@@ -330,7 +330,15 @@
       "fieldAvgResult": "Moy. résultat",
       "fieldActivities": "Activités",
       "fieldLetters": "Lettres",
-      "fieldScore": "Score total"
+      "fieldScore": "Score total",
+      "availableSpots": "Destinations avec des places disponibles",
+      "noAvailableSpots": "Il n'y a actuellement aucune destination avec des places disponibles.",
+      "slotsBachelor": "{count} licence",
+      "slotsBachelorPlural": "{count} licences",
+      "slotsMaster": "{count} master",
+      "slotsMasterPlural": "{count} masters",
+      "slotsOpen": "{count} place ouverte",
+      "slotsOpenPlural": "{count} places ouvertes"
     },
     "steps": {
       "step1": "Contact & Consentement",

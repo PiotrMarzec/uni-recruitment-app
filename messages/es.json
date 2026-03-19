@@ -330,7 +330,15 @@
       "fieldAvgResult": "Resultado medio",
       "fieldActivities": "Actividades",
       "fieldLetters": "Cartas",
-      "fieldScore": "Puntuación total"
+      "fieldScore": "Puntuación total",
+      "availableSpots": "Destinos con plazas disponibles",
+      "noAvailableSpots": "Actualmente no hay destinos con plazas disponibles.",
+      "slotsBachelor": "{count} grado",
+      "slotsBachelorPlural": "{count} grados",
+      "slotsMaster": "{count} máster",
+      "slotsMasterPlural": "{count} másters",
+      "slotsOpen": "{count} plaza abierta",
+      "slotsOpenPlural": "{count} plazas abiertas"
     },
     "steps": {
       "step1": "Contacto y consentimiento",

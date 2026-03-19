@@ -330,7 +330,15 @@
       "fieldAvgResult": "Śr. wynik",
       "fieldActivities": "Aktywności",
       "fieldLetters": "Listy",
-      "fieldScore": "Wynik łączny"
+      "fieldScore": "Wynik łączny",
+      "availableSpots": "Kierunki z dostępnymi miejscami",
+      "noAvailableSpots": "Obecnie nie ma kierunków z dostępnymi miejscami.",
+      "slotsBachelor": "{count} licencjackie",
+      "slotsBachelorPlural": "{count} licencjackich",
+      "slotsMaster": "{count} magisterskie",
+      "slotsMasterPlural": "{count} magisterskich",
+      "slotsOpen": "{count} otwarte miejsce",
+      "slotsOpenPlural": "{count} otwartych miejsc"
     },
     "steps": {
       "step1": "Kontakt i zgody",

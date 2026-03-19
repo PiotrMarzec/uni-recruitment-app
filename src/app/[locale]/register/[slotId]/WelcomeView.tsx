@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
+import { useParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -67,6 +69,20 @@ export default function WelcomeView({
   const t = useTranslations("registration.welcome");
   const troot = useTranslations();
   const locale = useLocale();
+  const params = useParams();
+  const slotId = params.slotId as string;
+
+  const [availableSpots, setAvailableSpots] = useState<
+    Array<{
+      id: string;
+      name: string;
+      availableBachelor: number;
+      availableMaster: number;
+      availableOpen: number;
+      totalAvailable: number;
+    }>
+  >([]);
+  const [spotsLoaded, setSpotsLoaded] = useState(false);
 
   function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleString(locale, {
@@ -88,6 +104,18 @@ export default function WelcomeView({
   const isInitialActive = activeStage?.type === "initial";
   const isAdminActive = activeStage?.type === "admin";
   const isSupplementaryActive = activeStage?.type === "supplementary";
+
+  // Fetch available spots when supplementary stage is active
+  useEffect(() => {
+    if (!isSupplementaryActive) return;
+    fetch(`/api/registration/${slotId}/available-spots`)
+      .then((res) => res.json())
+      .then((data) => {
+        setAvailableSpots(data.destinations ?? []);
+        setSpotsLoaded(true);
+      })
+      .catch(() => setSpotsLoaded(true));
+  }, [isSupplementaryActive, slotId]);
 
   // Determine score visibility based on current stage context
   // Show scores during: verification, supplementary, and when no stage is active (recruitment over)
@@ -302,6 +330,45 @@ export default function WelcomeView({
                 <span className="font-semibold">{computedScore?.toFixed(1)}</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Destinations with available spots (supplementary stage only) */}
+      {isSupplementaryActive && spotsLoaded && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("availableSpots")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {availableSpots.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t("noAvailableSpots")}
+              </p>
+            ) : (
+              <ul className="list-disc list-inside space-y-1.5 text-sm">
+                {availableSpots.map((dest) => {
+                  const parts: string[] = [];
+                  if (dest.availableBachelor > 0) {
+                    parts.push(t(dest.availableBachelor === 1 ? "slotsBachelor" : "slotsBachelorPlural", { count: dest.availableBachelor }));
+                  }
+                  if (dest.availableMaster > 0) {
+                    parts.push(t(dest.availableMaster === 1 ? "slotsMaster" : "slotsMasterPlural", { count: dest.availableMaster }));
+                  }
+                  if (dest.availableOpen > 0) {
+                    parts.push(t(dest.availableOpen === 1 ? "slotsOpen" : "slotsOpenPlural", { count: dest.availableOpen }));
+                  }
+                  return (
+                    <li key={dest.id}>
+                      <span className="font-medium">{dest.name}</span>
+                      {parts.length > 0 && (
+                        <span className="text-muted-foreground">: {parts.join(", ")}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </CardContent>
         </Card>
       )}

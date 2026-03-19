@@ -43,6 +43,8 @@ export async function GET(
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to generate PDF";
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("[PDF generation error]", message, stack);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
