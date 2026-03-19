@@ -112,6 +112,17 @@ jobs:
     if: github.ref == 'refs/heads/master'
 
     steps:
+      - uses: actions/checkout@v6
+
+      - name: Copy docker-compose.prod.yml to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: deploy
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: docker-compose.prod.yml
+          target: /opt/uni-recruitment-app
+
       - name: Deploy on VM
         uses: appleboy/ssh-action@v1.2.0
         env:
@@ -132,55 +143,7 @@ jobs:
           envs: DB_PASSWORD,DB_DATA_PATH,SESSION_SECRET,HMAC_SECRET,RESEND_API_KEY,EMAIL_FROM,APP_URL,IMAGE_TAG,GH_TOKEN,GH_ACTOR
           script: |
             set -e
-            mkdir -p /opt/uni-recruitment-app
             cd /opt/uni-recruitment-app
-
-            # Write docker-compose.prod.yml (no secrets — safe to write inline)
-            cat > docker-compose.prod.yml << 'COMPOSE'
-            services:
-              app:
-                image: ghcr.io/piotrmarzec/uni-recruitment-app:${IMAGE_TAG:-latest}
-                container_name: regie
-                environment:
-                  - DATABASE_URL=postgresql://postgres:${DB_PASSWORD}@db:5432/recruitment
-                  - SESSION_SECRET=${SESSION_SECRET}
-                  - HMAC_SECRET=${HMAC_SECRET}
-                  - RESEND_API_KEY=${RESEND_API_KEY}
-                  - EMAIL_FROM=${EMAIL_FROM}
-                  - APP_URL=${APP_URL}
-                  - NODE_ENV=production
-                depends_on:
-                  db:
-                    condition: service_healthy
-                restart: unless-stopped
-                networks:
-                  - proxy
-                  - internal
-
-              db:
-                image: postgres:16-alpine
-                environment:
-                  POSTGRES_DB: recruitment
-                  POSTGRES_USER: postgres
-                  POSTGRES_PASSWORD: ${DB_PASSWORD}
-                volumes:
-                  - ${DB_DATA_PATH}:/var/lib/postgresql/data
-                healthcheck:
-                  test: ["CMD-SHELL", "pg_isready -U postgres"]
-                  interval: 5s
-                  timeout: 5s
-                  retries: 5
-                restart: unless-stopped
-                networks:
-                  - internal
-
-            networks:
-              proxy:
-                external: true
-                name: proxy
-              internal:
-                internal: true
-            COMPOSE
 
             # Write .env from GitHub secrets (values are masked in logs)
             printf 'DB_PASSWORD=%s\n'    "$DB_PASSWORD"    >  .env
