@@ -338,7 +338,11 @@
       "slotsMaster": "{count} master",
       "slotsMasterPlural": "{count} masters",
       "slotsOpen": "{count} open slot",
-      "slotsOpenPlural": "{count} open slots"
+      "slotsOpenPlural": "{count} open slots",
+      "recruitmentNotStarted": "The recruitment process has not started yet.",
+      "recruitmentStartsAt": "Registration opens on {date}.",
+      "recruitmentConcluded": "Recruitment Concluded",
+      "recruitmentConcludedDesc": "The recruitment process has been completed. No further changes are possible."
     },
     "steps": {
       "step1": "Contact & Consent",

@@ -338,7 +338,11 @@
       "slotsMaster": "{count} magistrale",
       "slotsMasterPlural": "{count} magistrali",
       "slotsOpen": "{count} posto aperto",
-      "slotsOpenPlural": "{count} posti aperti"
+      "slotsOpenPlural": "{count} posti aperti",
+      "recruitmentNotStarted": "Il processo di reclutamento non è ancora iniziato.",
+      "recruitmentStartsAt": "La registrazione aprirà il {date}.",
+      "recruitmentConcluded": "Reclutamento concluso",
+      "recruitmentConcludedDesc": "Il processo di reclutamento è terminato. Non è possibile apportare ulteriori modifiche."
     },
     "steps": {
       "step1": "Contatto e consenso",

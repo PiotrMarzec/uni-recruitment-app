@@ -88,6 +88,93 @@ export async function POST(
     .set({ approved: true })
     .where(eq(assignmentResults.stageId, id));
 
+  // If this stage has no assignment results (e.g. verification stage where the
+  // algorithm was never run directly), propagate approved results from the most
+  // recent preceding admin/verification stage so that every completed stage has
+  // its own authoritative results.
+  const [existingResult] = await db
+    .select({ id: assignmentResults.id })
+    .from(assignmentResults)
+    .where(eq(assignmentResults.stageId, id))
+    .limit(1);
+
+  if (!existingResult) {
+    const [prevStageWithResults] = await db
+      .select({ id: stages.id })
+      .from(stages)
+      .where(
+        and(
+          eq(stages.recruitmentId, stage.recruitmentId),
+          or(eq(stages.type, "admin"), eq(stages.type, "verification")),
+          eq(stages.status, "completed"),
+          lt(stages.order, stage.order)
+        )
+      )
+      .orderBy(desc(stages.order))
+      .limit(1);
+
+    if (prevStageWithResults) {
+      const prevResults = await db
+        .select({
+          registrationId: assignmentResults.registrationId,
+          destinationId: assignmentResults.destinationId,
+          score: assignmentResults.score,
+          guaranteed: assignmentResults.guaranteed,
+        })
+        .from(assignmentResults)
+        .where(
+          and(
+            eq(assignmentResults.stageId, prevStageWithResults.id),
+            eq(assignmentResults.approved, true)
+          )
+        );
+
+      if (prevResults.length > 0) {
+        await db.insert(assignmentResults).values(
+          prevResults.map((r) => ({
+            stageId: id,
+            registrationId: r.registrationId,
+            destinationId: r.destinationId ?? undefined,
+            score: r.score,
+            approved: true,
+            guaranteed: r.guaranteed,
+          }))
+        );
+      }
+    }
+  }
+
+  // Also propagate assignedDestinationId to this stage's enrollments so that
+  // lookups against stageEnrollments are consistent.
+  {
+    const resultsWithDest = await db
+      .select({
+        registrationId: assignmentResults.registrationId,
+        destinationId: assignmentResults.destinationId,
+      })
+      .from(assignmentResults)
+      .where(
+        and(
+          eq(assignmentResults.stageId, id),
+          eq(assignmentResults.approved, true)
+        )
+      );
+
+    for (const r of resultsWithDest) {
+      if (r.destinationId) {
+        await db
+          .update(stageEnrollments)
+          .set({ assignedDestinationId: r.destinationId })
+          .where(
+            and(
+              eq(stageEnrollments.stageId, id),
+              eq(stageEnrollments.registrationId, r.registrationId)
+            )
+          );
+      }
+    }
+  }
+
   // Fetch results with student, registration, and destination info for emails
   const results = await db
     .select({

@@ -296,10 +296,12 @@ export async function GET(
             }
           }
 
-          // Fall back to the most recent completed admin/verification stage
+          // Fall back to the most recent completed admin/verification stage.
+          // Every completed stage has its own assignment results (propagated at
+          // completion time if the algorithm wasn't run directly on that stage).
           if (!currentAssignment) {
             const [completedStage] = await db
-              .select()
+              .select({ id: stages.id })
               .from(stages)
               .where(
                 and(
@@ -312,57 +314,31 @@ export async function GET(
               .limit(1);
 
             if (completedStage) {
-              // Check stage enrollments for assigned destination
-              const [enrollment] = await db
-                .select({ assignedDestinationId: stageEnrollments.assignedDestinationId })
-                .from(stageEnrollments)
+              const [result] = await db
+                .select({
+                  destinationId: assignmentResults.destinationId,
+                })
+                .from(assignmentResults)
                 .where(
                   and(
-                    eq(stageEnrollments.stageId, completedStage.id),
-                    eq(stageEnrollments.registrationId, regResult[0].id)
+                    eq(assignmentResults.stageId, completedStage.id),
+                    eq(assignmentResults.registrationId, regResult[0].id),
+                    eq(assignmentResults.approved, true)
                   )
                 )
                 .limit(1);
 
-              if (enrollment?.assignedDestinationId) {
+              if (result?.destinationId) {
                 const [dest] = await db
                   .select({ name: destinations.name })
                   .from(destinations)
-                  .where(eq(destinations.id, enrollment.assignedDestinationId))
+                  .where(eq(destinations.id, result.destinationId))
                   .limit(1);
 
                 currentAssignment = {
-                  destinationId: enrollment.assignedDestinationId,
-                  destinationName: dest?.name ?? enrollment.assignedDestinationId,
+                  destinationId: result.destinationId,
+                  destinationName: dest?.name ?? result.destinationId,
                 };
-              } else {
-                // Also check assignment results for approved assignments
-                const [result] = await db
-                  .select({
-                    destinationId: assignmentResults.destinationId,
-                  })
-                  .from(assignmentResults)
-                  .where(
-                    and(
-                      eq(assignmentResults.stageId, completedStage.id),
-                      eq(assignmentResults.registrationId, regResult[0].id),
-                      eq(assignmentResults.approved, true)
-                    )
-                  )
-                  .limit(1);
-
-                if (result?.destinationId) {
-                  const [dest] = await db
-                    .select({ name: destinations.name })
-                    .from(destinations)
-                    .where(eq(destinations.id, result.destinationId))
-                    .limit(1);
-
-                  currentAssignment = {
-                    destinationId: result.destinationId,
-                    destinationName: dest?.name ?? result.destinationId,
-                  };
-                }
               }
             }
           }
@@ -406,6 +382,8 @@ export async function GET(
       name: recruitment.name,
       description: recruitment.description,
       maxDestinationChoices: recruitment.maxDestinationChoices,
+      startDate: recruitment.startDate,
+      endDate: recruitment.endDate,
     },
     allStages,
     initialStage: initialStage

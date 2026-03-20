@@ -31,7 +31,7 @@ interface Stage {
 }
 
 interface WelcomeViewProps {
-  recruitment: { name: string; description: string | null };
+  recruitment: { name: string; description: string | null; startDate: string; endDate: string };
   allStages: Stage[];
   isRegistrationOpen: boolean;
   isVerificationStageActive?: boolean;
@@ -95,6 +95,12 @@ export default function WelcomeView({
     });
   }
 
+  const now = new Date();
+  const recruitmentStartDate = new Date(recruitment.startDate);
+  const recruitmentEndDate = new Date(recruitment.endDate);
+  const isBeforeStart = now < recruitmentStartDate;
+  const isAfterEnd = now >= recruitmentEndDate;
+
   const pendingSupplementaryStages = allStages.filter(
     (s) => s.type === "supplementary" && s.status === "pending"
   );
@@ -122,6 +128,7 @@ export default function WelcomeView({
   // Hide scores during: before recruitment, initial stage, admin stage
   const shouldShowScores = (() => {
     if (!registration) return false;
+    if (isBeforeStart) return false;
     if (isVerificationStageActive) return true;
     if (isSupplementaryActive) return true;
     if (isAdminActive) return true; // supplementary admin shows scores from prev verification
@@ -148,8 +155,10 @@ export default function WelcomeView({
   // - verification: show assignment from previous admin stage
   // - supplementary: show assignment from previous verification stage
   // - supplementary admin: show current assignment if approved previously
-  // - no active stage: show from last verification stage
+  // - no active stage + after end: show from last verification stage
+  // - before start: never show
   const shouldShowAssignment = (() => {
+    if (isBeforeStart) return false;
     if (isVerificationStageActive) return true;
     if (isSupplementaryActive) return true;
     if (isAdminActive) return true;
@@ -173,8 +182,30 @@ export default function WelcomeView({
         </CardHeader>
       </Card>
 
+      {/* Recruitment not yet started banner */}
+      {isBeforeStart && (
+        <Card className="border-blue-300 bg-blue-50">
+          <CardContent className="pt-4">
+            <p className="text-sm font-medium text-blue-800">{t("recruitmentNotStarted")}</p>
+            <p className="text-sm text-blue-700 mt-1">
+              {t("recruitmentStartsAt", { date: formatDate(recruitment.startDate) })}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recruitment concluded banner */}
+      {isAfterEnd && (
+        <Card className="border-muted bg-muted/30">
+          <CardContent className="pt-4">
+            <p className="text-sm font-medium text-muted-foreground">{t("recruitmentConcluded")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{t("recruitmentConcludedDesc")}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Registration completed banner */}
-      {registration?.registrationCompleted && (
+      {!isBeforeStart && registration?.registrationCompleted && (
         <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-300 rounded-lg">
           <CheckCircle2 className="text-green-600 shrink-0" size={22} />
           <span className="text-sm font-medium text-green-800">{t("registrationCompleted")}</span>
@@ -256,8 +287,8 @@ export default function WelcomeView({
         </CardContent>
       </Card>
 
-      {/* Existing registration details */}
-      {hasExistingRegistration && (
+      {/* Existing registration details (hidden before recruitment starts) */}
+      {!isBeforeStart && hasExistingRegistration && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t("yourRegistration")}</CardTitle>
@@ -373,33 +404,35 @@ export default function WelcomeView({
         </Card>
       )}
 
-      {/* Action area */}
-      {isRegistrationOpen ? (
-        <Button
-          onClick={onProceed}
-          className={`w-full ${
-            hasExistingRegistration
-              ? "bg-blue-600 hover:bg-blue-700"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {hasExistingRegistration ? t("updateRegistration") : t("startRegistration")}
-        </Button>
-      ) : (
-        <Card>
-          <CardContent className="pt-4 space-y-2">
-            <p className="text-sm font-medium">{t("registrationNotOpen")}</p>
-            {pendingSupplementaryStages.map((s) => (
-              <p key={s.id} className="text-sm text-muted-foreground">
-                {t("supplementaryPlanned", {
-                  name: s.name,
-                  startDate: formatDate(s.startDate),
-                  endDate: formatDate(s.endDate),
-                })}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+      {/* Action area — hidden before start and after end */}
+      {!isBeforeStart && !isAfterEnd && (
+        isRegistrationOpen ? (
+          <Button
+            onClick={onProceed}
+            className={`w-full ${
+              hasExistingRegistration
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {hasExistingRegistration ? t("updateRegistration") : t("startRegistration")}
+          </Button>
+        ) : (
+          <Card>
+            <CardContent className="pt-4 space-y-2">
+              <p className="text-sm font-medium">{t("registrationNotOpen")}</p>
+              {pendingSupplementaryStages.map((s) => (
+                <p key={s.id} className="text-sm text-muted-foreground">
+                  {t("supplementaryPlanned", {
+                    name: s.name,
+                    startDate: formatDate(s.startDate),
+                    endDate: formatDate(s.endDate),
+                  })}
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+        )
       )}
     </div>
   );

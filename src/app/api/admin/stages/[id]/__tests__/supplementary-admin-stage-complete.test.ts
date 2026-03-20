@@ -112,6 +112,9 @@ vi.mock("@/db", () => {
  *   4.  insert stageEnrollments    – enroll second registration
  *   5.  update stages              – mark as completed
  *   6.  update assignmentResults   – auto-approve
+ *   6a. select assignmentResults   – check if stage has results (for propagation)
+ *   6b. select assignmentResults   – fetch results for enrollment sync
+ *   6c. update stageEnrollments    – sync assignedDestinationId (for each assigned student)
  *   7.  select results             – assignment results with student/destination info
  *   8.  select precedingSupplementaryStage – detects this is a supplementary admin stage
  *   9.  select nextSupplementaryStage – no next supplementary stage
@@ -141,6 +144,15 @@ function queueSupplementaryAdminStageComplete() {
     // 5. Update stage → completed
     [],
     // 6. Update assignmentResults → approved = true
+    [],
+    // 6a. Check if stage has existing results (for propagation) — yes, it does
+    [{ id: "result-uuid-0000-0000-0000-000000000001" }],
+    // 6b. Select results for enrollment sync
+    [
+      { registrationId: WINTER_REG_IDS[0], destinationId: WINTER_DEST_BERLIN_ID },
+      { registrationId: WINTER_REG_IDS[1], destinationId: null },
+    ],
+    // 6c. Update stageEnrollments for Emma (Carlos has null dest, skipped)
     [],
     // 7. Assignment results: Emma assigned to Berlin, Carlos unassigned
     [

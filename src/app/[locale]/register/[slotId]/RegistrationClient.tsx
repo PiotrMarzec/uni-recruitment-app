@@ -83,7 +83,7 @@ interface StageInfo {
 
 interface SlotInfo {
   slot: { id: string; number: number; status: string };
-  recruitment: { id: string; name: string; description: string | null; maxDestinationChoices: number };
+  recruitment: { id: string; name: string; description: string | null; maxDestinationChoices: number; startDate: string; endDate: string };
   allStages: StageInfo[];
   initialStage: { id: string; status: string; endDate: string } | null;
   isInitialActive: boolean;

@@ -338,7 +338,11 @@
       "slotsMaster": "{count} magisterskie",
       "slotsMasterPlural": "{count} magisterskich",
       "slotsOpen": "{count} otwarte miejsce",
-      "slotsOpenPlural": "{count} otwartych miejsc"
+      "slotsOpenPlural": "{count} otwartych miejsc",
+      "recruitmentNotStarted": "Proces rekrutacji jeszcze się nie rozpoczął.",
+      "recruitmentStartsAt": "Rejestracja rozpocznie się {date}.",
+      "recruitmentConcluded": "Rekrutacja zakończona",
+      "recruitmentConcludedDesc": "Proces rekrutacji został zakończony. Dalsze zmiany nie są możliwe."
     },
     "steps": {
       "step1": "Kontakt i zgody",

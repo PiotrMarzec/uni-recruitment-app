@@ -138,11 +138,6 @@ export default function AssignmentResultsPage() {
           )}
         </div>
         <div className="flex items-center gap-3">
-          {!approved && (
-            <Button onClick={approveAll} disabled={approving}>
-              {approving ? t("approving") : t("approve")}
-            </Button>
-          )}
           {approved && (
             <Badge variant="success">{t("approved")}</Badge>
           )}
