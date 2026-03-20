@@ -4,7 +4,9 @@ import { db } from "@/db";
 import { emailQueue } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const EMAIL_FROM = process.env.EMAIL_FROM || "noreply@example.com";
+const EMAIL_FROM_ADDRESS = process.env.EMAIL_FROM || "noreply@example.com";
+const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "Regie";
+export const EMAIL_FROM = `${EMAIL_FROM_NAME} <${EMAIL_FROM_ADDRESS}>`;
 
 export interface SendEmailOptions {
   from: string;
