@@ -182,6 +182,7 @@ export default function RegisterPage() {
       if (parsed.emailVerifiedThisSession !== undefined) setEmailVerifiedThisSession(parsed.emailVerifiedThisSession);
       if (parsed.assignmentLossConfirmed !== undefined) setAssignmentLossConfirmed(parsed.assignmentLossConfirmed);
       if (parsed.confirmSummary !== undefined) setConfirmSummary(parsed.confirmSummary);
+      if (parsed.availableDestinations !== undefined) setAvailableDestinations(parsed.availableDestinations);
       sessionStorage.removeItem(sessionKey);
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -203,6 +204,7 @@ export default function RegisterPage() {
         emailVerifiedThisSession,
         assignmentLossConfirmed,
         confirmSummary,
+        availableDestinations,
       }));
     } catch {}
 
