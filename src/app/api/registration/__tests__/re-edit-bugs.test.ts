@@ -166,17 +166,20 @@ function makeStepRequest(slotId: string, body: object): NextRequest {
 /**
  * Queue responses for GET /api/registration/[slotId] when the slot is already
  * "registered" (i.e. the student previously completed registration and is now
- * re-opening the link to edit).
+ * re-opening the link to view/edit).
  *
- * DB call order in route.ts (after Bug 1 fix):
+ * DB call order in route.ts:
  *   1. select slot
  *   2. select recruitment
  *   3. select initial stage
  *   4. select supplementary stage  (returns [] — only initial is active here)
- *   5. update slot  registered → registration_started
- *   6. select counts by status  (for slot_status_update broadcast)
- *   7. select registration      (slot.studentId is still set → fetched via studentId check)
- *   8. select user
+ *   5. select admin stage          (returns [] — not relevant)
+ *   6. select verification stage   (returns [] — not relevant)
+ *   7. update slot  registered → registration_started
+ *   -- NO broadcast (re-edit views don't broadcast; counter doesn't change because
+ *      registrationCompleted is still true and student hasn't authenticated yet)
+ *   8. select registration         (slot.studentId is still set → fetched via studentId check)
+ *   9. select user
  */
 function queueGetRegisteredSlot() {
   dbQueue.push(
@@ -184,8 +187,9 @@ function queueGetRegisteredSlot() {
     [{ id: RECRUITMENT_ID, name: "Winter Erasmus 2026", description: "", maxDestinationChoices: 5 }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID, endDate: new Date("2026-03-11") }],
     [],  // supplementary stage → not active
+    [],  // admin stage → not active
+    [],  // verification stage → not active
     [],  // update: slot registered → registration_started
-    [{ status: "registration_started", n: 1 }, { status: "open", n: 5 }],  // counts
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, spokenLanguages: "[]", destinationPreferences: "[]", registrationCompletedAt: new Date("2026-03-01"), updatedAt: new Date() }],
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
   );
@@ -198,15 +202,15 @@ function queueGetRegisteredSlot() {
  * DB call order in step/route.ts:
  *   1. select slot
  *   2. select initial stage   (getActiveInitialStage)
- *   3. select existingReg     (registrationCompleted: true — the re-edit case)
+ *   3. select existingReg     (registrationCompleted: false — reset by GET on re-edit open)
  *   4. update registration    (set level)
  *   5. select updatedUser
  */
 function queueStep4ReEdit() {
   dbQueue.push(
-    [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registered", studentId: USER_EMMA_ID }],
+    [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
-    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01"), level: "bachelor" }],
+    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: false, registrationCompletedAt: new Date("2026-03-01"), level: "bachelor" }],
     [], // update result
     [{ fullName: "Emma Johnson", email: "emma.johnson@student.edu" }],
   );
@@ -225,25 +229,88 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ── Bug 1 ─────────────────────────────────────────────────────────────────────
+// ── Bug 1 – GET route transitions slot for re-edits ──────────────────────────
 
-describe("Bug 1 – GET route does not fire slot_status_update for registered slot (re-edit)", () => {
-  it("should broadcast slot_status_update so the in-progress counter increments", async () => {
+describe("Bug 1 – GET route transitions slot from registered to registration_started", () => {
+  it("should transition slot but NOT broadcast (counter unchanged until OTP)", async () => {
     queueGetRegisteredSlot();
 
     const req = makeGetRequest(SLOT_ID);
-    await GET(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+    const res = await GET(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+    const body = await res.json();
 
-    // ✗ CURRENTLY FAILS:
-    // route.ts line 63:  if (isInitialActive && slot.status === "open")
-    // For a re-edit the slot is "registered" → condition is false →
-    // broadcastSlotStatusUpdate is never called → dashboard counter stays at 0.
+    // The GET route transitions the slot to registration_started…
+    expect(res.status).toBe(200);
+    // …but does NOT broadcast slot_status_update (the dashboard counter doesn't
+    // change because registrationCompleted is still true — the student hasn't
+    // authenticated yet).
+    expect(mockBroadcastSlotStatusUpdate).not.toHaveBeenCalled();
+    // The response preserves registrationCompleted: true so the welcome screen
+    // still shows the "registration complete" state.
+    expect(body.registration?.registrationCompleted).toBe(true);
+  });
+});
+
+// ── Bug 5 – step 2 resets registrationCompleted for re-edits ─────────────────
+
+/**
+ * Queue responses for POST /api/registration/[slotId]/step with {step: 2}
+ * when re-editing a previously completed registration (OTP verification).
+ *
+ * DB call order in step/route.ts for step 2:
+ *   1. select slot                 (registration_started, has studentId)
+ *   2. select initial stage        (getActiveRegistrationStage)
+ *   3. select user by email        (existing user found — no insert)
+ *   4. update user locale
+ *   5. select existingReg          (registrationCompleted: true)
+ *   6. update registration         (reset notEligible + registrationCompleted)
+ *   7. select openCount            (for slot_status_update broadcast)
+ *   8. select startedCount         (for slot_status_update broadcast)
+ *   9. select enrollment ID fallback
+ */
+function queueStep2ReEditWithReset() {
+  dbQueue.push(
+    [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
+    [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
+    [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
+    [], // update user locale
+    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01T10:00:00.000Z"), enrollmentId: null }],
+    [], // update registration (reset registrationCompleted + notEligible)
+    [{ count: 5 }],  // openCount
+    [{ count: 1 }],  // startedCount
+    [], // enrollment ID fallback
+  );
+}
+
+describe("Bug 5 – step 2 (OTP) resets registrationCompleted and broadcasts counter update for re-edits", () => {
+  it("should reset registrationCompleted and broadcast startedSlotsCount including the re-editing student", async () => {
+    queueStep2ReEditWithReset();
+
+    const req = makeStepRequest(SLOT_ID, {
+      step: 2,
+      code: "123456",
+      email: "emma.johnson@student.edu",
+    });
+    await stepPOST(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+
+    // Step 2 should broadcast slot_status_update with the correct in-progress count
     expect(mockBroadcastSlotStatusUpdate).toHaveBeenCalledOnce();
     expect(mockBroadcastSlotStatusUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "slot_status_update",
         stageId: STAGE_ID,
-        startedSlotsCount: expect.any(Number),
+        startedSlotsCount: 1,
+        openSlotsCount: 5,
+      }),
+    );
+
+    // Also broadcasts registration_step_update with registrationCompleted: false
+    expect(mockBroadcastRegistrationStepUpdate).toHaveBeenCalledOnce();
+    expect(mockBroadcastRegistrationStepUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        registration: expect.objectContaining({
+          registrationCompleted: false,
+        }),
       }),
     );
   });
@@ -300,7 +367,7 @@ function queueCompleteReEdit() {
     [{ id: SLOT_ID, number: 1, recruitmentId: RECRUITMENT_ID, status: "registration_started", studentId: USER_EMMA_ID }],
     [{ id: STAGE_ID, type: "initial", status: "active", recruitmentId: RECRUITMENT_ID }],
     [],  // supplementary stage → not active
-    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01"), level: "master", destinationPreferences: "[\"dest-uuid\"]", spokenLanguages: "[\"en\"]", enrollmentId: "123456" }],
+    [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: false, registrationCompletedAt: new Date("2026-03-01"), level: "master", destinationPreferences: "[\"dest-uuid\"]", spokenLanguages: "[\"en\"]", enrollmentId: "123456" }],
     [],  // update registration
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],  // Promise.all[0]
     [{ name: "Winter Erasmus 2026" }],  // Promise.all[1] recruitment name
@@ -346,11 +413,14 @@ describe("Bug 3 – complete route does not fire registration_step_update with r
  *
  * DB call order in step/route.ts for step 2:
  *   1. select slot
- *   2. select initial stage   (getActiveInitialStage)
+ *   2. select initial stage   (getActiveRegistrationStage)
  *   3. select user by email   (existing user found — no insert)
  *   4. update user locale     (update locale for returning users)
  *   5. select existingReg     (registrationCompleted: true, registrationCompletedAt set)
- *   6. select enrollment ID fallback (existingReg.enrollmentId is null → fallback query)
+ *   6. update registration    (reset registrationCompleted + notEligible)
+ *   7. select openCount       (for slot_status_update broadcast — registrationCompleted was true)
+ *   8. select startedCount    (for slot_status_update broadcast)
+ *   9. select enrollment ID fallback (existingReg.enrollmentId is null → fallback query)
  */
 function queueStep2ReEdit() {
   dbQueue.push(
@@ -359,6 +429,9 @@ function queueStep2ReEdit() {
     [{ id: USER_EMMA_ID, email: "emma.johnson@student.edu", fullName: "Emma Johnson" }],
     [], // update user locale
     [{ id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID, registrationCompleted: true, registrationCompletedAt: new Date("2026-03-01T10:00:00.000Z"), enrollmentId: null }],
+    [], // update registration
+    [{ count: 5 }],  // openCount
+    [{ count: 1 }],  // startedCount
     [], // enrollment ID fallback — no prior registrations
   );
 }

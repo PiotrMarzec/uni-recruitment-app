@@ -19,7 +19,7 @@ import {
 import { getStageName } from "@/lib/stage-name";
 import { getRootT } from "@/lib/email/translations";
 import { getStudentRegistrationLink } from "@/lib/auth/hmac";
-import { eq, and, gt, lt, desc, inArray, isNotNull, ne } from "drizzle-orm";
+import { eq, and, gt, lt, or, desc, inArray, isNotNull, ne } from "drizzle-orm";
 import { syncRecruitmentDates } from "@/lib/recruitment-dates";
 
 export async function POST(
@@ -301,14 +301,14 @@ export async function POST(
           .onConflictDoNothing();
       }
 
-      // Find most recently completed admin stage to get current assignment
+      // Find most recently completed admin/verification stage to get current assignment
       const [prevAdminStage] = await db
         .select()
         .from(stages)
         .where(
           and(
             eq(stages.recruitmentId, stage.recruitmentId),
-            eq(stages.type, "admin"),
+            or(eq(stages.type, "admin"), eq(stages.type, "verification")),
             eq(stages.status, "completed")
           )
         )

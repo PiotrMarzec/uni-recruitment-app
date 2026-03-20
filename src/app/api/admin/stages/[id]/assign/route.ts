@@ -99,6 +99,7 @@ export async function POST(
       .select({
         registrationId: assignmentResults.registrationId,
         destinationId: assignmentResults.destinationId,
+        guaranteed: assignmentResults.guaranteed,
       })
       .from(assignmentResults)
       .where(eq(assignmentResults.stageId, id)),
@@ -116,6 +117,7 @@ export async function POST(
       registrationId: a.registrationId,
       assignedDestinationId: a.destinationId ?? null,
       assignedDestinationName: a.destinationId ? (destMap[a.destinationId] ?? null) : null,
+      assignmentGuaranteed: a.guaranteed,
     })),
     assigned: result.assigned,
     unassigned: result.unassigned,

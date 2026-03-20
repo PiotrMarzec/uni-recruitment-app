@@ -117,6 +117,7 @@ export interface ApplicationAssignmentsUpdateEvent {
     registrationId: string;
     assignedDestinationId: string | null;
     assignedDestinationName: string | null;
+    assignmentGuaranteed: boolean;
   }>;
   assigned: number;
   unassigned: number;

@@ -42,6 +42,7 @@ export interface RegistrationRow {
   updatedAt: string;
   assignedDestinationId: string | null;
   assignedDestinationName: string | null;
+  assignmentGuaranteed: boolean;
 }
 
 interface EditState {
@@ -210,6 +211,7 @@ export function RegistrationsGrid({
                 updatedAt: createdAt,
                 assignedDestinationId: null,
                 assignedDestinationName: null,
+                assignmentGuaranteed: false,
               };
               return [placeholder, ...prev];
             });
@@ -235,18 +237,20 @@ export function RegistrationsGrid({
         if (msg.type === "application_assignments_update" && msg.stageId === stageId) {
           const assignmentMap = new Map<
             string,
-            { assignedDestinationId: string | null; assignedDestinationName: string | null }
+            { assignedDestinationId: string | null; assignedDestinationName: string | null; assignmentGuaranteed: boolean }
           >(
             msg.assignments.map(
               (a: {
                 registrationId: string;
                 assignedDestinationId: string | null;
                 assignedDestinationName: string | null;
+                assignmentGuaranteed: boolean;
               }) => [
                 a.registrationId,
                 {
                   assignedDestinationId: a.assignedDestinationId,
                   assignedDestinationName: a.assignedDestinationName,
+                  assignmentGuaranteed: a.assignmentGuaranteed,
                 },
               ]
             )
@@ -255,11 +259,12 @@ export function RegistrationsGrid({
           setRows((prev) =>
             prev.map((row) => {
               const asgn = assignmentMap.get(row.registrationId);
-              if (!asgn) return { ...row, assignedDestinationId: null, assignedDestinationName: null };
+              if (!asgn) return { ...row, assignedDestinationId: null, assignedDestinationName: null, assignmentGuaranteed: false };
               return {
                 ...row,
                 assignedDestinationId: asgn.assignedDestinationId,
                 assignedDestinationName: asgn.assignedDestinationName,
+                assignmentGuaranteed: asgn.assignmentGuaranteed,
               };
             })
           );
@@ -719,7 +724,7 @@ export function RegistrationsGrid({
                       </td>
                       <td className="p-3 align-top text-sm">
                         {row.assignedDestinationName ? (
-                          <Badge variant="success" className="whitespace-nowrap">
+                          <Badge variant={row.assignmentGuaranteed ? "success" : "info"} className="whitespace-nowrap">
                             {row.assignedDestinationName}
                           </Badge>
                         ) : row.assignedDestinationId === null && hasAssignments ? (
@@ -857,7 +862,7 @@ export function RegistrationsGrid({
                     <td className="p-3 font-mono">{row.score.toFixed(1)}</td>
                     <td className="p-3">
                       {row.assignedDestinationName ? (
-                        <Badge variant="success" className="whitespace-nowrap">
+                        <Badge variant={row.assignmentGuaranteed ? "success" : "info"} className="whitespace-nowrap">
                           {row.assignedDestinationName}
                         </Badge>
                       ) : row.assignedDestinationId === null && hasAssignments ? (

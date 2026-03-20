@@ -180,13 +180,15 @@ function makeCompleteRequest(slotId: string): NextRequest {
  *  2. select recruitment
  *  3. select initial stage         → [] (not active)
  *  4. select supplementary stage   → [active]
- *  5. update slot: registered → registration_started
- *  6. select counts by status
- *  7. select registration
- *  8. select user
- *  9. select completed admin stage (for assignment lookup)
- * 10. select stageEnrollment       → has assignedDestinationId
- * 11. select destination name
+ *  5. select admin stage           → [] (not relevant)
+ *  6. select verification stage    → [] (not relevant)
+ *  7. update slot: registered → registration_started
+ *  -- NO broadcast (re-edit views don't broadcast; registrationCompleted is still true)
+ *  8. select registration
+ *  9. select user
+ * 10. select completed admin stage (for assignment lookup)
+ * 11. select stageEnrollment       → has assignedDestinationId
+ * 12. select destination name
  */
 function queueGetSupplementaryRegisteredSlot() {
   dbQueue.push(
@@ -198,10 +200,12 @@ function queueGetSupplementaryRegisteredSlot() {
     [],
     // 4. supplementary stage → active
     [{ id: SUPP_STAGE_ID, type: "supplementary", status: "active", recruitmentId: RECRUITMENT_ID, endDate: new Date("2026-03-25") }],
-    // 5. update slot → void
+    // 5. admin stage → not active
     [],
-    // 6. counts
-    [{ status: "registration_started", n: 1 }, { status: "open", n: 5 }],
+    // 6. verification stage → not active
+    [],
+    // 7. update slot → void
+    [],
     // 7. registration
     [{
       id: REG_ID, slotId: SLOT_ID, studentId: USER_EMMA_ID,
@@ -334,24 +338,18 @@ beforeEach(() => {
 
 // ── Bug A ─────────────────────────────────────────────────────────────────────
 
-describe("Bug A – GET route does not broadcast slot_status_update to supplementary stage dashboard", () => {
-  it("should broadcast slot_status_update using the supplementary stageId so the in-progress counter updates", async () => {
+describe("Bug A – GET route transitions slot but does not broadcast for re-edits", () => {
+  it("should transition slot to registration_started without broadcasting (broadcast happens at step 2 OTP)", async () => {
     queueGetSupplementaryRegisteredSlot();
 
     const req = makeGetRequest(SLOT_ID);
-    await GET(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
+    const res = await GET(req, { params: Promise.resolve({ slotId: SLOT_ID }) });
 
-    // ✗ CURRENTLY FAILS:
-    // The broadcast is inside `if (initialStage)` which is null during supplementary →
-    // broadcastSlotStatusUpdate is never called → the dashboard counter stays stale.
-    expect(mockBroadcastSlotStatusUpdate).toHaveBeenCalledOnce();
-    expect(mockBroadcastSlotStatusUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "slot_status_update",
-        stageId: SUPP_STAGE_ID,
-        startedSlotsCount: expect.any(Number),
-      }),
-    );
+    // GET route transitions the slot but does NOT broadcast for re-edits.
+    // The counter update happens at step 2 (OTP verification) when
+    // registrationCompleted is reset to false.
+    expect(res.status).toBe(200);
+    expect(mockBroadcastSlotStatusUpdate).not.toHaveBeenCalled();
   });
 });
 

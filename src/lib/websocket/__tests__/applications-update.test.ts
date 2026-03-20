@@ -51,9 +51,9 @@ const BASE_APP: ApplicationRowUpdateEvent["application"] = {
 };
 
 const ASSIGNMENTS: ApplicationAssignmentsUpdateEvent["assignments"] = [
-  { registrationId: "reg-00000001", assignedDestinationId: "dest-aaa", assignedDestinationName: "Madrid" },
-  { registrationId: "reg-00000002", assignedDestinationId: null, assignedDestinationName: null },
-  { registrationId: "reg-00000003", assignedDestinationId: "dest-bbb", assignedDestinationName: "Berlin" },
+  { registrationId: "reg-00000001", assignedDestinationId: "dest-aaa", assignedDestinationName: "Madrid", assignmentGuaranteed: false },
+  { registrationId: "reg-00000002", assignedDestinationId: null, assignedDestinationName: null, assignmentGuaranteed: false },
+  { registrationId: "reg-00000003", assignedDestinationId: "dest-bbb", assignedDestinationName: "Berlin", assignmentGuaranteed: true },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

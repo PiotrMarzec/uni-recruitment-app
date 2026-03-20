@@ -17,6 +17,7 @@ export const assignmentResults = pgTable("assignment_results", {
   }),
   score: numeric("score", { precision: 5, scale: 1 }).notNull(),
   approved: boolean("approved").notNull().default(false),
+  guaranteed: boolean("guaranteed").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 

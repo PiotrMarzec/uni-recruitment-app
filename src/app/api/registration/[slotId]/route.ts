@@ -12,7 +12,7 @@ import {
 } from "@/db/schema";
 import { broadcastSlotStatusUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
-import { eq, and, count, desc, inArray } from "drizzle-orm";
+import { eq, and, count, desc, inArray, or, isNull } from "drizzle-orm";
 
 export async function GET(
   req: NextRequest,
@@ -112,6 +112,7 @@ export async function GET(
 
   // Mark slot as registration_started when the link is opened.
   // Handles both first-time opens ("open") and re-edits of completed registrations ("registered").
+  const prevStatus = slot.status;
   if ((isInitialActive || isSupplementaryActive) && (slot.status === "open" || slot.status === "registered")) {
     await db
       .update(slots)
@@ -120,30 +121,46 @@ export async function GET(
 
     slot.status = "registration_started";
 
-    // Broadcast updated counts to admin dashboard
-    const counts = await db
-      .select({ status: slots.status, n: count() })
-      .from(slots)
-      .where(eq(slots.recruitmentId, slot.recruitmentId))
-      .groupBy(slots.status);
+    // Broadcast counter update only for genuinely new registrations (open → started).
+    // Re-edit views (registered → started) don't change the counter because
+    // registrationCompleted is still true — the student hasn't started editing yet
+    // (they'll go through OTP first, which is where registrationCompleted is reset).
+    if (prevStatus === "open") {
+      const [openCount] = await db
+        .select({ count: count() })
+        .from(slots)
+        .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
 
-    const byStatus = Object.fromEntries(counts.map((r) => [r.status, Number(r.n)]));
+      const [startedCount] = await db
+        .select({ count: count() })
+        .from(slots)
+        .leftJoin(registrations, eq(registrations.slotId, slots.id))
+        .where(
+          and(
+            eq(slots.recruitmentId, slot.recruitmentId),
+            eq(slots.status, "registration_started"),
+            or(
+              eq(registrations.registrationCompleted, false),
+              isNull(registrations.registrationCompleted)
+            )
+          )
+        );
 
-    // Broadcast to whichever stage is active — the dashboard subscribes by stageId.
-    const broadcastStageId = initialStage?.id ?? supplementaryStage?.id;
-    if (broadcastStageId) {
-      broadcastSlotStatusUpdate({
-        type: "slot_status_update",
-        stageId: broadcastStageId,
-        openSlotsCount: byStatus["open"] ?? 0,
-        startedSlotsCount: byStatus["registration_started"] ?? 0,
-        startedSlot: {
-          slotId: slot.id,
-          slotNumber: slot.number,
-          createdAt: slot.createdAt.toISOString(),
-          teacherManagementLink: getTeacherPath(slot.id),
-        },
-      });
+      const broadcastStageId = initialStage?.id ?? supplementaryStage?.id;
+      if (broadcastStageId) {
+        broadcastSlotStatusUpdate({
+          type: "slot_status_update",
+          stageId: broadcastStageId,
+          openSlotsCount: openCount?.count ?? 0,
+          startedSlotsCount: startedCount?.count ?? 0,
+          startedSlot: {
+            slotId: slot.id,
+            slotNumber: slot.number,
+            createdAt: slot.createdAt.toISOString(),
+            teacherManagementLink: getTeacherPath(slot.id),
+          },
+        });
+      }
     }
   }
 
@@ -279,7 +296,7 @@ export async function GET(
             }
           }
 
-          // Fall back to the most recent completed admin stage
+          // Fall back to the most recent completed admin/verification stage
           if (!currentAssignment) {
             const [completedStage] = await db
               .select()
@@ -287,7 +304,7 @@ export async function GET(
               .where(
                 and(
                   eq(stages.recruitmentId, slot.recruitmentId),
-                  eq(stages.type, "admin"),
+                  or(eq(stages.type, "admin"), eq(stages.type, "verification")),
                   eq(stages.status, "completed")
                 )
               )

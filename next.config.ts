@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
     config.resolve.alias.canvas = false;
     return config;
   },
+  turbopack: {
+    resolveAlias: {
+      canvas: { browser: "./empty-module.js" },
+      // next-intl plugin writes to experimental.turbo which Next 15.5+ ignores;
+      // explicitly alias next-intl/config here so Turbopack can resolve it.
+      "next-intl/config": "./src/i18n/request.ts",
+    },
+  },
 };
 
 export default withNextIntl(nextConfig);

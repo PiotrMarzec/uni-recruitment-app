@@ -70,6 +70,8 @@ export async function GET(
     .orderBy(asc(slots.number));
 
   const assignmentMap = new Map<string, string | null>();
+  const guaranteedSet = new Set<string>();
+  const guaranteedDestMap = new Map<string, string | null>(); // regId → guaranteed destId
   let hasAssignments = false;
   let hasNextSupplementary = false;
   let stageInfo: { type: string; order: number } | null = null;
@@ -104,7 +106,7 @@ export async function GET(
       }
 
       // Helper: find the most recent supplementary stage in the chain before a
-      // given order, and use the admin stage before it as the assignment source.
+      // given order, and use the admin/verification stage before it as the assignment source.
       async function traceBackThroughSupplementary(beforeOrder: number): Promise<boolean> {
         const [suppStage] = await db
           .select({ id: stages.id, order: stages.order })
@@ -120,43 +122,43 @@ export async function GET(
           .limit(1);
         if (!suppStage) return false;
 
-        const [prevAdmin] = await db
+        const [prevStage] = await db
           .select({ id: stages.id })
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, recruitmentId),
-              eq(stages.type, "admin"),
+              or(eq(stages.type, "admin"), eq(stages.type, "verification")),
               eq(stages.status, "completed"),
               lt(stages.order, suppStage.order)
             )
           )
           .orderBy(desc(stages.order))
           .limit(1);
-        if (!prevAdmin) return false;
+        if (!prevStage) return false;
 
-        assignmentLookupStageId = prevAdmin.id;
+        assignmentLookupStageId = prevStage.id;
         await applyCancelledFilter(suppStage.id);
         return true;
       }
 
       if (stage.type === "supplementary") {
-        // Supplementary stages: show assignments from the admin stage before it
-        const [prevAdminStage] = await db
+        // Supplementary stages: show assignments from the most recent admin/verification stage
+        const [prevStage] = await db
           .select({ id: stages.id })
           .from(stages)
           .where(
             and(
               eq(stages.recruitmentId, recruitmentId),
-              eq(stages.type, "admin"),
+              or(eq(stages.type, "admin"), eq(stages.type, "verification")),
               eq(stages.status, "completed"),
               lt(stages.order, stage.order)
             )
           )
           .orderBy(desc(stages.order))
           .limit(1);
-        if (prevAdminStage) {
-          assignmentLookupStageId = prevAdminStage.id;
+        if (prevStage) {
+          assignmentLookupStageId = prevStage.id;
         }
 
         // Find students who cancelled during this supplementary stage
@@ -260,6 +262,95 @@ export async function GET(
       ? assignmentMap.size > 0
       : existingAssignments.length > 0;
 
+    // Compute guaranteed set: registrations with approved assignments from the
+    // most recent completed admin/verification stage, minus those who cancelled in a
+    // supplementary stage between that stage and the current one.
+    if (stage && stage.order > 0) {
+      const [prevResultStage] = await db
+        .select({ id: stages.id, order: stages.order })
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, recruitmentId),
+            or(eq(stages.type, "admin"), eq(stages.type, "verification")),
+            eq(stages.status, "completed"),
+            lt(stages.order, stage.order)
+          )
+        )
+        .orderBy(desc(stages.order))
+        .limit(1);
+
+      if (prevResultStage) {
+        // Check for a supplementary stage between that stage and this stage
+        const [suppBetween] = await db
+          .select({ id: stages.id })
+          .from(stages)
+          .where(
+            and(
+              eq(stages.recruitmentId, recruitmentId),
+              eq(stages.type, "supplementary"),
+              gt(stages.order, prevResultStage.order),
+              lt(stages.order, stage.order)
+            )
+          )
+          .orderBy(desc(stages.order))
+          .limit(1);
+
+        let gCancelledIds: Set<string> | null = null;
+        if (suppBetween) {
+          const suppEnrollments = await db
+            .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
+            .from(stageEnrollments)
+            .where(eq(stageEnrollments.stageId, suppBetween.id));
+          if (suppEnrollments.length > 0) {
+            gCancelledIds = new Set(
+              suppEnrollments.filter((e) => e.cancelled).map((e) => e.registrationId)
+            );
+          }
+        }
+
+        // For supplementary stages: students who cancelled in THIS stage also lose guarantee
+        if (stage.type === "supplementary") {
+          const thisEnrollments = await db
+            .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
+            .from(stageEnrollments)
+            .where(eq(stageEnrollments.stageId, stageId));
+          if (thisEnrollments.length > 0) {
+            if (!gCancelledIds) gCancelledIds = new Set();
+            for (const e of thisEnrollments) {
+              if (e.cancelled) gCancelledIds.add(e.registrationId);
+            }
+          }
+        }
+
+        const prevApproved = await db
+          .select({
+            registrationId: assignmentResults.registrationId,
+            destinationId: assignmentResults.destinationId,
+          })
+          .from(assignmentResults)
+          .where(
+            and(
+              eq(assignmentResults.stageId, prevResultStage.id),
+              eq(assignmentResults.approved, true),
+              isNotNull(assignmentResults.destinationId)
+            )
+          );
+
+        for (const r of prevApproved) {
+          if (gCancelledIds && gCancelledIds.has(r.registrationId)) continue;
+          guaranteedSet.add(r.registrationId);
+          guaranteedDestMap.set(r.registrationId, r.destinationId ?? null);
+        }
+      }
+    }
+
+    // Override assignment map for guaranteed students: their locked destination
+    // takes priority over any stale algorithm result from the current stage.
+    for (const [regId, destId] of guaranteedDestMap) {
+      if (destId) assignmentMap.set(regId, destId);
+    }
+
     if (stage) {
       stageInfo = { type: stage.type, order: stage.order };
       const [nextSupplementary] = await db
@@ -309,6 +400,7 @@ export async function GET(
       score,
       assignedDestinationId: assignedDestId,
       assignedDestinationName: assignedDestId ? (destMap[assignedDestId] ?? null) : null,
+      assignmentGuaranteed: guaranteedSet.has(registrationId),
     };
   }
 

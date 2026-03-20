@@ -8,7 +8,7 @@ import {
   users,
   slots,
 } from "@/db/schema";
-import { eq, and, desc, lt, inArray, isNotNull } from "drizzle-orm";
+import { eq, and, desc, lt, gt, or, inArray, isNotNull } from "drizzle-orm";
 import { logAuditEvent, ACTIONS } from "@/lib/audit";
 
 interface SlotCounts {
@@ -133,85 +133,86 @@ export async function runAssignmentAlgorithm(
 
   const destNameMap = new Map(allDestinations.map((d) => [d.id, d.name]));
 
-  // 5. Determine locked assignments from the most recent supplementary stage (if any).
-  // Students who did NOT cancel during the supplementary stage retain their approved
-  // assignment from the admin stage that preceded it — they are excluded from re-run.
-  // This applies to any stage after the supplementary (admin or verification),
-  // not just the immediately following one.
+  // 5. Determine locked assignments from the most recent completed admin stage.
+  // Students with approved assignments are LOCKED (excluded from re-assignment)
+  // UNLESS they cancelled during a supplementary stage between that admin stage
+  // and the current one.
+  // Also builds previousApprovedDest for guaranteed marking on non-locked students.
   const lockedAssignments = new Map<string, { destinationId: string; score: number }>();
+  const previousApprovedDest = new Map<string, string>(); // regId → destId
 
   if (stage.order > 1) {
-    // Find the most recent supplementary stage before the current one
-    const [suppStage] = await db
+    // Find the most recent completed admin or verification stage before the current one.
+    // Verification stages can also produce approved assignments (e.g. for students who
+    // were unassigned in the admin stage but got a slot during verification).
+    const [prevStageWithResults] = await db
       .select()
       .from(stages)
       .where(
         and(
           eq(stages.recruitmentId, stage.recruitmentId),
-          eq(stages.type, "supplementary"),
+          or(eq(stages.type, "admin"), eq(stages.type, "verification")),
+          eq(stages.status, "completed"),
           lt(stages.order, stage.order)
         )
       )
       .orderBy(desc(stages.order))
       .limit(1);
 
-    if (suppStage) {
-      // Non-cancelled supplementary enrollments = students keeping their placement
-      const allSuppEnrollments = await db
-        .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
-        .from(stageEnrollments)
-        .where(eq(stageEnrollments.stageId, suppStage.id));
-
-      // If the supplementary stage has no enrollments at all (enrollment creation was missed),
-      // treat every student in this stage as non-cancelled (guaranteed) so their previous
-      // assignment is preserved — the same outcome as if no one had cancelled.
-      const nonCancelledIds = allSuppEnrollments.length === 0
-        ? registrationIds
-        : allSuppEnrollments.filter((e) => !e.cancelled).map((e) => e.registrationId);
-
-      if (nonCancelledIds.length > 0) {
-        // Find the most recently completed admin stage before the supplementary stage.
-        // This is where the canonical assignment results are stored (the algorithm always
-        // runs on admin stages; verification stages only optionally re-run it).
-        const [prevAdminStage] = await db
-          .select()
-          .from(stages)
-          .where(
-            and(
-              eq(stages.recruitmentId, stage.recruitmentId),
-              eq(stages.type, "admin"),
-              eq(stages.status, "completed"),
-              lt(stages.order, suppStage.order)
-            )
+    if (prevStageWithResults) {
+      // Check for a supplementary stage between that stage and the current stage.
+      // Students who cancelled there forfeited their placement and re-enter the pool.
+      const [suppBetween] = await db
+        .select()
+        .from(stages)
+        .where(
+          and(
+            eq(stages.recruitmentId, stage.recruitmentId),
+            eq(stages.type, "supplementary"),
+            gt(stages.order, prevStageWithResults.order),
+            lt(stages.order, stage.order)
           )
-          .orderBy(desc(stages.order))
-          .limit(1);
+        )
+        .orderBy(desc(stages.order))
+        .limit(1);
 
-        if (prevAdminStage) {
-          const prevApproved = await db
-            .select({
-              registrationId: assignmentResults.registrationId,
-              destinationId: assignmentResults.destinationId,
-              score: assignmentResults.score,
-            })
-            .from(assignmentResults)
-            .where(
-              and(
-                eq(assignmentResults.stageId, prevAdminStage.id),
-                eq(assignmentResults.approved, true),
-                isNotNull(assignmentResults.destinationId),
-                inArray(assignmentResults.registrationId, nonCancelledIds)
-              )
-            );
+      let cancelledIds: Set<string> | null = null;
+      if (suppBetween) {
+        const suppEnrollments = await db
+          .select({ registrationId: stageEnrollments.registrationId, cancelled: stageEnrollments.cancelled })
+          .from(stageEnrollments)
+          .where(eq(stageEnrollments.stageId, suppBetween.id));
 
-          for (const r of prevApproved) {
-            if (r.destinationId) {
-              lockedAssignments.set(r.registrationId, {
-                destinationId: r.destinationId,
-                score: parseFloat(r.score ?? "0"),
-              });
-            }
-          }
+        if (suppEnrollments.length > 0) {
+          cancelledIds = new Set(
+            suppEnrollments.filter((e) => e.cancelled).map((e) => e.registrationId)
+          );
+        }
+      }
+
+      const prevApproved = await db
+        .select({
+          registrationId: assignmentResults.registrationId,
+          destinationId: assignmentResults.destinationId,
+          score: assignmentResults.score,
+        })
+        .from(assignmentResults)
+        .where(
+          and(
+            eq(assignmentResults.stageId, prevStageWithResults.id),
+            eq(assignmentResults.approved, true),
+            isNotNull(assignmentResults.destinationId)
+          )
+        );
+
+      for (const r of prevApproved) {
+        if (cancelledIds && cancelledIds.has(r.registrationId)) continue;
+        if (r.destinationId) {
+          lockedAssignments.set(r.registrationId, {
+            destinationId: r.destinationId,
+            score: parseFloat(r.score ?? "0"),
+          });
+          previousApprovedDest.set(r.registrationId, r.destinationId);
         }
       }
     }
@@ -338,7 +339,7 @@ export async function runAssignmentAlgorithm(
   const availableCounts = new Map(
     Array.from(lockedDestinationCounts.entries()).map(([k, v]) => [k, { ...v }])
   );
-  const assignments: Array<{ registrationId: string; destinationId: string | null; score: number }> = [];
+  const assignments: Array<{ registrationId: string; destinationId: string | null; score: number; guaranteed: boolean }> = [];
 
   // Record locked assignments
   for (const [regId, locked] of lockedAssignments) {
@@ -346,6 +347,7 @@ export async function runAssignmentAlgorithm(
       registrationId: regId,
       destinationId: locked.destinationId,
       score: locked.score,
+      guaranteed: true,
     });
     await db
       .update(stageEnrollments)
@@ -470,6 +472,7 @@ export async function runAssignmentAlgorithm(
           registrationId: student.registrationId,
           destinationId: destId,
           score: student.score,
+          guaranteed: previousApprovedDest.get(student.registrationId) === destId,
         });
 
         await db
@@ -487,6 +490,7 @@ export async function runAssignmentAlgorithm(
           registrationId: student.registrationId,
           destinationId: null,
           score: student.score,
+          guaranteed: false,
         });
       }
     }
@@ -506,6 +510,7 @@ export async function runAssignmentAlgorithm(
         destinationId: a.destinationId ?? undefined,
         score: String(a.score),
         approved: false,
+        guaranteed: a.guaranteed,
       }))
     );
   }

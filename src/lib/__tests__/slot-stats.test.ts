@@ -39,12 +39,12 @@ describe("computeSlotStats", () => {
     });
   });
 
-  it("counts slot as registered (not in-progress) when student re-opens a completed registration link", () => {
-    // Bug scenario: student re-opens their completed registration link which
-    // reverts slot.status to "registration_started", but registrationCompleted
-    // is still true.  The slot must NOT count as "In Progress".
+  it("counts slot as registered (not in-progress) when registrationCompleted is still true (safety net)", () => {
+    // Defensive case: if registrationCompleted somehow stays true while
+    // status is "registration_started", computeSlotStats treats it as registered.
+    // In practice the GET route resets registrationCompleted to false on re-edit.
     const rows = [
-      { status: "registration_started", registrationCompleted: true },  // re-opened
+      { status: "registration_started", registrationCompleted: true },
       { status: "registered", registrationCompleted: true },
       { status: "registered", registrationCompleted: true },
       { status: "registered", registrationCompleted: true },
@@ -53,6 +53,21 @@ describe("computeSlotStats", () => {
     const stats = computeSlotStats(rows);
     expect(stats.registeredSlots).toBe(5);
     expect(stats.startedSlots).toBe(0);
+  });
+
+  it("counts re-editing student as in-progress after registrationCompleted is reset to false", () => {
+    // Real re-edit scenario: GET route resets registrationCompleted to false
+    // when student re-opens a completed registration.
+    const rows = [
+      { status: "registration_started", registrationCompleted: false },  // re-editing
+      { status: "registered", registrationCompleted: true },
+      { status: "registered", registrationCompleted: true },
+      { status: "registered", registrationCompleted: true },
+      { status: "registered", registrationCompleted: true },
+    ];
+    const stats = computeSlotStats(rows);
+    expect(stats.registeredSlots).toBe(4);
+    expect(stats.startedSlots).toBe(1);
   });
 
   it("treats registration_started with null registrationCompleted as in-progress", () => {

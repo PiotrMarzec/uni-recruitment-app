@@ -10,11 +10,11 @@ import {
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
 import { issueOtp, verifyOtp } from "@/lib/auth/otp";
 import { sendOtpEmail } from "@/lib/email/send";
-import { broadcastRegistrationStepUpdate } from "@/lib/websocket/events";
+import { broadcastRegistrationStepUpdate, broadcastSlotStatusUpdate } from "@/lib/websocket/events";
 import { getTeacherPath } from "@/lib/auth/hmac";
 import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
-import { eq, and, isNotNull, desc } from "drizzle-orm";
+import { eq, and, count, isNotNull, desc, or, isNull } from "drizzle-orm";
 import { getRegistrationSessionFromRequest } from "@/lib/auth/session";
 
 const SUPPORTED_LOCALES = ["en", "pl", "de", "fr", "es", "it"] as const;
@@ -239,11 +239,44 @@ export async function POST(
         .set({ status: "registered", studentId: user.id })
         .where(eq(slots.id, slotId));
     } else {
-      // Reset not_eligible status when student re-verifies OTP
+      // Reset not_eligible status when student re-verifies OTP.
+      // Also reset registrationCompleted — the student is now actively re-editing,
+      // so the dashboard should show this as "In Progress" until they re-submit.
       await db
         .update(registrations)
-        .set({ notEligible: false, updatedAt: new Date() })
+        .set({ notEligible: false, registrationCompleted: false, updatedAt: new Date() })
         .where(eq(registrations.id, existingReg.id));
+
+      // If the registration was previously completed, broadcast updated counters
+      // so the dashboard's "In Progress" card reflects the re-editing student.
+      if (existingReg.registrationCompleted) {
+        const [openCount] = await db
+          .select({ count: count() })
+          .from(slots)
+          .where(and(eq(slots.recruitmentId, slot.recruitmentId), eq(slots.status, "open")));
+
+        const [startedCount] = await db
+          .select({ count: count() })
+          .from(slots)
+          .leftJoin(registrations, eq(registrations.slotId, slots.id))
+          .where(
+            and(
+              eq(slots.recruitmentId, slot.recruitmentId),
+              eq(slots.status, "registration_started"),
+              or(
+                eq(registrations.registrationCompleted, false),
+                isNull(registrations.registrationCompleted)
+              )
+            )
+          );
+
+        broadcastSlotStatusUpdate({
+          type: "slot_status_update",
+          stageId: activeStageInfo.stage.id,
+          openSlotsCount: openCount?.count ?? 0,
+          startedSlotsCount: startedCount?.count ?? 0,
+        });
+      }
     }
 
     // Set student session

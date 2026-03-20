@@ -8,7 +8,7 @@ import {
   assignmentResults,
   registrations,
 } from "@/db/schema";
-import { eq, and, desc, isNotNull, inArray } from "drizzle-orm";
+import { eq, and, or, desc, isNotNull, inArray } from "drizzle-orm";
 
 /**
  * Returns destinations with available (unassigned) spots for the recruitment
@@ -68,14 +68,14 @@ export async function GET(
     return NextResponse.json({ destinations: [] });
   }
 
-  // Find the most recent completed admin stage (the one whose assignments are active)
+  // Find the most recent completed admin/verification stage (the one whose assignments are active)
   const [completedAdminStage] = await db
     .select({ id: stages.id })
     .from(stages)
     .where(
       and(
         eq(stages.recruitmentId, slot.recruitmentId),
-        eq(stages.type, "admin"),
+        or(eq(stages.type, "admin"), eq(stages.type, "verification")),
         eq(stages.status, "completed")
       )
     )
