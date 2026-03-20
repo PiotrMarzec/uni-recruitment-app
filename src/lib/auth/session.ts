@@ -7,6 +7,11 @@ import { eq } from "drizzle-orm";
 
 let _sessionSecret: string | undefined;
 
+function isSecureCookie(): boolean {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "";
+  return appUrl.startsWith("https://");
+}
+
 function getSessionSecret(): string {
   if (!_sessionSecret) {
     const value = process.env.SESSION_SECRET;
@@ -44,7 +49,7 @@ function getSessionOptions() {
     password: getSessionSecret(),
     cookieName: "session",
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureCookie(),
       httpOnly: true,
       sameSite: "lax" as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -61,7 +66,7 @@ function getRegistrationSessionOptions() {
     password: getSessionSecret(),
     cookieName: "reg_session",
     cookieOptions: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecureCookie(),
       httpOnly: true,
       sameSite: "lax" as const,
       maxAge: 60 * 60 * 24, // 1 day — registration sessions are short-lived

@@ -10,6 +10,18 @@
         "reveal": "silent",
         "panel": "shared"
       }
+    },
+    {
+      "label": "Docker QA Build & Run",
+      "type": "shell",
+      "command": "docker rm -f regie-qa 2>/dev/null; docker compose -f docker-compose.dev.yml up -d && docker build -t uni-recruitment-app:qa . && docker run --rm --name regie-qa --add-host=host.docker.internal:host-gateway --env-file .env -e DATABASE_URL=postgresql://postgres:password@host.docker.internal:5433/recruitment -e SMTP_HOST=host.docker.internal -e NODE_ENV=production -p 3000:3000 uni-recruitment-app:qa",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "isBackground": true
     }
   ]
 }
