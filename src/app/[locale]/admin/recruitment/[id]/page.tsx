@@ -967,52 +967,56 @@ export default function RecruitmentDetailPage() {
           {recruitment.destinations.length === 0 ? (
             <p className="text-muted-foreground">{t("destinations.noDestinations")}</p>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {recruitment.destinations.map((dest) => (
-                <Card key={dest.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-base">{dest.name}</CardTitle>
-                      <div className="flex gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openEditDestination(dest)}
-                          className="h-auto py-1"
-                        >
-                          {tc("edit")}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteDestination(dest.id)}
-                          className="text-destructive hover:text-destructive border-destructive hover:border-destructive h-auto py-1"
-                        >
-                          {tc("remove")}
-                        </Button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{dest.description}</p>
-                  </CardHeader>
-                  <CardContent className="text-sm space-y-1">
-                    <div className="flex gap-4">
-                      {dest.slotsAny > 0 ? (
-                        <span>{t("destinations.open")} <strong>{dest.slotsAny}</strong></span>
-                      ) : (
-                        <>
-                          <span>{t("destinations.bachelor")} <strong>{dest.slotsBachelor}</strong></span>
-                          <span>{t("destinations.master")} <strong>{dest.slotsMaster}</strong></span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {dest.requiredLanguages.map((lang) => (
-                        <Badge key={lang} variant="secondary" className="text-xs">{lang}</Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/50">
+                  <tr>
+                    <th className="text-left p-3 font-medium">{tc("name")}</th>
+                    <th className="text-left p-3 font-medium">{t("destinations.slotsBachelor")}</th>
+                    <th className="text-left p-3 font-medium">{t("destinations.slotsMaster")}</th>
+                    <th className="text-left p-3 font-medium">{t("destinations.slotsAny")}</th>
+                    <th className="text-left p-3 font-medium">{t("destinations.requiredLanguages")}</th>
+                    <th className="p-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recruitment.destinations.map((dest) => (
+                    <tr key={dest.id} className="border-b last:border-0 hover:bg-muted/20">
+                      <td className="p-3 font-medium">{dest.name}</td>
+                      <td className="p-3">{dest.slotsBachelor || "—"}</td>
+                      <td className="p-3">{dest.slotsMaster || "—"}</td>
+                      <td className="p-3">{dest.slotsAny || "—"}</td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-1">
+                          {dest.requiredLanguages.map((lang) => (
+                            <Badge key={lang} variant="secondary" className="text-xs">{lang}</Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex gap-1 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditDestination(dest)}
+                            className="h-auto py-1"
+                          >
+                            {tc("edit")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteDestination(dest.id)}
+                            className="text-destructive hover:text-destructive border-destructive hover:border-destructive h-auto py-1"
+                          >
+                            {tc("remove")}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
