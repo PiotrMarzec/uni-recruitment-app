@@ -3,10 +3,10 @@ import { db } from "@/db";
 import { registrations, users, slots, stages, destinations, assignmentResults } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
 import { logAuditEvent, ACTIONS, getIpAddress } from "@/lib/audit";
-import { broadcastApplicationRowUpdate } from "@/lib/websocket/events";
+import { broadcastApplicationRowUpdate, broadcastApplicationAssignmentsUpdate } from "@/lib/websocket/events";
 import { STUDENT_LEVELS, StudentLevel } from "@/db/schema/registrations";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNotNull } from "drizzle-orm";
 
 const updateSchema = z.object({
   fullName: z.string().min(1).max(255).optional(),
@@ -18,6 +18,7 @@ const updateSchema = z.object({
   additionalActivities: z.number().int().min(0).max(4).nullable().optional(),
   recommendationLetters: z.number().int().min(0).max(10).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
+  removeAssignment: z.object({ stageId: z.string().uuid() }).optional(),
 });
 
 export async function PATCH(
@@ -119,6 +120,97 @@ export async function PATCH(
   }
 
   await db.update(registrations).set(updates).where(eq(registrations.id, id));
+
+  // Handle assignment removal
+  if (data.removeAssignment) {
+    const { stageId: removeStageId } = data.removeAssignment;
+
+    // Find and delete the assignment result for this registration + stage
+    const [removedAssignment] = await db
+      .select({
+        id: assignmentResults.id,
+        destinationId: assignmentResults.destinationId,
+        guaranteed: assignmentResults.guaranteed,
+      })
+      .from(assignmentResults)
+      .where(
+        and(
+          eq(assignmentResults.stageId, removeStageId),
+          eq(assignmentResults.registrationId, id)
+        )
+      )
+      .limit(1);
+
+    if (removedAssignment) {
+      await db
+        .delete(assignmentResults)
+        .where(eq(assignmentResults.id, removedAssignment.id));
+
+      // Look up destination name for audit log
+      let removedDestName: string | null = null;
+      if (removedAssignment.destinationId) {
+        const [dest] = await db
+          .select({ name: destinations.name })
+          .from(destinations)
+          .where(eq(destinations.id, removedAssignment.destinationId))
+          .limit(1);
+        removedDestName = dest?.name ?? null;
+      }
+
+      await logAuditEvent({
+        actorType: "admin",
+        actorId: admin.userId,
+        actorLabel: admin.email,
+        action: ACTIONS.ASSIGNMENT_REMOVED,
+        resourceType: "registration",
+        resourceId: id,
+        recruitmentId: slot?.recruitmentId,
+        details: {
+          stageId: removeStageId,
+          destinationId: removedAssignment.destinationId,
+          destinationName: removedDestName,
+          wasGuaranteed: removedAssignment.guaranteed,
+        },
+        ipAddress: getIpAddress(req),
+      });
+
+      // Broadcast updated assignments to all clients watching this stage
+      const allResults = await db
+        .select({
+          registrationId: assignmentResults.registrationId,
+          destinationId: assignmentResults.destinationId,
+          guaranteed: assignmentResults.guaranteed,
+        })
+        .from(assignmentResults)
+        .where(eq(assignmentResults.stageId, removeStageId));
+
+      const allDestinations = await db
+        .select({ id: destinations.id, name: destinations.name })
+        .from(destinations)
+        .where(eq(destinations.recruitmentId, slot!.recruitmentId));
+      const destNameMap = Object.fromEntries(allDestinations.map((d) => [d.id, d.name]));
+
+      broadcastApplicationAssignmentsUpdate({
+        type: "application_assignments_update",
+        stageId: removeStageId,
+        assignments: allResults.map((r) => ({
+          registrationId: r.registrationId,
+          assignedDestinationId: r.destinationId,
+          assignedDestinationName: r.destinationId ? (destNameMap[r.destinationId] ?? null) : null,
+          assignmentGuaranteed: r.guaranteed,
+        })),
+        assigned: allResults.filter((r) => r.destinationId !== null).length,
+        unassigned: allResults.filter((r) => r.destinationId === null).length,
+        hasAssignments: allResults.length > 0,
+      });
+    }
+
+    after.removedAssignment = {
+      stageId: removeStageId,
+      destinationId: removedAssignment?.destinationId ?? null,
+      wasGuaranteed: removedAssignment?.guaranteed ?? false,
+    };
+  }
 
   await logAuditEvent({
     actorType: "admin",

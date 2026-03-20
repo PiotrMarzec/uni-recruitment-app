@@ -295,7 +295,11 @@
         "confirmSelection": "Confirmer la sélection",
         "resolving": "Résolution en cours...",
         "cancel": "Annuler"
-      }
+      },
+      "removeAssignment": "Supprimer l'affectation",
+      "removeAssignmentConfirm": "Êtes-vous sûr de vouloir supprimer l'affectation de destination pour cet étudiant ?",
+      "removeGuaranteedWarning": "{studentName} a actuellement une affectation garantie à {destinationName} depuis l'étape {stageName}. En supprimant l'affectation, l'étudiant perdra sa garantie de destination.",
+      "removingAssignment": "Suppression..."
     }
   },
   "registration": {

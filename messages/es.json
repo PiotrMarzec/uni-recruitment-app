@@ -295,7 +295,11 @@
         "confirmSelection": "Confirmar selección",
         "resolving": "Resolviendo...",
         "cancel": "Cancelar"
-      }
+      },
+      "removeAssignment": "Eliminar asignación",
+      "removeAssignmentConfirm": "¿Está seguro de que desea eliminar la asignación de destino para este estudiante?",
+      "removeGuaranteedWarning": "{studentName} tiene actualmente una asignación garantizada a {destinationName} desde la etapa {stageName}. Al eliminar la asignación, el estudiante perderá la garantía de destino.",
+      "removingAssignment": "Eliminando..."
     }
   },
   "registration": {

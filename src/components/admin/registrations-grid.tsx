@@ -12,6 +12,7 @@ import {
   Search,
   CheckCircle2,
   Clock,
+  X,
 } from "lucide-react";
 import { SUPPORTED_LANGUAGES } from "@/db/schema/destinations";
 import { STUDENT_LEVELS, STUDENT_LEVEL_LABELS, StudentLevel } from "@/db/schema/registrations";
@@ -119,6 +120,12 @@ export function RegistrationsGrid({
   const [editingRows, setEditingRows] = useState<Map<string, EditState>>(new Map());
   const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
   const [connected, setConnected] = useState(false);
+  const [guaranteeSourceStageName, setGuaranteeSourceStageName] = useState<string | null>(null);
+  const [removeAssignmentConfirm, setRemoveAssignmentConfirm] = useState<{
+    row: RegistrationRow;
+    isGuaranteed: boolean;
+  } | null>(null);
+  const [removingAssignment, setRemovingAssignment] = useState(false);
 
   const editingRowsRef = useRef<Map<string, EditState>>(new Map());
   editingRowsRef.current = editingRows;
@@ -160,6 +167,7 @@ export function RegistrationsGrid({
         setDestinations(data.destinations);
         setMaxDestChoices(data.maxDestinationChoices ?? 3);
         setHasAssignments(data.hasAssignments ?? false);
+        setGuaranteeSourceStageName(data.guaranteeSourceStageName ?? null);
         onDataLoad?.({
           hasAssignments: data.hasAssignments ?? false,
           hasNextSupplementary: data.hasNextSupplementary ?? false,
@@ -379,6 +387,24 @@ export function RegistrationsGrid({
         next.delete(row.registrationId);
         return next;
       });
+    }
+  }
+
+  async function removeAssignment(row: RegistrationRow) {
+    if (!stageId) return;
+    setRemovingAssignment(true);
+    try {
+      const res = await fetch(`/api/admin/registrations/${row.registrationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ removeAssignment: { stageId } }),
+      });
+      if (res.ok) {
+        setRemoveAssignmentConfirm(null);
+        await fetchData();
+      }
+    } finally {
+      setRemovingAssignment(false);
     }
   }
 
@@ -724,9 +750,24 @@ export function RegistrationsGrid({
                       </td>
                       <td className="p-3 align-top text-sm">
                         {row.assignedDestinationName ? (
-                          <Badge variant={row.assignmentGuaranteed ? "success" : "info"} className="whitespace-nowrap">
-                            {row.assignedDestinationName}
-                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <Badge variant={row.assignmentGuaranteed ? "success" : "info"} className="whitespace-nowrap">
+                              {row.assignedDestinationName}
+                            </Badge>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRemoveAssignmentConfirm({
+                                  row,
+                                  isGuaranteed: row.assignmentGuaranteed,
+                                })
+                              }
+                              className="ml-1 p-0.5 rounded hover:bg-red-100 text-muted-foreground hover:text-red-600 transition-colors"
+                              title={t("removeAssignment")}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         ) : row.assignedDestinationId === null && hasAssignments ? (
                           <span className="text-amber-500 font-medium">{tresults("unassigned")}</span>
                         ) : (
@@ -909,6 +950,46 @@ export function RegistrationsGrid({
           </tbody>
         </table>
       </div>
+
+      {/* Remove assignment confirmation dialog */}
+      {removeAssignmentConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-background rounded-lg shadow-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-3">{t("removeAssignment")}</h3>
+            {removeAssignmentConfirm.isGuaranteed ? (
+              <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+                {t("removeGuaranteedWarning", {
+                  studentName: removeAssignmentConfirm.row.studentName ?? "—",
+                  destinationName: removeAssignmentConfirm.row.assignedDestinationName ?? "—",
+                  stageName: guaranteeSourceStageName ?? "—",
+                })}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mb-4">
+                {t("removeAssignmentConfirm")}
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRemoveAssignmentConfirm(null)}
+                disabled={removingAssignment}
+              >
+                {tc("cancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => removeAssignment(removeAssignmentConfirm.row)}
+                disabled={removingAssignment}
+              >
+                {removingAssignment ? t("removingAssignment") : t("removeAssignment")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

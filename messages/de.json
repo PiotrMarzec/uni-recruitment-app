@@ -295,7 +295,11 @@
         "confirmSelection": "Auswahl bestätigen",
         "resolving": "Wird aufgelöst...",
         "cancel": "Abbrechen"
-      }
+      },
+      "removeAssignment": "Zuweisung entfernen",
+      "removeAssignmentConfirm": "Sind Sie sicher, dass Sie die Zuweisung für diesen Studenten entfernen möchten?",
+      "removeGuaranteedWarning": "{studentName} hat derzeit eine garantierte Zuweisung zu {destinationName} aus der Phase {stageName}. Durch das Entfernen der Zuweisung verliert der Student die Garantie auf einen Studienplatz.",
+      "removingAssignment": "Wird entfernt..."
     }
   },
   "registration": {

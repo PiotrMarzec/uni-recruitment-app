@@ -79,6 +79,7 @@ export const ACTIONS = {
   ASSIGNMENT_COMPUTED: "assignment.computed",
   ASSIGNMENT_APPROVED: "assignment.approved",
   ASSIGNMENT_CANCELLED: "assignment.cancelled",
+  ASSIGNMENT_REMOVED: "assignment.removed",
   // Supplementary
   SUPPLEMENTARY_STAGE_STARTED: "supplementary_stage.started",
   PREFERENCES_UPDATED: "preferences.updated",

@@ -295,7 +295,11 @@
         "confirmSelection": "Conferma selezione",
         "resolving": "Risoluzione in corso...",
         "cancel": "Annulla"
-      }
+      },
+      "removeAssignment": "Rimuovi assegnazione",
+      "removeAssignmentConfirm": "Sei sicuro di voler rimuovere l'assegnazione di destinazione per questo studente?",
+      "removeGuaranteedWarning": "{studentName} ha attualmente un'assegnazione garantita a {destinationName} dalla fase {stageName}. Rimuovendo l'assegnazione, lo studente perderà la garanzia di destinazione.",
+      "removingAssignment": "Rimozione..."
     }
   },
   "registration": {

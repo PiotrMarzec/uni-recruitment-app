@@ -295,7 +295,11 @@
         "confirmSelection": "Zatwierdź wybór",
         "resolving": "Rozstrzyganie...",
         "cancel": "Anuluj"
-      }
+      },
+      "removeAssignment": "Usuń przydział",
+      "removeAssignmentConfirm": "Czy na pewno chcesz usunąć przydział destynacji dla tego studenta?",
+      "removeGuaranteedWarning": "{studentName} ma obecnie gwarantowany przydział do {destinationName} z etapu {stageName}. Usunięcie przydziału spowoduje utratę gwarancji destynacji.",
+      "removingAssignment": "Usuwanie..."
     }
   },
   "registration": {

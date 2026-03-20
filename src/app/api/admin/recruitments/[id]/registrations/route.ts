@@ -72,6 +72,7 @@ export async function GET(
   const assignmentMap = new Map<string, string | null>();
   const guaranteedSet = new Set<string>();
   const guaranteedDestMap = new Map<string, string | null>(); // regId → guaranteed destId
+  let guaranteeSourceStageName: string | null = null;
   let hasAssignments = false;
   let hasNextSupplementary = false;
   let stageInfo: { type: string; order: number } | null = null;
@@ -267,7 +268,7 @@ export async function GET(
     // supplementary stage between that stage and the current one.
     if (stage && stage.order > 0) {
       const [prevResultStage] = await db
-        .select({ id: stages.id, order: stages.order })
+        .select({ id: stages.id, order: stages.order, name: stages.name })
         .from(stages)
         .where(
           and(
@@ -281,6 +282,7 @@ export async function GET(
         .limit(1);
 
       if (prevResultStage) {
+        guaranteeSourceStageName = prevResultStage.name;
         // Check for a supplementary stage between that stage and this stage
         const [suppBetween] = await db
           .select({ id: stages.id })
@@ -412,5 +414,6 @@ export async function GET(
     hasAssignments,
     hasNextSupplementary,
     stage: stageInfo,
+    guaranteeSourceStageName,
   });
 }

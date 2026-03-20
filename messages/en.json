@@ -295,7 +295,11 @@
         "confirmSelection": "Confirm Selection",
         "resolving": "Resolving...",
         "cancel": "Cancel"
-      }
+      },
+      "removeAssignment": "Remove assignment",
+      "removeAssignmentConfirm": "Are you sure you want to remove the destination assignment for this student?",
+      "removeGuaranteedWarning": "{studentName} is currently guaranteed the assignment to {destinationName} from the {stageName} stage. By removing the assignment they will no longer be guaranteed a destination.",
+      "removingAssignment": "Removing..."
     }
   },
   "registration": {
