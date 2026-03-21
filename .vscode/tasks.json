@@ -22,6 +22,17 @@
         "clear": true
       },
       "isBackground": true
+    },
+    {
+      "label": "Deploy to Staging",
+      "type": "shell",
+      "command": ".local/staging-deploy.sh",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     }
   ]
 }
