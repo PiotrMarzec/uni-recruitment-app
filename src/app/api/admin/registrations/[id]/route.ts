@@ -62,13 +62,19 @@ export async function PATCH(
   const updates: Record<string, unknown> = { updatedAt: new Date() };
 
   if (data.fullName !== undefined) {
-    after.fullName = data.fullName;
     if (existingReg.studentId) {
+      const [currentUser] = await db
+        .select({ fullName: users.fullName })
+        .from(users)
+        .where(eq(users.id, existingReg.studentId))
+        .limit(1);
+      before.fullName = currentUser?.fullName ?? null;
       await db
         .update(users)
         .set({ fullName: data.fullName })
         .where(eq(users.id, existingReg.studentId));
     }
+    after.fullName = data.fullName;
   }
 
   if (data.enrollmentId !== undefined) {

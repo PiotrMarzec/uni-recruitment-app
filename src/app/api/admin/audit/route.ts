@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { auditLog } from "@/db/schema";
 import { requireAdmin } from "@/lib/auth/session";
-import { desc, eq, and, gte, lte, like, or } from "drizzle-orm";
+import { desc, eq, and, gte, lte, ilike, or, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const admin = await requireAdmin();
@@ -44,8 +44,9 @@ export async function GET(req: NextRequest) {
   if (search) {
     conditions.push(
       or(
-        like(auditLog.actorLabel, `%${search}%`),
-        like(auditLog.resourceId, `%${search}%`)
+        ilike(auditLog.actorLabel, `%${search}%`),
+        ilike(auditLog.action, `%${search}%`),
+        sql`${auditLog.resourceId}::text ILIKE ${`%${search}%`}`
       )
     );
   }

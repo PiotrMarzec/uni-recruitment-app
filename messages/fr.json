@@ -259,7 +259,10 @@
         "student": "Étudiant",
         "teacher": "Enseignant",
         "system": "Système"
-      }
+      },
+      "field": "Champ",
+      "before": "Avant",
+      "after": "Après"
     },
     "applications": {
       "title": "Examiner les candidatures",

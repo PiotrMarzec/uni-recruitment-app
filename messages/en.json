@@ -259,7 +259,10 @@
         "student": "Student",
         "teacher": "Teacher",
         "system": "System"
-      }
+      },
+      "field": "Field",
+      "before": "Before",
+      "after": "After"
     },
     "applications": {
       "title": "Review Applications",

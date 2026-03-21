@@ -259,7 +259,10 @@
         "student": "Estudiante",
         "teacher": "Profesor",
         "system": "Sistema"
-      }
+      },
+      "field": "Campo",
+      "before": "Antes",
+      "after": "Después"
     },
     "applications": {
       "title": "Revisar solicitudes",

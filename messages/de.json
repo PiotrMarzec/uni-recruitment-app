@@ -259,7 +259,10 @@
         "student": "Student",
         "teacher": "Lehrer",
         "system": "System"
-      }
+      },
+      "field": "Feld",
+      "before": "Vorher",
+      "after": "Nachher"
     },
     "applications": {
       "title": "Bewerbungen prüfen",

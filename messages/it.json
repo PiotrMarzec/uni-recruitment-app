@@ -259,7 +259,10 @@
         "student": "Studente",
         "teacher": "Insegnante",
         "system": "Sistema"
-      }
+      },
+      "field": "Campo",
+      "before": "Prima",
+      "after": "Dopo"
     },
     "applications": {
       "title": "Revisione candidature",

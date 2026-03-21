@@ -66,8 +66,14 @@ export async function PATCH(
     resourceId: id,
     recruitmentId: stage.recruitmentId,
     details: {
-      startDate: updates.startDate?.toISOString(),
-      endDate: updates.endDate?.toISOString(),
+      before: {
+        startDate: stage.startDate?.toISOString() ?? null,
+        endDate: stage.endDate?.toISOString() ?? null,
+      },
+      after: {
+        startDate: (updates.startDate ?? stage.startDate)?.toISOString() ?? null,
+        endDate: (updates.endDate ?? stage.endDate)?.toISOString() ?? null,
+      },
     },
     ipAddress: getIpAddress(req),
   });

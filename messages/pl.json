@@ -259,7 +259,10 @@
         "student": "Student",
         "teacher": "Nauczyciel",
         "system": "System"
-      }
+      },
+      "field": "Pole",
+      "before": "Przed",
+      "after": "Po"
     },
     "applications": {
       "title": "Przegląd zgłoszeń",

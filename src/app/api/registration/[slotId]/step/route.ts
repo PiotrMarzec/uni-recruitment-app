@@ -363,10 +363,16 @@ export async function POST(
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
+  const before: Record<string, unknown> = {};
+  const after: Record<string, unknown> = {};
 
   if (data.step === 3) {
+    before.fullName = session.name;
+    before.enrollmentId = existingReg.enrollmentId;
     updates.fullName = (data as { fullName: string }).fullName;
     updates.enrollmentId = (data as { enrollmentId: string }).enrollmentId;
+    after.fullName = updates.fullName;
+    after.enrollmentId = updates.enrollmentId;
 
     // Update user's full name
     await db
@@ -383,7 +389,9 @@ export async function POST(
       );
     }
     const chosenLevel = (data as { level: StudentLevel }).level;
+    before.level = existingReg.level;
     updates.level = chosenLevel;
+    after.level = chosenLevel;
 
     // Check eligibility for this recruitment
     const [rec] = await db
@@ -415,13 +423,17 @@ export async function POST(
         { status: 403 }
       );
     }
+    before.spokenLanguages = JSON.parse(existingReg.spokenLanguages || "[]");
     updates.spokenLanguages = JSON.stringify((data as { spokenLanguages: string[] }).spokenLanguages);
+    after.spokenLanguages = (data as { spokenLanguages: string[] }).spokenLanguages;
   }
 
   if (data.step === 6) {
+    before.destinationPreferences = JSON.parse(existingReg.destinationPreferences || "[]");
     updates.destinationPreferences = JSON.stringify(
       (data as { destinationPreferences: string[] }).destinationPreferences
     );
+    after.destinationPreferences = (data as { destinationPreferences: string[] }).destinationPreferences;
   }
 
   await db
@@ -436,7 +448,7 @@ export async function POST(
     action: ACTIONS.REGISTRATION_STEP_COMPLETED,
     resourceType: "registration",
     resourceId: existingReg.id,
-    details: { step: data.step },
+    details: { step: data.step, before, after },
     ipAddress: getIpAddress(req),
   });
 

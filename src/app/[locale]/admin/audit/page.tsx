@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useTranslations } from "next-intl";
 import { AdminLayout } from "@/components/admin/admin-layout";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,47 @@ export default function AuditLogPage() {
 
   const td = useTranslations("admin.dashboard");
 
+  function formatValue(v: unknown): string {
+    if (v === null || v === undefined) return "—";
+    if (Array.isArray(v)) return v.join(", ");
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+  }
+
+  function renderBeforeAfter(details: Record<string, unknown>) {
+    const before = details.before as Record<string, unknown>;
+    const after = details.after as Record<string, unknown>;
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+
+    if (keys.length === 0) return null;
+
+    return (
+      <table className="text-xs w-full border-collapse">
+        <thead>
+          <tr className="border-b">
+            <th className="text-left p-2 font-medium">{t("field")}</th>
+            <th className="text-left p-2 font-medium">{t("before")}</th>
+            <th className="text-left p-2 font-medium">{t("after")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {keys.map((key) => {
+            const bVal = formatValue(before[key]);
+            const aVal = formatValue(after[key]);
+            const changed = bVal !== aVal;
+            return (
+              <tr key={key} className={changed ? "bg-yellow-50 dark:bg-yellow-950/20" : ""}>
+                <td className="p-2 font-mono text-muted-foreground">{key}</td>
+                <td className={`p-2 ${changed ? "text-red-600 dark:text-red-400 line-through" : ""}`}>{bVal}</td>
+                <td className={`p-2 ${changed ? "text-green-600 dark:text-green-400 font-medium" : ""}`}>{aVal}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
+
   return (
     <AdminLayout
       breadcrumbs={[
@@ -143,9 +184,8 @@ export default function AuditLogPage() {
             </thead>
             <tbody>
               {entries.map((entry) => (
-                <>
+                <Fragment key={entry.id}>
                   <tr
-                    key={entry.id}
                     className="border-b hover:bg-muted/20 cursor-pointer"
                     onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
                   >
@@ -172,16 +212,33 @@ export default function AuditLogPage() {
                   {expandedId === entry.id && (
                     <tr key={`${entry.id}-expanded`} className="border-b bg-muted/10">
                       <td colSpan={5} className="p-4">
-                        <pre className="text-xs font-mono overflow-auto max-h-48 bg-muted p-3 rounded">
-                          {JSON.stringify(entry.details, null, 2)}
-                        </pre>
+                        {entry.details.before && entry.details.after ? (
+                          <div className="space-y-2">
+                            {renderBeforeAfter(entry.details)}
+                            {Object.keys(entry.details).filter((k) => k !== "before" && k !== "after").length > 0 && (
+                              <pre className="text-xs font-mono overflow-auto max-h-32 bg-muted p-3 rounded mt-2">
+                                {JSON.stringify(
+                                  Object.fromEntries(
+                                    Object.entries(entry.details).filter(([k]) => k !== "before" && k !== "after")
+                                  ),
+                                  null,
+                                  2
+                                )}
+                              </pre>
+                            )}
+                          </div>
+                        ) : (
+                          <pre className="text-xs font-mono overflow-auto max-h-48 bg-muted p-3 rounded">
+                            {JSON.stringify(entry.details, null, 2)}
+                          </pre>
+                        )}
                         {entry.ipAddress && (
                           <p className="text-xs text-muted-foreground mt-2">IP: {entry.ipAddress}</p>
                         )}
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>
